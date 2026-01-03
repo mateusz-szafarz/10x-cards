@@ -1,8 +1,7 @@
 ---
-description: 
-globs: *.tsx
-alwaysApply: false
+paths: **/*.tsx
 ---
+
 ### Guidelines for React
 
 - Use functional components with hooks instead of class components

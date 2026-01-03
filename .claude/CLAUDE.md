@@ -1,11 +1,6 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-# AI Rules for {app-name}
+# AI Rules for spaced repetition cards project
 
-{project-description}
+Web application for AI-powered flashcard generation and spaced repetition learning. Users paste text and AI generates flashcard suggestions that can be edited, accepted, or rejected before saving. Users can also create flashcards manually. A spaced repetition algorithm schedules optimal review sessions.
 
 ## Tech Stack
 

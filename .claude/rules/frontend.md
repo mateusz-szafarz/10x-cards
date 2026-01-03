@@ -1,8 +1,7 @@
 ---
-description: 
-globs: *.tsx,*.astro
-alwaysApply: false
+paths: **/*.tsx, **/*.astro
 ---
+
 ## Frontend
 
 ### General Guidelines

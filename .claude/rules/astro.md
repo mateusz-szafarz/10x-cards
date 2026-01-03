@@ -1,8 +1,7 @@
 ---
-description: 
-globs: *.astro
-alwaysApply: false
+paths: **/*.astro
 ---
+
 ### Guidelines for Astro
 
 - Leverage View Transitions API for smooth page transitions (use ClientRouter)
