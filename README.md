@@ -82,14 +82,15 @@ AI-powered flashcard generation and spaced repetition learning application.
 
 ## Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint checks |
-| `npm run lint:fix` | Run ESLint and auto-fix issues |
-| `npm run format` | Format code with Prettier |
+| Script             | Description                      |
+|--------------------|----------------------------------|
+| `npm run dev`      | Start development server         |
+| `npm run build`    | Build for production             |
+| `npm run preview`  | Preview production build locally |
+| `npm run astro`    | Run Astro CLI command            |
+| `npm run lint`     | Run ESLint checks                |
+| `npm run lint:fix` | Run ESLint and auto-fix issues   |
+| `npm run format`   | Format code with Prettier        |
 
 ## Project Scope
 
