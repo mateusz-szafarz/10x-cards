@@ -42,6 +42,9 @@ Napisz kod SQL kompatybilny z PostgreSQL dla plików migracji Supabase, który:
     - Upewnij się, że polityki obejmują wszystkie istotne scenariusze dostępu (np. select, insert, update, delete) w oparciu o cel tabeli i wrażliwość danych.
     - Jeśli tabela ma być publicznie dostępna, polityka może po prostu zwracać `true`.
     - Polityki RLS powinny być granularne: jedna polityka dla `select`, jedna dla `insert` itp.) i dla każdej roli supabase (`anon` i `authenticated`). NIE łącz polityk, nawet jeśli funkcjonalność jest taka sama dla obu ról.
+    - WAŻNE: Zawsze używaj `(select auth.uid())` zamiast `auth.uid()` w politykach RLS. Subquery jest ewaluowane tylko raz, podczas gdy bezpośrednie wywołanie funkcji jest re-ewaluowane dla każdego wiersza, co powoduje znaczny spadek wydajności przy dużych tabelach.
     - Dołącz komentarze wyjaśniające uzasadnienie i zamierzone zachowanie każdej polityki bezpieczeństwa
+- Podczas tworzenia kluczy obcych (foreign keys)
+    - WAŻNE: Zawsze twórz indeks dla każdej kolumny będącej kluczem obcym. PostgreSQL NIE tworzy automatycznie indeksów dla FK (w przeciwieństwie do innych baz danych). Brak indeksu powoduje pełne skanowanie tabeli przy operacjach CASCADE (DELETE/UPDATE) i JOIN.
 
 Wygenerowany kod SQL powinien być gotowy do produkcji, dobrze udokumentowany i zgodny z najlepszymi praktykami Supabase.

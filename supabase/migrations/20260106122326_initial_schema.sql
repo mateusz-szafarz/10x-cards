@@ -163,6 +163,11 @@ comment on table generation_error_logs is 'Stores logs for failed AI flashcard g
 -- Most common query pattern: fetching all flashcards for a specific user
 create index idx_flashcards_user_id on flashcards(user_id);
 
+-- Index for foreign key: flashcards.generation_id -> generation_sessions.id
+-- Required for efficient CASCADE operations and JOIN queries
+-- Without this index, DELETE on generation_sessions would cause full table scan on flashcards
+create index idx_flashcards_generation_id on flashcards(generation_id);
+
 -- Composite index for fetching user's generation history ordered by date
 -- Supports queries like: "Show user's generation sessions, newest first"
 create index idx_generation_sessions_user_id_created_at
@@ -192,14 +197,14 @@ alter table generation_error_logs enable row level security;
 create policy "flashcards_select_authenticated"
     on flashcards for select
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- INSERT: Users can only create flashcards for themselves
 -- WITH CHECK ensures the user_id in the new row matches the authenticated user
 create policy "flashcards_insert_authenticated"
     on flashcards for insert
     to authenticated
-    with check (user_id = auth.uid());
+    with check (user_id = (select auth.uid()));
 
 -- UPDATE: Users can only update their own flashcards
 -- USING clause filters which rows can be updated
@@ -207,14 +212,14 @@ create policy "flashcards_insert_authenticated"
 create policy "flashcards_update_authenticated"
     on flashcards for update
     to authenticated
-    using (user_id = auth.uid())
-    with check (user_id = auth.uid());
+    using (user_id = (select auth.uid()))
+    with check (user_id = (select auth.uid()));
 
 -- DELETE: Users can only delete their own flashcards
 create policy "flashcards_delete_authenticated"
     on flashcards for delete
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- ----------------------------------------------------------------------------
 -- RLS Policies: generation_sessions
@@ -225,27 +230,27 @@ create policy "flashcards_delete_authenticated"
 create policy "generation_sessions_select_authenticated"
     on generation_sessions for select
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- INSERT: Users can only create generation sessions for themselves
 create policy "generation_sessions_insert_authenticated"
     on generation_sessions for insert
     to authenticated
-    with check (user_id = auth.uid());
+    with check (user_id = (select auth.uid()));
 
 -- UPDATE: Users can only update their own generation sessions
 -- Primarily used to set accepted_count after user reviews generated flashcards
 create policy "generation_sessions_update_authenticated"
     on generation_sessions for update
     to authenticated
-    using (user_id = auth.uid())
-    with check (user_id = auth.uid());
+    using (user_id = (select auth.uid()))
+    with check (user_id = (select auth.uid()));
 
 -- DELETE: Users can only delete their own generation sessions
 create policy "generation_sessions_delete_authenticated"
     on generation_sessions for delete
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- ----------------------------------------------------------------------------
 -- RLS Policies: generation_error_logs
@@ -257,21 +262,21 @@ create policy "generation_sessions_delete_authenticated"
 create policy "generation_error_logs_select_authenticated"
     on generation_error_logs for select
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- INSERT: Users can only create error logs for themselves
 -- Typically created by the backend when AI generation fails
 create policy "generation_error_logs_insert_authenticated"
     on generation_error_logs for insert
     to authenticated
-    with check (user_id = auth.uid());
+    with check (user_id = (select auth.uid()));
 
 -- DELETE: Users can only delete their own error logs
 -- Allows users to clean up their error history if desired
 create policy "generation_error_logs_delete_authenticated"
     on generation_error_logs for delete
     to authenticated
-    using (user_id = auth.uid());
+    using (user_id = (select auth.uid()));
 
 -- ----------------------------------------------------------------------------
 -- Triggers

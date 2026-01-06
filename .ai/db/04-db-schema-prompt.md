@@ -32,10 +32,12 @@ Wykonaj następujące kroki, aby utworzyć schemat bazy danych:
    b. Klucze podstawowe i klucze obce
    c. Indeksy poprawiające wydajność zapytań
    d. Wszelkie niezbędne ograniczenia (np. unikalność, not null)
+   e. Indeksy dla wszystkich kolumn będących kluczami obcymi (PostgreSQL nie tworzy ich automatycznie)
 
 5. Zdefiniuj relacje między tabelami, określając kardynalność (jeden-do-jednego, jeden-do-wielu, wiele-do-wielu) i wszelkie tabele łączące wymagane dla relacji wiele-do-wielu.
 
 6. Opracowanie zasad PostgreSQL dla zabezpieczeń na poziomie wiersza (RLS), jeśli dotyczy, w oparciu o wymagania określone w notatkach z sesji lub PRD.
+   - W politykach RLS używaj `(select auth.uid())` zamiast `auth.uid()` dla lepszej wydajności (subquery jest ewaluowane raz, a nie dla każdego wiersza)
 
 7. Upewnij się, że schemat jest zgodny z najlepszymi praktykami projektowania baz danych, w tym normalizacji do odpowiedniego poziomu (zwykle 3NF, chyba że denormalizacja jest uzasadniona ze względu na wydajność).
 
