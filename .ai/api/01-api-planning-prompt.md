@@ -72,7 +72,7 @@ Dla każdego endpointu podaj:
 - Parametry zapytania (jeśli dotyczy)
 - Struktura JSON requestu (jeśli dotyczy)
 - Struktura JSON odpowiedzi (jeśli dotyczy)
-- Kody i komunikaty powodzenia
+- Kody i komunikaty sukcesu
 - Kody i komunikaty błędów
 
 ## 3. Uwierzytelnianie i autoryzacja
@@ -86,8 +86,9 @@ Dla każdego endpointu podaj:
 ```
 
 Upewnij się, że Twój plan jest kompleksowy, dobrze skonstruowany i odnosi się do wszystkich aspektów materiałów
-wejściowych. Jeśli musisz przyjąć jakieś założenia z powodu niejasnych informacji wejściowych, określ je wyraźnie w
-swojej analizie.
+wejściowych. Jeśli jakieś informacje są niejasne/sprzeczne lub gdy jakaś kwestia wymaga doprecyzowania, to dopytaj
+o nią użytkownika przed wygenerowaniem ostatecznego planu API. Możesz wykonywać kolejne iteracje w sekcji myślenia,
+aż będziesz pewien, że wszystko zostało uwzględnione.
 
 Końcowy wynik powinien składać się wyłącznie z planu API w formacie markdown w języku angielskim, który zapiszesz w
 .ai/api/02-api-plan.md Rezultat nie powinien powielać ani powtarzać żadnej pracy wykonanej w bloku myślenia.
