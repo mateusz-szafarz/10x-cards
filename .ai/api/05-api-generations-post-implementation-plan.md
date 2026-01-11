@@ -9,13 +9,38 @@ użytkownik otrzymuje propozycje fiszek do przeglądu i ewentualnej edycji przed
 Endpoint tworzy rekord w tabeli `generation_sessions` przy każdym udanym wywołaniu. W przypadku błędów związanych z
 usługą AI, zapisuje szczegóły do tabeli `generation_error_logs`.
 
-## 2. Szczegóły żądania
+## 2. Uproszczenia na etapie MVP
+
+> ⚠️ **UWAGA**: Poniższe uproszczenia mają na celu szybkie przejście do implementacji UI i testów funkcjonalnych.
+> Zostaną usunięte w kolejnych iteracjach.
+
+### 2.1. Brak autentykacji
+
+- **Zahardcodowany user ID**: `484dc1d3-add5-4701-a9a5-d91b12fb6165`
+- Endpoint nie wymaga tokenu Bearer
+- Nagłówek `Authorization` jest ignorowany
+- Autentykacja zostanie dodana w osobnym etapie
+
+### 2.2. Wyłączony Row Level Security (RLS)
+
+- RLS jest tymczasowo wyłączony na wszystkich tabelach
+- Pozwala to na prostsze testowanie bez konieczności konfiguracji polityk
+- RLS zostanie włączony po implementacji autentykacji
+
+### 2.3. Zamockowany serwis AI (OpenRouter)
+
+- Zamiast rzeczywistego wywołania OpenRouter API, używamy mockowej implementacji
+- Mock zwraca predefiniowane propozycje fiszek
+- Pozwala to na testowanie flow bez kosztów API i zależności od zewnętrznego serwisu
+- Rzeczywista integracja z OpenRouter zostanie dodana w kolejnym etapie
+
+## 3. Szczegóły żądania
 
 - **Metoda HTTP**: POST
 - **Struktura URL**: `/api/generations`
 - **Nagłówki**:
-    - `Authorization: Bearer <access_token>` (wymagany)
     - `Content-Type: application/json` (wymagany)
+    - ~~`Authorization: Bearer <access_token>`~~ (pominięty w MVP)
 
 **Parametry:**
 
@@ -31,7 +56,7 @@ usługą AI, zapisuje szczegóły do tabeli `generation_error_logs`.
 }
 ```
 
-## 3. Wykorzystywane typy
+## 4. Wykorzystywane typy
 
 **Istniejące typy z `src/types.ts`:**
 
@@ -66,12 +91,9 @@ interface ErrorResponseDTO {
 ```typescript
 // src/lib/schemas/generation.schema.ts
 // Zod schema dla walidacji
-
-// src/lib/services/openrouter.types.ts
-// Typy dla komunikacji z OpenRouter API
 ```
 
-## 4. Szczegóły odpowiedzi
+## 5. Szczegóły odpowiedzi
 
 **Sukces (201 Created):**
 
@@ -94,11 +116,11 @@ interface ErrorResponseDTO {
 |--------|-------------------------------------------------------------------------------------------------------------------|
 | 400    | `{ "error": { "code": "VALIDATION_ERROR", "message": "Source text is required" } }`                               |
 | 400    | `{ "error": { "code": "VALIDATION_ERROR", "message": "Source text must be between 1000 and 10000 characters" } }` |
-| 401    | `{ "error": { "code": "UNAUTHORIZED", "message": "Not authenticated" } }`                                         |
-| 500    | `{ "error": { "code": "AI_SERVICE_ERROR", "message": "Failed to generate flashcards" } }`                         |
-| 503    | `{ "error": { "code": "AI_SERVICE_UNAVAILABLE", "message": "AI service is temporarily unavailable" } }`           |
 
-## 5. Przepływ danych
+> **Uwaga MVP**: Błędy 401 (UNAUTHORIZED), 500 (AI_SERVICE_ERROR) i 503 (AI_SERVICE_UNAVAILABLE) zostaną dodane
+> po implementacji autentykacji i rzeczywistej integracji z OpenRouter.
+
+## 6. Przepływ danych (MVP)
 
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌───────────────────┐
@@ -108,67 +130,46 @@ interface ErrorResponseDTO {
                               │                        │
                               ▼                        ▼
                     ┌──────────────────┐     ┌───────────────────┐
-                    │  Zod Validation  │     │ OpenRouterService │
-                    └──────────────────┘     └───────────────────┘
-                                                       │
-                                                       ▼
-                                             ┌───────────────────┐
-                                             │   OpenRouter API  │
-                                             │   (External LLM)  │
+                    │  Zod Validation  │     │ MockAIService     │
+                    └──────────────────┘     │ (zamiast OpenRouter)│
                                              └───────────────────┘
                                                        │
                               ┌─────────────────────────┘
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Supabase Database                         │
-├─────────────────────────────┬───────────────────────────────────┤
-│   generation_sessions       │     generation_error_logs         │
-│   (przy sukcesie)           │     (przy błędzie AI)             │
-└─────────────────────────────┴───────────────────────────────────┘
+│                    Supabase Database (RLS OFF)                   │
+├─────────────────────────────────────────────────────────────────┤
+│   generation_sessions (hardcoded user_id)                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Kroki przepływu:**
+**Kroki przepływu (MVP):**
 
-1. Klient wysyła POST z `source_text` i tokenem autoryzacji
-2. Middleware Astro weryfikuje token i ustawia `context.locals.supabase`
-3. Endpoint waliduje body za pomocą Zod schema
-4. `GenerationService.generateFlashcards()` jest wywoływany
-5. `OpenRouterService.generateFlashcardProposals()` wysyła prompt do AI
-6. Po otrzymaniu odpowiedzi AI, parsuje propozycje fiszek
-7. Sukces: Zapis do `generation_sessions`, zwrot 201 z propozycjami
-8. Błąd AI: Zapis do `generation_error_logs`, zwrot 500/503
+1. Klient wysyła POST z `source_text`
+2. Endpoint waliduje body za pomocą Zod schema
+3. `GenerationService.generateFlashcards()` jest wywoływany z zahardcodowanym `user_id`
+4. `MockAIService.generateFlashcardProposals()` zwraca predefiniowane propozycje
+5. Zapis do `generation_sessions` z zahardcodowanym `user_id`
+6. Zwrot 201 z propozycjami fiszek
 
-## 6. Względy bezpieczeństwa
-
-### Uwierzytelnianie i autoryzacja
-
-- Token Bearer weryfikowany przez middleware Supabase
-- `user_id` pobierany z kontekstu sesji, nie z requestu
-- Dostęp tylko do własnych danych (RLS na poziomie Supabase)
+## 7. Względy bezpieczeństwa
 
 ### Walidacja danych wejściowych
 
 - Zod schema z restrykcyjną walidacją długości tekstu
 - Limit 10000 znaków zapobiega atakom DoS przez duże payloady
-- Trim/sanityzacja tekstu przed wysłaniem do AI
 
-### Ochrona przed Prompt Injection
+### Uproszczenia MVP (do uzupełnienia później)
 
-- Tekst użytkownika osadzany w jasno określonej sekcji prompta
-- Instrukcje systemowe przed tekstem użytkownika
-- Walidacja formatu odpowiedzi AI
+| Aspekt                | Status MVP                      | Docelowa implementacja           |
+|-----------------------|---------------------------------|----------------------------------|
+| Uwierzytelnianie      | ❌ Pominięte (hardcoded user_id) | Token Bearer + Supabase Auth     |
+| Autoryzacja (RLS)     | ❌ Wyłączona                     | RLS na poziomie Supabase         |
+| Ochrona Prompt Inject | ❌ Nie dotyczy (mock)            | Sanityzacja + structured prompts |
+| Bezpieczeństwo kluczy | ❌ Nie dotyczy (mock)            | Klucz OpenRouter w env vars      |
+| Rate limiting         | ❌ Brak                          | Rate limit per user              |
 
-### Bezpieczeństwo kluczy API
-
-- Klucz OpenRouter tylko w zmiennych środowiskowych serwera
-- Nigdy nie eksponowany w odpowiedziach błędów
-
-### Ograniczenia użycia
-
-- Rozważyć rate limiting na poziomie użytkownika (przyszła implementacja)
-- Monitorowanie kosztów generacji per user
-
-## 7. Obsługa błędów
+## 8. Obsługa błędów
 
 ### Błędy walidacji (400)
 
@@ -192,67 +193,24 @@ if (!result.success) {
 }
 ```
 
-### Błędy autoryzacji (401)
+> **Uwaga MVP**: Obsługa błędów autoryzacji (401) i błędów serwisu AI (500, 503) zostanie dodana
+> w kolejnych etapach implementacji.
 
-```typescript
-// W middleware lub na początku endpointu
-const { data: { user } } = await supabase.auth.getUser();
-if (!user) {
-  return new Response(JSON.stringify({
-    error: { code: "UNAUTHORIZED", message: "Not authenticated" }
-  }), { status: 401 });
-}
-```
+## 9. Rozważania dotyczące wydajności
 
-### Błędy serwisu AI (500, 503)
+### MVP
 
-```typescript
-try {
-  const proposals = await openRouterService.generate(sourceText);
-  // ...
-} catch (error) {
-  // Zapis do generation_error_logs
-  await generationService.logError({
-    user_id: user.id,
-    source_text: sourceText,
-    error_code: error.isTimeout ? "AI_SERVICE_UNAVAILABLE" : "AI_SERVICE_ERROR",
-    error_message: error.message,
-    model_used: config.modelId
-  });
+- MockAIService zwraca odpowiedź natychmiastowo
+- Brak opóźnień związanych z zewnętrznym API
+- Idealne dla szybkiego prototypowania UI
 
-  const status = error.isTimeout ? 503 : 500;
-  const code = error.isTimeout ? "AI_SERVICE_UNAVAILABLE" : "AI_SERVICE_ERROR";
-  const message = error.isTimeout
-    ? "AI service is temporarily unavailable"
-    : "Failed to generate flashcards";
-
-  return new Response(JSON.stringify({
-    error: { code, message }
-  }), { status });
-}
-```
-
-## 8. Rozważania dotyczące wydajności
-
-### Czas odpowiedzi
+### Docelowa implementacja (do uwzględnienia później)
 
 - Wywołanie OpenRouter może trwać 5-30 sekund
-- Rozważyć implementację streamingu w przyszłości
+- Rozważyć implementację streamingu
 - Timeout na poziomie 60 sekund dla wywołań AI
 
-### Optymalizacje
-
-- Pojedyncze wywołanie AI zamiast wielu małych
-- Asynchroniczny zapis do bazy (nie blokuje odpowiedzi)
-- Połączenie do bazy z connection pooling (Supabase wbudowane)
-
-### Monitoring
-
-- Logowanie czasu generacji do metryki
-- Śledzenie kosztów per model/user
-- Alerting przy wysokim error rate
-
-## 9. Etapy wdrożenia
+## 10. Etapy wdrożenia
 
 ### Etap 1: Przygotowanie struktury
 
@@ -267,62 +225,74 @@ try {
    });
    ```
 
-2. Utworzenie pliku typów dla OpenRouter `src/lib/services/openrouter.types.ts`
+### Etap 2: Implementacja MockAIService
+
+2. Utworzenie `src/lib/services/ai.service.ts`
    ```typescript
-   // Typy żądania i odpowiedzi OpenRouter
-   // Konfiguracja modelu
+   // Interfejs dla serwisu AI (umożliwia łatwą zamianę mocka na rzeczywisty serwis)
+   export interface AIService {
+     generateFlashcardProposals(sourceText: string): Promise<FlashcardProposalDTO[]>;
+   }
+
+   // Mockowa implementacja
+   export class MockAIService implements AIService {
+     async generateFlashcardProposals(sourceText: string): Promise<FlashcardProposalDTO[]> {
+       // Generuje 3-5 przykładowych fiszek bazując na długości tekstu
+       // Symuluje opóźnienie 500-1000ms dla realizmu
+     }
+   }
    ```
-
-### Etap 2: Implementacja OpenRouterService
-
-3. Utworzenie `src/lib/services/openrouter.service.ts`
-    - Konfiguracja klienta HTTP (fetch)
-    - Metoda `generateFlashcardProposals(sourceText: string): Promise<FlashcardProposalDTO[]>`
-    - Budowanie prompta systemowego i użytkownika
-    - Parsowanie odpowiedzi JSON z AI
-    - Obsługa błędów i timeout
-
-4. Utworzenie prompta dla AI
-    - System prompt definiujący rolę i format odpowiedzi
-    - User prompt z tekstem źródłowym
-    - Instrukcje generowania fiszek w formacie JSON
 
 ### Etap 3: Implementacja GenerationService
 
-5. Utworzenie `src/lib/services/generation.service.ts`
-    - Metoda `generateFlashcards(userId: string, sourceText: string): Promise<GenerationResponseDTO>`
-    - Metoda `logError(errorData: ErrorLogEntry): Promise<void>`
-    - Integracja z OpenRouterService
+3. Utworzenie `src/lib/services/generation.service.ts`
+    - Metoda `generateFlashcards(sourceText: string): Promise<GenerationResponseDTO>`
+    - Zahardcodowany `user_id`: `484dc1d3-add5-4701-a9a5-d91b12fb6165`
+    - Integracja z MockAIService
     - Zapis do `generation_sessions`
-    - Obsługa transakcji i rollback
 
 ### Etap 4: Implementacja endpointu
 
-6. Utworzenie `src/pages/api/generations/index.ts`
+4. Utworzenie `src/pages/api/generations/index.ts`
    ```typescript
    export const prerender = false;
 
-   export const POST: APIRoute = async ({ locals, request }) => {
-     // 1. Sprawdzenie autoryzacji
-     // 2. Parsowanie i walidacja body
-     // 3. Wywołanie GenerationService
-     // 4. Zwrot odpowiedzi
+   // Hardcoded user ID for MVP
+   const HARDCODED_USER_ID = "484dc1d3-add5-4701-a9a5-d91b12fb6165";
+
+   export const POST: APIRoute = async ({ request }) => {
+     // 1. Parsowanie i walidacja body (Zod)
+     // 2. Wywołanie GenerationService z HARDCODED_USER_ID
+     // 3. Zwrot odpowiedzi 201 z propozycjami
    };
    ```
 
-### Etap 5: Konfiguracja środowiska
+### Etap 5: Weryfikacja i testy manualne
 
-7. Dodanie zmiennych środowiskowych
-   ```
-   OPENROUTER_API_KEY=sk-...
-   OPENROUTER_MODEL_ID=openai/gpt-4o-mini
-   ```
+5. Testy manualne endpointu
+    - Test walidacji (za krótki/długi tekst)
+    - Test poprawnego flow z mockiem
+    - Weryfikacja zapisu do bazy danych
 
-8. Aktualizacja typów dla `import.meta.env`
+## 11. Przyszłe etapy (poza zakresem MVP)
 
-### Etap 6: Dokumentacja i finalizacja
+Poniższe elementy zostaną zaimplementowane w kolejnych iteracjach:
 
-9. Aktualizacja dokumentacji API
-10. Code review i refactoring
-11. Deployment na środowisko staging
-12. Testy akceptacyjne
+### Autentykacja i autoryzacja
+
+- Implementacja middleware weryfikującego token Bearer
+- Włączenie RLS na tabelach
+- Pobieranie `user_id` z kontekstu sesji
+
+### Integracja z OpenRouter
+
+- Utworzenie `OpenRouterService` implementującego interfejs `AIService`
+- Konfiguracja kluczy API i zmiennych środowiskowych
+- Obsługa błędów i timeoutów
+- Logowanie błędów do `generation_error_logs`
+
+### Rozszerzona obsługa błędów
+
+- Błędy 401 (UNAUTHORIZED)
+- Błędy 500 (AI_SERVICE_ERROR)
+- Błędy 503 (AI_SERVICE_UNAVAILABLE)
