@@ -21,11 +21,6 @@ Najpierw dokładnie przejrzyj dostarczony plan wdrożenia:
 @.ai/tech-stack.md
 </tech_stack>
 
-<implementation_approach>
-Realizuj maksymalnie 3 kroki planu implementacji, podsumuj krótko co zrobiłeś i opisz plan na 3 kolejne działania -
-zatrzymaj w tym momencie pracę i czekaj na mój feedback.
-</implementation_approach>
-
 Teraz wykonaj następujące kroki, aby zaimplementować punkt końcowy interfejsu API REST:
 
 1. Przeanalizuj plan wdrożenia:
