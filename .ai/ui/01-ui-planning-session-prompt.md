@@ -1,9 +1,10 @@
 Jesteś asystentem AI, którego zadaniem jest pomoc w zaplanowaniu architektury interfejsu użytkownika dla MVP (Minimum
-Viable Product) na podstawie dostarczonych informacji. Twoim celem jest wygenerowanie listy pytań i zaleceń, które
-zostaną wykorzystane w kolejnym promptowaniu do utworzenia szczegółowej architektury UI, map podróży użytkownika i
+Viable Product) na podstawie dostarczonych informacji. Twoim celem jest wygenerowanie listy pytań i swoich rekomendacji,
+które
+zostaną wykorzystane w kolejnym sesji z LLM do utworzenia szczegółowej architektury UI, map podróży użytkownika i
 struktury nawigacji.
 
-Prosimy o uważne zapoznanie się z poniższymi informacjami:
+Proszę o uważne zapoznanie się z poniższymi informacjami:
 
 <product_requirements>
 @.ai/prd.md
@@ -18,6 +19,7 @@ Prosimy o uważne zapoznanie się z poniższymi informacjami:
 </api_plan>
 
 Przeanalizuj dostarczone informacje, koncentrując się na aspektach istotnych dla projektowania interfejsu użytkownika.
+
 Rozważ następujące kwestie:
 
 1. Zidentyfikuj kluczowe widoki i ekrany na podstawie wymagań produktu i dostępnych endpointów API.
@@ -28,39 +30,49 @@ Rozważ następujące kwestie:
 6. Rozważ wszelkie konkretne biblioteki UI lub frameworki, które mogą być korzystne dla projektu.
 7. Przeanalizuj, jak struktura API wpływa na projekt UI i przepływy danych w aplikacji.
 
-Na podstawie analizy wygeneruj listę 10 pytań i zaleceń w formie łączonej (pytanie + zalecenie). Powinny one dotyczyć
+Na podstawie analizy wygeneruj listę 10 pytań i swoich rekomendacji w formie łączonej (pytanie + rekomendacja). Powinny
+one dotyczyć
 wszelkich niejasności, potencjalnych problemów lub obszarów, w których potrzeba więcej informacji, aby stworzyć
 efektywną architekturę UI. Rozważ pytania dotyczące:
 
-1. Hierarchia i organizacja widoków w odniesieniu do struktury API
-2. Przepływy użytkownika i nawigacja wspierane przez dostępne endpointy
-3. Responsywność i adaptacja do różnych urządzeń
-4. Dostępność i inkluzywność
-5. Bezpieczeństwo i autoryzacja na poziomie UI w powiązaniu z mechanizmami API
-6. Spójność designu i doświadczenia użytkownika
-7. Strategia zarządzania stanem aplikacji i synchronizacji z API
-8. Obsługa stanów błędów i wyjątków zwracanych przez API
-9. Strategie buforowania i optymalizacji wydajności w komunikacji z API
+1. Hierarchii i organizacji widoków.
+2. Przepływów użytkownika i nawigacji.
+3. Responsywnośi i adaptacji do różnych urządzeń.
+4. Dostępności i inkluzywności.
+5. Spójności designu i user experience.
+6. Strategii zarządzania stanem aplikacji i synchronizacją z API.
+7. Obsługi stanów błędów i wyjątków zwracanych przez API.
+8. Strategii buforowania i optymalizacji wydajności w komunikacji z API.
 
 Dane wyjściowe powinny mieć następującą strukturę:
 
 <pytania>
-W tym miejscu proszę wymienić pytania w połączeniu ze swoją rekomendację dla każdego z nich. Dla przejrzystości ponumeruj pytania.
+W tym miejscu wymień pytania w połączeniu ze swoją rekomendację dla każdego z nich. Dla przejrzystości ponumeruj pytania.
 
 Na przykład:
 
 1. Czy na pocztówce powinno znajdować się nazwisko autora?
-   Rekomendacja: Tak, na pocztówce powinno znajdować się nazwisko autora.
+   Rekomendacja: Tak, na pocztówce powinno znajdować się nazwisko autora ponieważ...
 2. ...
-   </pytania>
+
+</pytania>
 
 Pamiętaj, że Twoim celem jest dostarczenie kompleksowej listy pytań i zaleceń, które pomogą w stworzeniu solidnej
-architektury UI dla MVP, w pełni zintegrowanej z dostępnymi endpointami API. Skoncentruj się na jasności, trafności i
-dokładności swoich wyników. Nie dołączaj żadnych dodatkowych komentarzy ani wyjaśnień poza określonym formatem
-wyjściowym.
+architektury UI dla MVP. Skoncentruj się na jasności, trafności i dokładności swoich wyników. Nie dołączaj żadnych
+dodatkowych komentarzy ani wyjaśnień poza określonym formatem wyjściowym.
 
 Kontynuuj ten proces, generując nowe pytania i rekomendacje na podstawie przekazanego kontekstu i odpowiedzi
 użytkownika, dopóki użytkownik wyraźnie nie poprosi o podsumowanie.
 
 Pamiętaj, aby skupić się na jasności, trafności i dokładności wyników. Nie dołączaj żadnych dodatkowych komentarzy ani
 wyjaśnień poza określonym formatem wyjściowym.
+
+WAŻNE: Weź pod uwagę, że jestem nowy w świecie UI. Niech ta sesja będzie również edukacyjna, pomagając mi zrozumieć
+kluczowe aspekty planowania architektury UI takie jak:
+
+- Hierarchia widoków
+- Przepływy użytkownika
+- Nawigacja
+- Responsywność
+- Wykorzystanie gotowych komponentów shadcn (o użyciu shadcn więcej dowiesz się stąd:
+  @.claude/on-demand-rules/ui-shadcn-helper.md)
