@@ -1,5 +1,6 @@
 Jesteś wykwalifikowanym architektem frontend, którego zadaniem jest stworzenie kompleksowej architektury interfejsu
-użytkownika w oparciu o dokument wymagań produktu (PRD), plan API i notatki z sesji planowania. Twoim celem jest
+użytkownika na podstawie dokumentu wymagań produktu (PRD), planu API i notatek z sesji planowania architektury UI. Twoim
+celem jest
 zaprojektowanie struktury interfejsu użytkownika, która skutecznie spełnia wymagania produktu, jest zgodna z
 możliwościami API i uwzględnia spostrzeżenia z sesji planowania.
 
@@ -28,9 +29,9 @@ takie obszary jak:
 - accessibility,
 - security.
 
-Wykonaj następujące kroki, aby ukończyć zadanie:
+Wykonaj następujące kroki, aby jak najlepiej przygotować się do wygenerowania kompletnego planu implementacji UI:
 
-1. Dokładnie przeanalizuj PRD, plan API i notatki z sesji.
+1. Dokładnie przeanalizuj PRD, plan API i notatki z sesji planowania.
 2. Wyodrębnij i wypisz kluczowe wymagania z PRD.
 3. Zidentyfikuj i wymień główne punkty końcowe API i ich cele.
 4. Utworz listę wszystkich niezbędnych widoków na podstawie PRD, planu API i notatek z sesji.
@@ -39,16 +40,15 @@ Wykonaj następujące kroki, aby ukończyć zadanie:
 7. Zaprojektuj strukturę nawigacji.
 8. Zaproponuj kluczowe elementy interfejsu użytkownika dla każdego widoku, biorąc pod uwagę UX, dostępność i
    bezpieczeństwo.
-9. Rozważ potencjalne przypadki brzegowe lub stany błędów.
+9. Rozważ potencjalne przypadki brzegowe oraz obsługę stanów wyjątkowych (obsługa błędów i ładowania).
 10. Upewnij się, że architektura interfejsu użytkownika jest zgodna z planem API.
 11. Przeanalizuj i zmapuj wszystkie historyjki użytkownika z PRD do architektury interfejsu użytkownika.
 12. Dokonaj wyraźnego mapowania wymagań na elementy interfejsu użytkownika.
 13. Rozważ potencjalne "punkty bólu" użytkownika oraz sposób, w jaki interfejs użytkownika je rozwiązuje.
 
 Dla każdego głównego kroku pracuj wewnątrz tagów <ui_architecture_planning> w bloku myślenia, aby rozbić proces myślowy
-przed przejściem do następnego kroku. Ta sekcja może być dość długa, ale to dobrze. Wnikliwa analiza jest kluczowa dla
-stworzenia
-solidnej architektury interfejsu użytkownika.
+przed przejściem do następnego kroku. Ta sekcja może być dość długa, ale to dobrze. Wnikliwa analiza jest kluczowa do
+stworzenia solidnej architektury interfejsu użytkownika.
 
 Przedstaw ostateczną architekturę interfejsu użytkownika w następującym formacie Markdown:
 
@@ -63,8 +63,8 @@ Przedstaw ostateczną architekturę interfejsu użytkownika w następującym for
 
 Dla każdego widoku podaj:
 
-- Nazwa widoku
-- Ścieżka widoku
+- Nazwę widoku
+- Ścieżkę widoku
 - Główny cel
 - Kluczowe informacje do wyświetlenia
 - Kluczowe komponenty widoku
@@ -72,7 +72,7 @@ Dla każdego widoku podaj:
 
 ## 3. Mapa podróży użytkownika
 
-[Opisz przepływ między widokami i kluczowymi interakcjami użytkownika]
+[Opisz/zobrazuj przepływ między widokami i kluczowymi interakcjami użytkownika]
 
 ## 4. Układ i struktura nawigacji
 
@@ -83,9 +83,9 @@ Dla każdego widoku podaj:
 [Wymień i krótko opisz kluczowe komponenty, które będą używane w poszczególnych widokach].
 ```
 
-Skup się wyłącznie na architekturze interfejsu użytkownika, podróży użytkownika, nawigacji i kluczowych elementach dla
-każdego widoku. Nie uwzględniaj szczegółów implementacji, konkretnego projektu wizualnego ani przykładów kodu, chyba że
-są one kluczowe dla zrozumienia architektury.
+Skup się przede wszystkim na architekturze interfejsu użytkownika, podróży użytkownika, nawigacji i kluczowych
+elementach dla
+każdego widoku. Postaraj się nie pominąć żadnej z informacji zawartych w podsumowania sesji planowania UI.
 
 Końcowy rezultat powinien składać się wyłącznie z architektury UI w formacie Markdown w języku polskim, którą zapiszesz
 w pliku .ai/ui/05-ui-plan.md. Nie powielaj ani nie powtarzaj żadnej pracy wykonanej w bloku myślenia. W celu czytelnego
