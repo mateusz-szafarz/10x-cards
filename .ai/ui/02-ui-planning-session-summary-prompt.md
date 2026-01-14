@@ -22,7 +22,6 @@ Twoim zadaniem jest:
    b. Kluczowe widoki, ekrany i przepływy użytkownika
    c. Strategię integracji z API i zarządzania stanem
    d. Kwestie dotyczące responsywności, dostępności i bezpieczeństwa
-   e. Wszelkie nierozwiązane kwestie lub obszary wymagające dalszego wyjaśnienia
 4. Sformatować wyniki w następujący sposób:
    <conversation_summary>
    <decisions>
@@ -32,7 +31,7 @@ Twoim zadaniem jest:
    [Lista najistotniejszych zaleceń dopasowanych do rozmowy (ponumerowane)]
    </matched_recommendations>
    <ui_architecture_planning_summary>
-   [Podaj szczegółowe podsumowanie rozmowy, w tym elementy wymienione w kroku 3 w punktach a-e]
+   [Podaj szczegółowe podsumowanie rozmowy, w tym elementy wymienione w kroku 3 w punktach a-d]
    </ui_architecture_planning_summary>
    <unresolved_issues>
    [Wymień wszelkie nierozwiązane kwestie lub obszary wymagające dalszych wyjaśnień (jeśli takie istnieją)]
