@@ -91,4 +91,4 @@ o nią użytkownika przed wygenerowaniem ostatecznego planu API. Możesz wykonyw
 aż będziesz pewien, że wszystko zostało uwzględnione.
 
 Końcowy wynik powinien składać się wyłącznie z planu API w formacie markdown w języku angielskim, który zapiszesz w
-.ai/api/02-api-plan.md Rezultat nie powinien powielać ani powtarzać żadnej pracy wykonanej w bloku myślenia.
+.ai/api/02-high-level-api-plan.md Rezultat nie powinien powielać ani powtarzać żadnej pracy wykonanej w bloku myślenia.

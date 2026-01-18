@@ -15,7 +15,7 @@ Proszę o uważne zapoznanie się z poniższymi informacjami:
 </tech_stack>
 
 <api_plan>
-@.ai/api/02-api-plan.md
+@.ai/api/02-high-level-api-plan.md
 </api_plan>
 
 Przeanalizuj dostarczone informacje, koncentrując się na aspektach istotnych dla projektowania interfejsu użytkownika.

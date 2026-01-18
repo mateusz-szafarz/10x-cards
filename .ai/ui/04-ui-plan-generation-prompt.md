@@ -13,7 +13,7 @@ Dokument wymagań produktu (PRD):
 
 Plan API:
 <api_plan>
-@.ai/api/02-api-plan.md
+@.ai/api/02-high-level-api-plan.md
 </api_plan>
 
 Session Notes:

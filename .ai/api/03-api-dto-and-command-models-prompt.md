@@ -12,7 +12,7 @@ Najpierw dokładnie przejrzyj następujące dane wejściowe:
 
 2. Plan API (zawierający zdefiniowane DTO):
    <api_plan>
-   @.ai/api/02-api-plan.md
+   @.ai/api/02-high-level-api-plan.md
    </api_plan>
 
 Twoim zadaniem jest utworzenie definicji typów TypeScript dla DTO i Command Modeli określonych w planie API, upewniając

@@ -2,17 +2,20 @@
 
 ## 1. Przegląd struktury UI
 
-Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych z wykorzystaniem AI. Architektura UI opiera się na następujących założeniach:
+Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych z wykorzystaniem AI. Architektura UI
+opiera się na następujących założeniach:
 
 ### Stack technologiczny
+
 - **Framework**: Astro 5 (routing, SSR) + React 19 (komponenty interaktywne)
 - **Styling**: Tailwind CSS 4
 - **Komponenty UI**: Shadcn/ui (wariant "new-york", kolor bazowy "neutral")
 - **Powiadomienia**: Sonner (toast notifications)
 
 ### Zasady architektoniczne
+
 - **Prostota ponad elastyczność** - natywne mechanizmy React (useState, useEffect, fetch) zamiast zewnętrznych bibliotek
-- **Desktop-first** responsive design z mobile breakpoints
+- **Mobile-first responsive design** - zgodnie z domyślnym podejściem Tailwind CSS
 - **Per-komponent** obsługa stanów (loading, error, empty) z reużywalnymi komponentami
 - **Feature-based** organizacja kodu
 
@@ -47,17 +50,18 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.1 Strona główna (/)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/` |
-| **Główny cel** | Przekierowanie użytkownika do odpowiedniego widoku |
-| **Kluczowe informacje** | Brak - tylko logika przekierowania |
-| **Kluczowe komponenty** | Brak komponentów UI |
-| **UX** | Automatyczne przekierowanie bez interakcji użytkownika |
-| **Dostępność** | N/A |
-| **Bezpieczeństwo** | Sprawdzenie sesji Supabase przed przekierowaniem |
+| Aspekt                  | Opis                                                   |
+|-------------------------|--------------------------------------------------------|
+| **Ścieżka**             | `/`                                                    |
+| **Główny cel**          | Przekierowanie użytkownika do odpowiedniego widoku     |
+| **Kluczowe informacje** | Brak - tylko logika przekierowania                     |
+| **Kluczowe komponenty** | Brak komponentów UI                                    |
+| **UX**                  | Automatyczne przekierowanie bez interakcji użytkownika |
+| **Dostępność**          | N/A                                                    |
+| **Bezpieczeństwo**      | Sprawdzenie sesji Supabase przed przekierowaniem       |
 
 **Logika przekierowania:**
+
 - Zalogowany użytkownik → `/flashcards`
 - Niezalogowany użytkownik → `/login`
 
@@ -65,21 +69,23 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.2 Strona logowania (/login)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/login` |
-| **Główny cel** | Uwierzytelnienie istniejącego użytkownika |
-| **Kluczowe informacje** | Formularz logowania (email, hasło), link do rejestracji |
-| **Kluczowe komponenty** | `LoginForm` (blok login-01 z Shadcn), `Input`, `Button`, `Alert` |
-| **UX** | Walidacja on-blur + on-submit, wyraźne komunikaty błędów |
-| **Dostępność** | Pełna obsługa klawiatury, aria-labels dla pól, focus management |
-| **Bezpieczeństwo** | Walidacja client-side + server-side, brak ujawniania czy email istnieje |
+| Aspekt                  | Opis                                                                    |
+|-------------------------|-------------------------------------------------------------------------|
+| **Ścieżka**             | `/login`                                                                |
+| **Główny cel**          | Uwierzytelnienie istniejącego użytkownika                               |
+| **Kluczowe informacje** | Formularz logowania (email, hasło), link do rejestracji                 |
+| **Kluczowe komponenty** | `LoginForm` (blok login-01 z Shadcn), `Input`, `Button`, `Alert`        |
+| **UX**                  | Walidacja on-blur + on-submit, wyraźne komunikaty błędów                |
+| **Dostępność**          | Pełna obsługa klawiatury, aria-labels dla pól, focus management         |
+| **Bezpieczeństwo**      | Walidacja client-side + server-side, brak ujawniania czy email istnieje |
 
 **Walidacja formularza:**
+
 - Email: wymagany, format email
 - Hasło: wymagane, minimum 8 znaków
 
 **Wireframe:**
+
 ```
 ┌─────────────────────────────────────────────────┐
 │                                                 │
@@ -107,17 +113,18 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.3 Strona rejestracji (/register)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/register` |
-| **Główny cel** | Utworzenie nowego konta użytkownika |
+| Aspekt                  | Opis                                                    |
+|-------------------------|---------------------------------------------------------|
+| **Ścieżka**             | `/register`                                             |
+| **Główny cel**          | Utworzenie nowego konta użytkownika                     |
 | **Kluczowe informacje** | Formularz rejestracji (email, hasło), link do logowania |
-| **Kluczowe komponenty** | `RegisterForm`, `Input`, `Button`, `Alert` |
-| **UX** | Analogicznie do logowania, potwierdzenie sukcesu |
-| **Dostępność** | Pełna obsługa klawiatury, aria-labels, focus management |
-| **Bezpieczeństwo** | Walidacja siły hasła, sanityzacja email |
+| **Kluczowe komponenty** | `RegisterForm`, `Input`, `Button`, `Alert`              |
+| **UX**                  | Analogicznie do logowania, potwierdzenie sukcesu        |
+| **Dostępność**          | Pełna obsługa klawiatury, aria-labels, focus management |
+| **Bezpieczeństwo**      | Walidacja siły hasła, sanityzacja email                 |
 
 **Walidacja formularza:**
+
 - Email: wymagany, format email
 - Hasło: wymagane, minimum 8 znaków
 
@@ -125,19 +132,20 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.4 Widok generowania fiszek (/generate)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/generate` |
-| **Główny cel** | Generowanie propozycji fiszek przez AI na podstawie tekstu źródłowego |
-| **Kluczowe informacje** | Pole tekstowe, propozycje fiszek, licznik zaakceptowanych |
+| Aspekt                  | Opis                                                                                                |
+|-------------------------|-----------------------------------------------------------------------------------------------------|
+| **Ścieżka**             | `/generate`                                                                                         |
+| **Główny cel**          | Generowanie propozycji fiszek przez AI na podstawie tekstu źródłowego                               |
+| **Kluczowe informacje** | Pole tekstowe, propozycje fiszek, licznik zaakceptowanych                                           |
 | **Kluczowe komponenty** | `GenerationForm`, `ProposalCard`, `ProposalList`, `Textarea`, `Button`, `Card`, `Skeleton`, `Alert` |
-| **UX** | Single-page flow z progressive disclosure, inline editing |
-| **Dostępność** | Aria-live dla dynamicznych aktualizacji, focus management po generowaniu |
-| **Bezpieczeństwo** | Wymaga uwierzytelnienia, walidacja długości tekstu |
+| **UX**                  | Single-page flow z progressive disclosure, inline editing                                           |
+| **Dostępność**          | Aria-live dla dynamicznych aktualizacji, focus management po generowaniu                            |
+| **Bezpieczeństwo**      | Wymaga uwierzytelnienia, walidacja długości tekstu                                                  |
 
 **Wymagana długość tekstu źródłowego:** 1000-10000 znaków
 
 **Wireframe - stan początkowy:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [Logo] [Generowanie] [Moje fiszki] .............. [User ▼] │
@@ -161,6 +169,7 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 ```
 
 **Wireframe - stan z propozycjami:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [Logo] [Generowanie] [Moje fiszki] .............. [User ▼] │
@@ -200,6 +209,7 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 ```
 
 **Stany komponentu:**
+
 - **Pusty**: Tylko textarea i przycisk "Generuj"
 - **Ładowanie**: Skeleton dla propozycji, przycisk "Generuj" disabled z spinnerem
 - **Błąd**: Alert z komunikatem i przyciskiem "Spróbuj ponownie"
@@ -209,17 +219,18 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.5 Widok "Moje fiszki" (/flashcards)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/flashcards` |
-| **Główny cel** | Przeglądanie, wyszukiwanie i zarządzanie zapisanymi fiszkami |
-| **Kluczowe informacje** | Lista fiszek, paginacja, wyszukiwarka, źródło fiszki |
+| Aspekt                  | Opis                                                                                                                                        |
+|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| **Ścieżka**             | `/flashcards`                                                                                                                               |
+| **Główny cel**          | Przeglądanie, wyszukiwanie i zarządzanie zapisanymi fiszkami                                                                                |
+| **Kluczowe informacje** | Lista fiszek, paginacja, wyszukiwarka, źródło fiszki                                                                                        |
 | **Kluczowe komponenty** | `FlashcardList`, `FlashcardCard`, `FlashcardEditDialog`, `FlashcardEmpty`, `Input`, `Pagination`, `Card`, `Dialog`, `AlertDialog`, `Button` |
-| **UX** | Wyszukiwanie z debounce, paginacja, modal dla edycji |
-| **Dostępność** | Aria-labels dla akcji, focus trap w modalach, keyboard navigation |
-| **Bezpieczeństwo** | RLS - użytkownik widzi tylko swoje fiszki |
+| **UX**                  | Wyszukiwanie z debounce, paginacja, modal dla edycji                                                                                        |
+| **Dostępność**          | Aria-labels dla akcji, focus trap w modalach, keyboard navigation                                                                           |
+| **Bezpieczeństwo**      | RLS - użytkownik widzi tylko swoje fiszki                                                                                                   |
 
 **Wireframe - stan z danymi:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [Logo] [Generowanie] [Moje fiszki] .............. [User ▼] │
@@ -250,6 +261,7 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 ```
 
 **Wireframe - stan pusty:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ [Logo] [Generowanie] [Moje fiszki] .............. [User ▼] │
@@ -276,6 +288,7 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 ```
 
 **Modal edycji/tworzenia fiszki:**
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
@@ -308,15 +321,15 @@ Aplikacja 10x-cards to webowa platforma do tworzenia i nauki fiszek edukacyjnych
 
 ### 2.6 Sesja nauki (pominięta w MVP)
 
-| Aspekt | Opis |
-|--------|------|
-| **Ścieżka** | `/learn` (ukryta w nawigacji) |
-| **Główny cel** | Placeholder dla przyszłej funkcjonalności |
-| **Kluczowe informacje** | Komunikat "Wkrótce dostępne" |
-| **Kluczowe komponenty** | Statyczna strona informacyjna |
-| **UX** | Przyjazny komunikat z informacją o planowanej funkcji |
-| **Dostępność** | Podstawowa |
-| **Bezpieczeństwo** | Wymaga uwierzytelnienia (opcjonalnie) |
+| Aspekt                  | Opis                                                  |
+|-------------------------|-------------------------------------------------------|
+| **Ścieżka**             | `/learn` (ukryta w nawigacji)                         |
+| **Główny cel**          | Placeholder dla przyszłej funkcjonalności             |
+| **Kluczowe informacje** | Komunikat "Wkrótce dostępne"                          |
+| **Kluczowe komponenty** | Statyczna strona informacyjna                         |
+| **UX**                  | Przyjazny komunikat z informacją o planowanej funkcji |
+| **Dostępność**          | Podstawowa                                            |
+| **Bezpieczeństwo**      | Wymaga uwierzytelnienia (opcjonalnie)                 |
 
 **Uwaga:** Ten widok nie jest częścią MVP. Link do niego nie będzie widoczny w nawigacji.
 
@@ -443,12 +456,12 @@ Aplikacja wykorzystuje płaską strukturę nawigacji z top navigation bar:
 
 ### 4.2 Elementy nawigacji
 
-| Element | Ścieżka | Widoczność | Opis |
-|---------|---------|------------|------|
-| Logo | `/flashcards` | Zawsze | Kliknięcie wraca do głównego widoku |
-| Generowanie | `/generate` | Zalogowany | Active state: podkreślenie |
-| Moje fiszki | `/flashcards` | Zalogowany | Active state: podkreślenie |
-| User dropdown | - | Zalogowany | Zawiera opcję wylogowania |
+| Element       | Ścieżka       | Widoczność | Opis                                |
+|---------------|---------------|------------|-------------------------------------|
+| Logo          | `/flashcards` | Zawsze     | Kliknięcie wraca do głównego widoku |
+| Generowanie   | `/generate`   | Zalogowany | Active state: podkreślenie          |
+| Moje fiszki   | `/flashcards` | Zalogowany | Active state: podkreślenie          |
+| User dropdown | -             | Zalogowany | Zawiera opcję wylogowania           |
 
 ### 4.3 Mobile Navigation
 
@@ -532,13 +545,16 @@ src/components/
 ### 5.2 Opis kluczowych komponentów
 
 #### Navbar.tsx
+
 Główna nawigacja aplikacji z obsługą responsive design.
 
 **Props:**
+
 - `currentPath: string` - aktualna ścieżka do oznaczenia active state
 - `user: User | null` - dane zalogowanego użytkownika
 
 **Funkcjonalność:**
+
 - Renderowanie linków nawigacyjnych
 - Active state przez podkreślenie
 - Hamburger menu na mobile
@@ -547,37 +563,45 @@ Główna nawigacja aplikacji z obsługą responsive design.
 ---
 
 #### GenerationForm.tsx
+
 Formularz do wprowadzania tekstu źródłowego dla AI.
 
 **Props:**
+
 - `onGenerate: (text: string) => Promise<void>` - callback po kliknięciu "Generuj"
 - `isLoading: boolean` - stan ładowania
 
 **Stan lokalny:**
+
 - `sourceText: string` - tekst wprowadzony przez użytkownika
 - `error: string | null` - błąd walidacji
 
 **Walidacja:**
+
 - Minimum 1000 znaków
 - Maximum 10000 znaków
 
 ---
 
 #### ProposalCard.tsx
+
 Karta pojedynczej propozycji fiszki z inline editing.
 
 **Props:**
+
 - `proposal: FlashcardProposal` - dane propozycji
 - `onAccept: () => void` - akceptacja propozycji
 - `onReject: () => void` - odrzucenie propozycji
 - `onEdit: (field: 'front' | 'back', value: string) => void` - edycja pola
 
 **Stan lokalny:**
+
 - `isEditingFront: boolean` - tryb edycji przodu
 - `isEditingBack: boolean` - tryb edycji tyłu
 - `status: 'pending' | 'accepted' | 'rejected'` - status propozycji
 
 **Funkcjonalność:**
+
 - Wyświetlanie front/back
 - Inline editing po kliknięciu "Edytuj"
 - Przyciski Akceptuj/Odrzuć
@@ -586,14 +610,17 @@ Karta pojedynczej propozycji fiszki z inline editing.
 ---
 
 #### FlashcardCard.tsx
+
 Karta zapisanej fiszki w widoku "Moje fiszki".
 
 **Props:**
+
 - `flashcard: Flashcard` - dane fiszki
 - `onEdit: () => void` - otwórz modal edycji
 - `onDelete: () => void` - otwórz dialog usunięcia
 
 **Wyświetla:**
+
 - Front (truncated jeśli długi)
 - Back (truncated jeśli długi)
 - Źródło (AI/Manual) z ikoną
@@ -603,34 +630,41 @@ Karta zapisanej fiszki w widoku "Moje fiszki".
 ---
 
 #### FlashcardEditDialog.tsx
+
 Modal do edycji lub tworzenia nowej fiszki.
 
 **Props:**
+
 - `flashcard?: Flashcard` - dane do edycji (undefined dla nowej)
 - `isOpen: boolean` - stan otwarcia modalu
 - `onClose: () => void` - zamknięcie modalu
 - `onSave: (data: FlashcardFormData) => Promise<void>` - zapis
 
 **Stan lokalny:**
+
 - `front: string` - przód fiszki
 - `back: string` - tył fiszki
 - `errors: { front?: string; back?: string }` - błędy walidacji
 - `isSubmitting: boolean` - stan zapisu
 
 **Walidacja:**
+
 - Front: 1-500 znaków
 - Back: 1-2000 znaków
 
 ---
 
 #### FlashcardList.tsx
+
 Lista fiszek z wyszukiwaniem i paginacją.
 
 **Props:**
+
 - `initialFlashcards?: Flashcard[]` - opcjonalne dane z SSR
 - `initialPagination?: PaginationData` - opcjonalne dane paginacji
 
 **Stan lokalny:**
+
 - `flashcards: Flashcard[]` - lista fiszek
 - `searchQuery: string` - fraza wyszukiwania
 - `currentPage: number` - aktualna strona
@@ -638,6 +672,7 @@ Lista fiszek z wyszukiwaniem i paginacją.
 - `error: string | null` - błąd
 
 **Funkcjonalność:**
+
 - Wyszukiwanie z debounce (300ms)
 - Paginacja
 - Obsługa empty state
@@ -657,26 +692,26 @@ npx shadcn@latest add navigation-menu card button input textarea \
 
 ### 6.1 Mapowanie widoków na endpointy
 
-| Widok | Endpoint | Metoda | Opis |
-|-------|----------|--------|------|
-| Login | `/api/auth/login` | POST | Logowanie użytkownika |
-| Register | `/api/auth/register` | POST | Rejestracja użytkownika |
-| Navbar | `/api/auth/logout` | POST | Wylogowanie użytkownika |
-| Generate | `/api/generations` | POST | Generowanie propozycji AI |
-| Generate | `/api/generations/:id/accept` | POST | Zapis zaakceptowanych fiszek |
-| Moje fiszki | `/api/flashcards` | GET | Lista fiszek z paginacją |
-| Moje fiszki | `/api/flashcards` | POST | Tworzenie nowej fiszki |
-| Moje fiszki | `/api/flashcards/:id` | PUT | Aktualizacja fiszki |
-| Moje fiszki | `/api/flashcards/:id` | DELETE | Usunięcie fiszki |
+| Widok       | Endpoint                      | Metoda | Opis                         |
+|-------------|-------------------------------|--------|------------------------------|
+| Login       | `/api/auth/login`             | POST   | Logowanie użytkownika        |
+| Register    | `/api/auth/register`          | POST   | Rejestracja użytkownika      |
+| Navbar      | `/api/auth/logout`            | POST   | Wylogowanie użytkownika      |
+| Generate    | `/api/generations`            | POST   | Generowanie propozycji AI    |
+| Generate    | `/api/generations/:id/accept` | POST   | Zapis zaakceptowanych fiszek |
+| Moje fiszki | `/api/flashcards`             | GET    | Lista fiszek z paginacją     |
+| Moje fiszki | `/api/flashcards`             | POST   | Tworzenie nowej fiszki       |
+| Moje fiszki | `/api/flashcards/:id`         | PUT    | Aktualizacja fiszki          |
+| Moje fiszki | `/api/flashcards/:id`         | DELETE | Usunięcie fiszki             |
 
 ### 6.2 Timeouty per endpoint
 
-| Endpoint | Timeout | Uzasadnienie |
-|----------|---------|--------------|
-| `POST /api/generations` | 60s | Generowanie AI może być czasochłonne |
-| `GET /api/flashcards` | 10s | Standardowe zapytanie |
-| `POST/PUT/DELETE /api/flashcards` | 10s | Standardowe operacje CRUD |
-| `POST /api/auth/*` | 10s | Operacje uwierzytelniania |
+| Endpoint                          | Timeout | Uzasadnienie                         |
+|-----------------------------------|---------|--------------------------------------|
+| `POST /api/generations`           | 60s     | Generowanie AI może być czasochłonne |
+| `GET /api/flashcards`             | 10s     | Standardowe zapytanie                |
+| `POST/PUT/DELETE /api/flashcards` | 10s     | Standardowe operacje CRUD            |
+| `POST /api/auth/*`                | 10s     | Operacje uwierzytelniania            |
 
 ### 6.3 Wzorzec fetch z timeout
 
@@ -713,32 +748,40 @@ export const fetchWithTimeout = async (
 
 ### 7.1 Breakpoints (Tailwind)
 
-| Breakpoint | Szerokość | Zastosowanie |
-|------------|-----------|--------------|
-| Default | < 640px | Mobile |
-| `sm:` | ≥ 640px | Mobile landscape / Small tablet |
-| `md:` | ≥ 768px | Tablet |
-| `lg:` | ≥ 1024px | Desktop |
+| Breakpoint | Szerokość | Zastosowanie                    |
+|------------|-----------|---------------------------------|
+| Default    | < 640px   | Mobile                          |
+| `sm:`      | ≥ 640px   | Mobile landscape / Small tablet |
+| `md:`      | ≥ 768px   | Tablet                          |
+| `lg:`      | ≥ 1024px  | Desktop                         |
 
 ### 7.2 Adaptacje per widok
 
 **Nawigacja:**
+
 - Desktop: pełne menu poziome
 - Mobile: hamburger menu
 
 **Lista fiszek (grid):**
+
 ```css
 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
 ```
 
 **Textarea generowania:**
+
 ```css
-w-full /* na wszystkich breakpointach */
+w-full
+
+/* na wszystkich breakpointach */
 ```
 
 **Modal edycji:**
+
 ```css
-w-full max-w-md /* centrowany, max 448px */
+w-full max-w-md
+
+/* 100% szerokości, max 448px (28rem) */
 ```
 
 ---
@@ -757,6 +800,7 @@ w-full max-w-md /* centrowany, max 448px */
 ### 8.2 Implementacja w komponentach Shadcn
 
 Komponenty Shadcn/ui są domyślnie zgodne z WCAG:
+
 - `Dialog` - focus trap, ESC zamyka
 - `AlertDialog` - focus na przycisku akcji
 - `Button` - obsługa keyboard
@@ -796,11 +840,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 ### 9.2 Walidacja
 
-| Warstwa | Odpowiedzialność |
-|---------|------------------|
-| Client-side | Szybki feedback UX, podstawowa walidacja formatu |
-| Server-side (API) | Źródło prawdy, walidacja biznesowa |
-| Database (RLS) | Ostatnia linia obrony, izolacja danych użytkowników |
+| Warstwa           | Odpowiedzialność                                    |
+|-------------------|-----------------------------------------------------|
+| Client-side       | Szybki feedback UX, podstawowa walidacja formatu    |
+| Server-side (API) | Źródło prawdy, walidacja biznesowa                  |
+| Database (RLS)    | Ostatnia linia obrony, izolacja danych użytkowników |
 
 ### 9.3 Supabase Row Level Security
 
@@ -808,8 +852,10 @@ Wszystkie tabele mają włączone RLS. Użytkownik może operować tylko na swoi
 
 ```sql
 -- Przykład polityki dla flashcards
-CREATE POLICY "Users can view own flashcards" ON flashcards
-  FOR SELECT USING (auth.uid() = user_id);
+CREATE
+POLICY "Users can view own flashcards" ON flashcards
+  FOR
+SELECT USING (auth.uid() = user_id);
 ```
 
 ---
@@ -820,23 +866,23 @@ CREATE POLICY "Users can view own flashcards" ON flashcards
 
 Każdy komponent pobierający dane obsługuje trzy stany:
 
-| Stan | Komponent | Opis |
-|------|-----------|------|
-| Loading | `Skeleton` | Placeholder podczas ładowania |
-| Error | `Alert` + retry | Komunikat błędu z możliwością ponowienia |
-| Empty | `Empty` | Przyjazny komunikat gdy brak danych |
+| Stan    | Komponent       | Opis                                     |
+|---------|-----------------|------------------------------------------|
+| Loading | `Skeleton`      | Placeholder podczas ładowania            |
+| Error   | `Alert` + retry | Komunikat błędu z możliwością ponowienia |
+| Empty   | `Empty`         | Przyjazny komunikat gdy brak danych      |
 
 ### 10.2 Komunikaty błędów
 
-| Kod API | Komunikat dla użytkownika |
-|---------|---------------------------|
-| `VALIDATION_ERROR` | Szczegółowy opis błędu walidacji |
-| `UNAUTHORIZED` | "Sesja wygasła. Zaloguj się ponownie." |
-| `NOT_FOUND` | "Nie znaleziono zasobu." |
-| `AI_SERVICE_ERROR` | "Nie udało się wygenerować fiszek. Spróbuj ponownie." |
-| `AI_SERVICE_UNAVAILABLE` | "Usługa AI jest chwilowo niedostępna." |
-| `INTERNAL_ERROR` | "Wystąpił błąd. Spróbuj ponownie później." |
-| Timeout | "Przekroczono czas oczekiwania na odpowiedź." |
+| Kod API                  | Komunikat dla użytkownika                             |
+|--------------------------|-------------------------------------------------------|
+| `VALIDATION_ERROR`       | Szczegółowy opis błędu walidacji                      |
+| `UNAUTHORIZED`           | "Sesja wygasła. Zaloguj się ponownie."                |
+| `NOT_FOUND`              | "Nie znaleziono zasobu."                              |
+| `AI_SERVICE_ERROR`       | "Nie udało się wygenerować fiszek. Spróbuj ponownie." |
+| `AI_SERVICE_UNAVAILABLE` | "Usługa AI jest chwilowo niedostępna."                |
+| `INTERNAL_ERROR`         | "Wystąpił błąd. Spróbuj ponownie później."            |
+| Timeout                  | "Przekroczono czas oczekiwania na odpowiedź."         |
 
 ### 10.3 Toast notifications
 
@@ -855,17 +901,17 @@ toast.info("Fiszka została zaktualizowana")
 
 ## 11. Mapowanie historyjek użytkownika
 
-| User Story | Widok | Komponenty |
-|------------|-------|------------|
-| US-001: Rejestracja | `/register` | `RegisterForm` |
-| US-002: Logowanie | `/login` | `LoginForm` |
-| US-003: Generowanie AI | `/generate` | `GenerationForm`, `ProposalList` |
-| US-004: Przegląd propozycji | `/generate` | `ProposalCard`, `ProposalList` |
-| US-005: Edycja fiszek | `/flashcards` | `FlashcardEditDialog` |
-| US-006: Usuwanie fiszek | `/flashcards` | `FlashcardDeleteDialog` |
-| US-007: Ręczne tworzenie | `/flashcards` | `FlashcardEditDialog` |
-| US-008: Sesja nauki | Pominięte w MVP | - |
-| US-009: Bezpieczeństwo | Middleware + RLS | - |
+| User Story                  | Widok            | Komponenty                       |
+|-----------------------------|------------------|----------------------------------|
+| US-001: Rejestracja         | `/register`      | `RegisterForm`                   |
+| US-002: Logowanie           | `/login`         | `LoginForm`                      |
+| US-003: Generowanie AI      | `/generate`      | `GenerationForm`, `ProposalList` |
+| US-004: Przegląd propozycji | `/generate`      | `ProposalCard`, `ProposalList`   |
+| US-005: Edycja fiszek       | `/flashcards`    | `FlashcardEditDialog`            |
+| US-006: Usuwanie fiszek     | `/flashcards`    | `FlashcardDeleteDialog`          |
+| US-007: Ręczne tworzenie    | `/flashcards`    | `FlashcardEditDialog`            |
+| US-008: Sesja nauki         | Pominięte w MVP  | -                                |
+| US-009: Bezpieczeństwo      | Middleware + RLS | -                                |
 
 ---
 
@@ -873,6 +919,7 @@ toast.info("Fiszka została zaktualizowana")
 
 1. **Blok login-01 z Shadcn**: Wymaga weryfikacji i ewentualnej customizacji do polskich tekstów.
 
-2. **Skeleton loading dla listy fiszek**: Nie ustalono dokładnie ile "placeholder" kart wyświetlać podczas ładowania (sugestia: 6 kart - 2x3 grid).
+2. **Skeleton loading dla listy fiszek**: Nie ustalono dokładnie ile "placeholder" kart wyświetlać podczas ładowania (
+   sugestia: 6 kart - 2x3 grid).
 
 3. **Obsługa bardzo długich tekstów w fiszkach**: Czy truncate na liście z tooltip, czy rozwijanie?
