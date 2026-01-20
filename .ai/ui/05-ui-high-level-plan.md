@@ -69,15 +69,15 @@ opiera się na następujących założeniach:
 
 ### 2.2 Strona logowania (/login)
 
-| Aspekt                  | Opis                                                                    |
-|-------------------------|-------------------------------------------------------------------------|
-| **Ścieżka**             | `/login`                                                                |
-| **Główny cel**          | Uwierzytelnienie istniejącego użytkownika                               |
-| **Kluczowe informacje** | Formularz logowania (email, hasło), link do rejestracji                 |
-| **Kluczowe komponenty** | `LoginForm` (blok login-01 z Shadcn), `Input`, `Button`, `Alert`        |
-| **UX**                  | Walidacja on-blur + on-submit, wyraźne komunikaty błędów                |
-| **Dostępność**          | Pełna obsługa klawiatury, aria-labels dla pól, focus management         |
-| **Bezpieczeństwo**      | Walidacja client-side + server-side, brak ujawniania czy email istnieje |
+| Aspekt                  | Opis                                                                                   |
+|-------------------------|----------------------------------------------------------------------------------------|
+| **Ścieżka**             | `/login`                                                                               |
+| **Główny cel**          | Uwierzytelnienie istniejącego użytkownika                                              |
+| **Kluczowe informacje** | Formularz logowania (email, hasło), link do rejestracji                                |
+| **Kluczowe komponenty** | `LoginForm` (inspirowany blokiem login-01 z shadcn/blocks), `Input`, `Button`, `Alert` |
+| **UX**                  | Walidacja on-blur + on-submit, wyraźne komunikaty błędów                               |
+| **Dostępność**          | Pełna obsługa klawiatury, aria-labels dla pól, focus management                        |
+| **Bezpieczeństwo**      | Walidacja client-side + server-side, brak ujawniania czy email istnieje                |
 
 **Walidacja formularza:**
 
@@ -389,17 +389,20 @@ flowchart TD
 │  1   │ Wejście na /generate       │ Wyświetla formularz z textarea           │
 │  2   │ Wklejenie tekstu           │ Aktualizacja licznika znaków             │
 │  3   │ Klik "Generuj fiszki"      │ POST /api/generations, skeleton loading  │
-│  4   │ -                          │ Wyświetla propozycje fiszek              │
+│  4   │ -                          │ Response: { id, proposals: [...] }       │
 │  5   │ Przegląd propozycji        │ -                                        │
 │  6   │ Klik "Edytuj" na front     │ Inline input z aktualną wartością        │
 │  7   │ Zmiana tekstu              │ Aktualizacja stanu lokalnego             │
 │  8   │ Klik "Akceptuj"            │ Zmiana stanu propozycji na accepted      │
 │  9   │ Klik "Odrzuć" (inna)       │ Ukrycie karty propozycji                 │
-│ 10   │ Klik "Zapisz (N)"          │ POST /api/generations/:id/accept         │
+│ 10   │ Klik "Zapisz (N)"          │ POST /api/generations/:id/accept (id z 4)│
 │ 11   │ -                          │ Toast "Zapisano N fiszek"                │
 │ 12   │ -                          │ Redirect na /flashcards                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Uwaga:** `id` w kroku 10 pochodzi z response w kroku 4. Generation ID jest potrzebne, aby backend mógł powiązać
+zaakceptowane propozycje z oryginalnym source text (dla statystyk i audytu).
 
 #### Flow 3: Zarządzanie istniejącymi fiszkami
 
@@ -408,7 +411,7 @@ flowchart TD
 │ KROK │ AKCJA UŻYTKOWNIKA          │ ODPOWIEDŹ SYSTEMU                        │
 ├──────┼────────────────────────────┼──────────────────────────────────────────┤
 │  1   │ Wejście na /flashcards     │ GET /api/flashcards, wyświetla listę     │
-│  2   │ Wpisanie w wyszukiwarkę    │ Debounce 300ms, filtrowanie listy        │
+│  2   │ Wpisanie w wyszukiwarkę    │ Debounce 300ms, GET ?search=..., page=1  │
 │  3   │ Klik "Edytuj" na fiszce    │ Otwiera Dialog z formularzem             │
 │  4   │ Edycja front/back          │ Walidacja lokalna                        │
 │  5   │ Klik "Zapisz"              │ PUT /api/flashcards/:id                  │
@@ -465,7 +468,8 @@ Aplikacja wykorzystuje płaską strukturę nawigacji z top navigation bar:
 
 ### 4.3 Mobile Navigation
 
-Na urządzeniach mobilnych (breakpoint `sm:`) nawigacja jest zwijana do hamburger menu:
+Na urządzeniach mobilnych (< 640px, poniżej breakpointu `sm:`) nawigacja jest zwijana do hamburger menu.
+Od breakpointu `sm:` (≥ 640px) wyświetlane jest pełne menu poziome:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -531,10 +535,9 @@ src/components/
 │   └── FlashcardEmpty.tsx      # Empty state
 │
 ├── generation/
-│   ├── GenerationForm.tsx      # Textarea + przycisk generuj
+│   ├── GenerationForm.tsx      # Textarea + przycisk generuj (licznik znaków inline)
 │   ├── ProposalCard.tsx        # Karta propozycji (inline edit)
-│   ├── ProposalList.tsx        # Lista propozycji + zapisz
-│   └── CharacterCounter.tsx    # Licznik znaków
+│   └── ProposalList.tsx        # Lista propozycji + zapisz
 │
 └── common/
     ├── LoadingSpinner.tsx      # Reużywalny spinner
@@ -585,27 +588,31 @@ Formularz do wprowadzania tekstu źródłowego dla AI.
 
 #### ProposalCard.tsx
 
-Karta pojedynczej propozycji fiszki z inline editing.
+Karta pojedynczej propozycji fiszki z inline editing. **Controlled component** - cały stan zarządzany przez parent (
+ProposalList).
 
 **Props:**
 
-- `proposal: FlashcardProposal` - dane propozycji
+- `proposal: FlashcardProposal` - dane propozycji (w tym status z parent)
 - `onAccept: () => void` - akceptacja propozycji
 - `onReject: () => void` - odrzucenie propozycji
-- `onEdit: (field: 'front' | 'back', value: string) => void` - edycja pola
+- `onEditFront: (value: string) => void` - edycja przodu
+- `onEditBack: (value: string) => void` - edycja tyłu
 
-**Stan lokalny:**
+**Stan lokalny (tylko UI):**
 
-- `isEditingFront: boolean` - tryb edycji przodu
-- `isEditingBack: boolean` - tryb edycji tyłu
-- `status: 'pending' | 'accepted' | 'rejected'` - status propozycji
+- `isEditingFront: boolean` - czy pokazać input dla przodu
+- `isEditingBack: boolean` - czy pokazać input dla tyłu
+
+**Uwaga:** Status (`pending`/`accepted`/`rejected`) **nie jest** w stanie lokalnym - jest częścią `proposal` z parent.
+Dzięki temu ProposalList może łatwo liczyć zaakceptowane i resetować stan przy "Generuj ponownie".
 
 **Funkcjonalność:**
 
 - Wyświetlanie front/back
 - Inline editing po kliknięciu "Edytuj"
 - Przyciski Akceptuj/Odrzuć
-- Wizualne oznaczenie statusu
+- Wizualne oznaczenie statusu (na podstawie `proposal.status`)
 
 ---
 
@@ -663,6 +670,27 @@ Lista fiszek z wyszukiwaniem i paginacją.
 - `initialFlashcards?: Flashcard[]` - opcjonalne dane z SSR
 - `initialPagination?: PaginationData` - opcjonalne dane paginacji
 
+**SSR Data Passing (Astro → React):**
+
+```astro
+---
+// src/pages/flashcards.astro
+const flashcards = await getFlashcards(Astro.locals.user.id)
+const pagination = await getPagination()
+---
+
+<AppLayout>
+  <FlashcardList
+    client:load
+    initialFlashcards={flashcards}
+    initialPagination={pagination}
+  />
+</AppLayout>
+```
+
+**Uwaga:** `client:load` directive sprawia, że komponent hydruje się natychmiast. Dane z SSR są przekazywane jako props
+i muszą być serializowalne (plain objects, no functions).
+
 **Stan lokalny:**
 
 - `flashcards: Flashcard[]` - lista fiszek
@@ -673,8 +701,8 @@ Lista fiszek z wyszukiwaniem i paginacją.
 
 **Funkcjonalność:**
 
-- Wyszukiwanie z debounce (300ms)
-- Paginacja
+- Wyszukiwanie z debounce (300ms) - **server-side** (GET /api/flashcards?search=...)
+- Paginacja - **server-side** (GET /api/flashcards?page=...)
 - Obsługa empty state
 
 ---
@@ -734,13 +762,86 @@ export const fetchWithTimeout = async (
     return response
   } catch (error) {
     clearTimeout(id)
-    if (error instanceof Error && error.name === 'AbortError') {
+    // AbortError jest typu DOMException, nie Error
+    if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error('Przekroczono czas oczekiwania na odpowiedź')
     }
     throw error
   }
 }
 ```
+
+### 6.4 Strategia odświeżania danych (FlashcardList)
+
+Różne operacje CRUD mają różne strategie odświeżania, zoptymalizowane pod kątem UX i spójności z paginacją/filtrowaniem.
+
+| Operacja   | Strategia            | Zachowanie kontekstu (page/search)         |
+|------------|----------------------|--------------------------------------------|
+| **DELETE** | Optimistic + refetch | Zachowuje page i search, adjust pagination |
+| **CREATE** | Refetch + reset      | Reset do page=1, czyszczenie search        |
+| **UPDATE** | Refetch z kontekstem | Zachowuje page i search                    |
+| **SEARCH** | Debounced refetch    | Reset do page=1                            |
+
+**Szczegóły implementacji:**
+
+```typescript
+// DELETE - optimistic update, następnie refetch dla adjust paginacji
+const handleDelete = async (id: string) => {
+  const backup = flashcards
+  setFlashcards(prev => prev.filter(f => f.id !== id)) // Instant UI
+
+  try {
+    await fetch(`/api/flashcards/${id}`, { method: 'DELETE' })
+  } catch {
+    setFlashcards(backup) // Rollback TYLKO gdy DELETE się nie powiódł
+    toast.error('Nie udało się usunąć')
+    return
+  }
+
+  // Refetch POZA try-catch - błąd tutaj NIE powinien przywracać usuniętej fiszki
+  toast.success('Usunięto fiszkę')
+  await refetchCurrentView().catch(() => {
+    // Błąd refetch nie jest krytyczny - dane są stale, ale paginacja może być off
+    // Użytkownik może odświeżyć stronę
+  })
+}
+
+// CREATE - refetch + reset do strony 1 (użytkownik zobaczy nową fiszkę)
+const handleCreate = async (data: FlashcardFormData) => {
+  await fetch('/api/flashcards', { method: 'POST', body: JSON.stringify(data) })
+  toast.success('Utworzono fiszkę')
+  setCurrentPage(1)
+  setSearchQuery('')
+  await refetchCurrentView()
+}
+
+// UPDATE - refetch z zachowaniem kontekstu (fiszka może zniknąć z widoku)
+const handleUpdate = async (id: string, data: FlashcardFormData) => {
+  await fetch(`/api/flashcards/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+  await refetchCurrentView()
+
+  // Sprawdź czy fiszka nadal jest w widoku (może nie pasować do filtra po edycji)
+  const stillVisible = flashcards.some(f => f.id === id)
+  if (stillVisible) {
+    toast.success('Zaktualizowano fiszkę')
+  } else {
+    toast.info('Zaktualizowano fiszkę (poza obecnym widokiem)')
+  }
+}
+
+// SEARCH - debounce + reset paginacji
+const handleSearch = debounce(async (query: string) => {
+  setSearchQuery(query)
+  setCurrentPage(1) // Reset przy nowym search
+  await refetchCurrentView()
+}, 300)
+```
+
+**Dlaczego tak:**
+
+- **DELETE optimistic**: Instant feedback, refetch naprawia paginację
+- **CREATE reset**: Użytkownik chce zobaczyć nową fiszkę (na stronie 1)
+- **UPDATE refetch**: Fiszka może nie pasować do filtra po edycji (oczekiwane)
 
 ---
 
@@ -764,24 +865,29 @@ export const fetchWithTimeout = async (
 
 **Lista fiszek (grid):**
 
-```css
-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+```html
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+  <!-- 1 kolumna na mobile, 2 na tablet, 3 na desktop -->
+</div>
 ```
 
 **Textarea generowania:**
 
-```css
-w-full
-
-/* na wszystkich breakpointach */
+```html
+<textarea class="w-full">
+  <!-- Pełna szerokość na wszystkich breakpointach -->
+</textarea>
 ```
 
 **Modal edycji:**
 
-```css
-w-full max-w-md
+```html
 
-/* 100% szerokości, max 448px (28rem) */
+<div class="w-full max-w-md">
+  <!-- 100% szerokości, max 448px (28rem) -->
+  <!-- Centrowanie pochodzi z komponentu Dialog (flex + items-center) -->
+</div>
 ```
 
 ---
@@ -823,6 +929,13 @@ const authPaths = ['/login', '/register']
 export const onRequest = defineMiddleware(async (context, next) => {
   const session = await getSession(context)
   const path = context.url.pathname
+
+  // Strona główna - przekierowanie na podstawie sesji
+  if (path === '/') {
+    return session
+      ? context.redirect('/flashcards')
+      : context.redirect('/login')
+  }
 
   // Chronione ścieżki wymagają sesji
   if (protectedPaths.some(p => path.startsWith(p)) && !session) {
@@ -919,7 +1032,7 @@ toast.info("Fiszka została zaktualizowana")
 
 1. **Blok login-01 z Shadcn**: Wymaga weryfikacji i ewentualnej customizacji do polskich tekstów.
 
-2. **Skeleton loading dla listy fiszek**: Nie ustalono dokładnie ile "placeholder" kart wyświetlać podczas ładowania (
-   sugestia: 6 kart - 2x3 grid).
+2. **Skeleton loading dla listy fiszek**: Nie ustalono dokładnie ile "placeholder" kart wyświetlać podczas ładowania
+   (sugestia: 6 kart - 2x3 grid).
 
 3. **Obsługa bardzo długich tekstów w fiszkach**: Czy truncate na liście z tooltip, czy rozwijanie?
