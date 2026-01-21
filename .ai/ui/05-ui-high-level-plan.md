@@ -128,6 +128,14 @@ opiera się na następujących założeniach:
 - Email: wymagany, format email
 - Hasło: wymagane, minimum 8 znaków
 
+**Automatyczne logowanie po rejestracji (MVP):**
+
+- `supabase.auth.signUp()` **automatycznie tworzy sesję** podczas rejestracji
+- Session tokens są ustawiane jako **httpOnly cookies** przez Supabase Auth
+- Po pomyślnej rejestracji użytkownik jest **automatycznie zalogowany**
+- Aplikacja przekierowuje bezpośrednio na `/flashcards` - **nie ma potrzeby osobnego logowania**
+- Email confirmation jest **WYŁĄCZONE dla MVP** - użytkownik ma natychmiastowy dostęp do aplikacji
+
 ---
 
 ### 2.4 Widok generowania fiszek (/generate)
@@ -346,7 +354,7 @@ flowchart TD
         A -->|Zalogowany| C["/flashcards"]
         B -->|Sukces logowania| C
         B -->|Brak konta| D["/register"]
-        D -->|Sukces rejestracji| C
+        D -->|" Sukces rejestracji<br/>(auto-login via cookies) "| C
     end
 
     subgraph Main["Główne przepływy"]
@@ -362,23 +370,36 @@ flowchart TD
     end
 ```
 
+**Wyjaśnienie przepływu rejestracji:**
+
+Po pomyślnej rejestracji (`POST /api/auth/register`) użytkownik jest **automatycznie zalogowany** dzięki sesji
+utworzonej przez `supabase.auth.signUp()`. Session tokens są ustawiane jako httpOnly cookies, więc przeglądarka
+automatycznie wysyła je w kolejnych requestach. Middleware rozpoznaje sesję i przepuszcza użytkownika do
+`/flashcards` bez konieczności osobnego logowania.
+
 ### 3.2 Szczegółowe przepływy użytkownika
 
 #### Flow 1: Rejestracja i pierwsze użycie
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ KROK │ AKCJA UŻYTKOWNIKA          │ ODPOWIEDŹ SYSTEMU                        │
-├──────┼────────────────────────────┼──────────────────────────────────────────┤
-│  1   │ Wejście na /               │ Przekierowanie na /login                 │
-│  2   │ Klik "Zarejestruj się"     │ Przejście na /register                   │
-│  3   │ Wypełnienie formularza     │ Walidacja on-blur                        │
-│  4   │ Klik "Zarejestruj"         │ POST /api/auth/register                  │
-│  5   │ -                          │ Sukces: auto-login + redirect /flashcards│
-│  6   │ Widzi empty state          │ Wyświetla CTA "Generuj fiszki"           │
-│  7   │ Klik "Generuj fiszki"      │ Przejście na /generate                   │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ KROK │ AKCJA UŻYTKOWNIKA          │ ODPOWIEDŹ SYSTEMU                                  │
+├──────┼────────────────────────────┼────────────────────────────────────────────────────┤
+│  1   │ Wejście na /               │ Middleware: brak sesji → redirect /login           │
+│  2   │ Klik "Zarejestruj się"     │ Przejście na /register                             │
+│  3   │ Wypełnienie formularza     │ Walidacja on-blur                                  │
+│  4   │ Klik "Zarejestruj"         │ POST /api/auth/register                            │
+│  5   │ -                          │ Supabase.signUp() tworzy user + sesję              │
+│  6   │ -                          │ Cookies ustawione automatycznie (httpOnly)         │
+│  7   │ -                          │ Response 201: { user: {...} }                      │
+│  8   │ -                          │ Client-side redirect → /flashcards                 │
+│  9   │ Widzi empty state          │ Middleware: sesja OK, wyświetla CTA "Generuj"      │
+│ 10   │ Klik "Generuj fiszki"      │ Przejście na /generate                             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Uwaga:** Użytkownik NIE musi logować się po rejestracji - sesja jest automatycznie utworzona i aktywna dzięki
+cookies ustawionym przez Supabase Auth w kroku 6.
 
 #### Flow 2: Generowanie fiszek przez AI
 
@@ -731,6 +752,44 @@ npx shadcn@latest add navigation-menu card button input textarea \
 | Moje fiszki | `/api/flashcards`             | POST   | Tworzenie nowej fiszki       |
 | Moje fiszki | `/api/flashcards/:id`         | PUT    | Aktualizacja fiszki          |
 | Moje fiszki | `/api/flashcards/:id`         | DELETE | Usunięcie fiszki             |
+
+### 6.1.1 Szczegółowy flow rejestracji (cookie-based auth)
+
+```typescript
+// RegisterForm.tsx - handleSubmit
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault()
+
+  // 1. Wywołanie API rejestracji
+  const response = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    credentials: 'include', // WAŻNE: pozwala na ustawienie cookies
+  })
+
+  if (!response.ok) {
+    // Obsługa błędów walidacji
+    return
+  }
+
+  // 2. Response zawiera tylko { user: {...} }
+  // Session tokens są już w httpOnly cookies (ustawione przez Supabase Auth)
+  const data = await response.json()
+
+  // 3. Redirect do /flashcards
+  // Middleware automatycznie rozpozna sesję z cookies
+  window.location.href = '/flashcards'
+}
+```
+
+**Kluczowe punkty:**
+
+- **Credentials: 'include'**: Niezbędne aby przeglądarka zaakceptowała httpOnly cookies z cross-origin responses
+  (choć w Astro SSR będzie same-origin)
+- **Brak localStorage/sessionStorage**: Tokeny są w httpOnly cookies - niedostępne dla JavaScript
+- **Automatyczna sesja**: `window.location.href` wymusza full page reload, middleware czyta cookies i przepuszcza do
+  `/flashcards`
 
 ### 6.2 Timeouty per endpoint
 
