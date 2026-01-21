@@ -68,14 +68,15 @@ Authenticates a user and creates a session.
   "user": {
     "id": "uuid",
     "email": "user@example.com"
-  },
-  "session": {
-    "access_token": "jwt_token",
-    "refresh_token": "refresh_token",
-    "expires_at": 1234567890
   }
 }
 ```
+
+**Authentication Mechanism:**
+- Session tokens (access_token and refresh_token) are **automatically set as httpOnly cookies** by Supabase Auth
+- Cookies are named `sb-<project-ref>-auth-token` and contain both access and refresh tokens
+- Cookie options: `secure: true`, `httpOnly: true`, `sameSite: 'lax'`
+- Client does **not** receive tokens in the response body for security reasons
 
 **Error Responses:**
 
@@ -91,10 +92,9 @@ Authenticates a user and creates a session.
 
 Terminates the current user session.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies (no Authorization header needed)
+- Middleware extracts user context from httpOnly cookies before reaching the endpoint
 
 **Response (200 OK):**
 ```json
@@ -102,6 +102,10 @@ Authorization: Bearer <access_token>
   "message": "Logged out successfully"
 }
 ```
+
+**Session Cleanup:**
+- Supabase Auth automatically clears session cookies
+- Both access and refresh tokens are invalidated
 
 **Error Responses:**
 
@@ -116,10 +120,9 @@ Authorization: Bearer <access_token>
 
 Deletes the user account and all associated data (GDPR compliance).
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies (no Authorization header needed)
+- Middleware extracts user context from httpOnly cookies before reaching the endpoint
 
 **Response (200 OK):**
 ```json
@@ -127,6 +130,13 @@ Authorization: Bearer <access_token>
   "message": "Account deleted successfully"
 }
 ```
+
+**Data Deletion:**
+- Deletes user from `auth.users` table
+- Database CASCADE constraints automatically delete all associated data:
+  - All flashcards (`flashcards.user_id` → CASCADE DELETE)
+  - All generation sessions (`generation_sessions.user_id` → CASCADE DELETE)
+  - All generation error logs (`generation_error_logs.user_id` → CASCADE DELETE)
 
 **Error Responses:**
 
@@ -147,10 +157,9 @@ All flashcard endpoints require authentication.
 
 Retrieves a paginated list of user's flashcards.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Only returns flashcards belonging to the authenticated user (enforced by RLS)
 
 **Query Parameters:**
 
@@ -199,10 +208,9 @@ Authorization: Bearer <access_token>
 
 Retrieves a single flashcard by ID.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Can only retrieve flashcards belonging to the authenticated user (enforced by RLS)
 
 **Path Parameters:**
 
@@ -238,10 +246,9 @@ Authorization: Bearer <access_token>
 
 Creates a new flashcard manually.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Flashcard is automatically associated with the authenticated user
 
 **Request Body:**
 ```json
@@ -285,10 +292,9 @@ Authorization: Bearer <access_token>
 
 Updates an existing flashcard.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Can only update flashcards belonging to the authenticated user (enforced by RLS)
 
 **Path Parameters:**
 
@@ -337,10 +343,9 @@ Authorization: Bearer <access_token>
 
 Deletes a flashcard permanently.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Can only delete flashcards belonging to the authenticated user (enforced by RLS)
 
 **Path Parameters:**
 
@@ -371,10 +376,9 @@ Endpoints for AI-powered flashcard generation.
 
 Initiates an AI generation session. Sends source text to LLM and returns flashcard proposals.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Generation session is automatically associated with the authenticated user
 
 **Request Body:**
 ```json
@@ -425,10 +429,9 @@ Authorization: Bearer <access_token>
 
 Accepts selected flashcard proposals and saves them to the database.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Can only finalize generation sessions belonging to the authenticated user (enforced by RLS)
 
 **Path Parameters:**
 
@@ -508,10 +511,9 @@ Authorization: Bearer <access_token>
 
 Retrieves the user's generation history.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Only returns generation sessions belonging to the authenticated user (enforced by RLS)
 
 **Query Parameters:**
 
@@ -556,10 +558,9 @@ Authorization: Bearer <access_token>
 
 Retrieves a single generation session with full details.
 
-**Request Headers:**
-```
-Authorization: Bearer <access_token>
-```
+**Authentication:**
+- User is automatically identified from session cookies
+- Can only retrieve generation sessions belonging to the authenticated user (enforced by RLS)
 
 **Path Parameters:**
 
@@ -602,46 +603,153 @@ Authorization: Bearer <access_token>
 
 ### 3.1 Authentication Mechanism
 
-The API uses **Supabase Auth** with JWT (JSON Web Tokens) for authentication.
+The API uses **Supabase Auth** with **cookie-based session management** for server-side rendered (SSR) applications.
 
-**Implementation Details:**
+**Implementation Pattern: Supabase SSR (@supabase/ssr)**
 
-1. **Token Acquisition:**
-   - Users obtain tokens via `/api/auth/login` endpoint
-   - Tokens are returned as `access_token` (short-lived) and `refresh_token` (long-lived)
+This approach is optimized for Astro (or Next.js, SvelteKit, etc.) where authentication happens on the server:
 
-2. **Token Usage:**
-   - Include the access token in the `Authorization` header: `Bearer <access_token>`
-   - Tokens are validated on each API request
+1. **Client Setup:**
+   ```typescript
+   // src/db/supabase.client.ts
+   import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 
-3. **Token Refresh:**
-   - Handled client-side using Supabase Auth SDK
-   - When access token expires, SDK automatically uses refresh token
+   const createSupabaseInstance = (apiKey: string, context: SupabaseContext) => {
+     return createServerClient(SUPABASE_URL, apiKey, {
+       cookieOptions: {
+         path: '/',
+         secure: true,      // HTTPS only
+         httpOnly: true,    // JavaScript cannot access
+         sameSite: 'lax',   // CSRF protection
+       },
+       cookies: {
+         getAll() {
+           return parseCookieHeader(context.headers.get('Cookie') ?? '');
+         },
+         setAll(cookiesToSet) {
+           cookiesToSet.forEach(({ name, value, options }) =>
+             context.cookies.set(name, value, options)
+           );
+         },
+       },
+     });
+   };
+   ```
 
-4. **Session Management:**
-   - Sessions are managed by Supabase Auth
-   - Session cookies are set for browser-based authentication
+2. **Session Flow:**
+   - **Login:** User calls `/api/auth/login` with email/password
+   - **Cookie Creation:** Supabase Auth automatically sets httpOnly cookies:
+     - Cookie name: `sb-<project-ref>-auth-token`
+     - Contains: Both access_token and refresh_token (encrypted)
+   - **Subsequent Requests:** Browser automatically sends cookies with every request
+   - **Middleware Extraction:** Server reads cookies and extracts user context using `supabase.auth.getUser()`
+
+3. **Middleware Implementation:**
+   ```typescript
+   // src/middleware/index.ts
+   const supabase = createSupabaseServerInstance({
+     cookies,
+     headers: request.headers,
+   });
+
+   const { data: { user } } = await supabase.auth.getUser();
+
+   if (user) {
+     locals.user = {
+       email: user.email ?? null,
+       id: user.id,
+     };
+   }
+   ```
+
+4. **Token Refresh:**
+   - Handled automatically by Supabase client on the server
+   - When access token expires, refresh token is used transparently
+   - New cookies are set automatically via `setAll()` callback
+
+5. **Why Cookie-Based vs Bearer Tokens?**
+   - **Security:** httpOnly cookies cannot be stolen via XSS attacks
+   - **SSR-Friendly:** Middleware has direct access to cookies without parsing headers
+   - **Automatic Refresh:** Token refresh happens transparently on the server
+   - **Browser Convenience:** No client-side token management needed
 
 ### 3.2 Authorization
 
 **Row Level Security (RLS):**
-- All tables have RLS enabled
+- All tables have RLS enabled in the database
 - Policies ensure users can only access their own data
 - RLS is enforced at the database level, providing defense in depth
+- Example policy: `(auth.uid() = user_id)` ensures users only see their own rows
 
-**API-Level Checks:**
-- All protected endpoints verify the user's JWT
-- User ID is extracted from the JWT and used in database queries
-- Supabase client is initialized with user context for RLS enforcement
+**Middleware-Level Checks:**
+- Middleware extracts user context from session cookies on every request
+- User object is stored in `locals.user` for API endpoints to access
+- Unauthenticated requests:
+  - API routes (starting with `/api/`) → Return 401 JSON response
+  - Page routes → Redirect to `/auth/login`
+
+**API-Level Authorization:**
+- Protected endpoints access user ID from `locals.user.id`
+- Supabase client is initialized with user session from cookies
+- RLS policies automatically filter database queries by user ID
+- No manual user ID checks needed in most cases (RLS handles it)
+
+**Authorization Flow Example:**
+```typescript
+// API endpoint: /api/flashcards
+export const GET: APIRoute = async ({ locals }) => {
+  // locals.user is populated by middleware from cookies
+  const userId = locals.user?.id;
+
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401
+    });
+  }
+
+  // Supabase client has user session from cookies
+  // RLS policy automatically filters: WHERE user_id = auth.uid()
+  const { data } = await locals.supabase
+    .from('flashcards')
+    .select('*');
+
+  return new Response(JSON.stringify({ flashcards: data }));
+};
+```
 
 ### 3.3 Security Measures
 
-1. **HTTPS Only:** All API communication must use HTTPS
-2. **Input Validation:** All inputs validated server-side before database operations
-3. **Rate Limiting:** Consider implementing rate limiting for:
-   - Authentication endpoints (prevent brute force)
-   - AI generation endpoints (prevent abuse and control costs)
-4. **CORS Configuration:** Restrict to allowed origins only
+1. **HTTPS Only:**
+   - All API communication must use HTTPS
+   - `secure: true` cookie flag ensures cookies only sent over HTTPS
+
+2. **Cookie Security:**
+   - `httpOnly: true` - Cookies inaccessible to JavaScript (XSS protection)
+   - `sameSite: 'lax'` - CSRF protection for most requests
+   - `secure: true` - Cookies only transmitted over HTTPS
+   - Automatic token encryption by Supabase Auth
+
+3. **Input Validation:**
+   - All inputs validated server-side before database operations
+   - Use Zod schemas for type-safe validation
+   - Sanitize user inputs to prevent injection attacks
+
+4. **Rate Limiting:**
+   - Authentication endpoints (prevent brute force attacks):
+     - `/api/auth/login` - 3 seconds between attempts
+     - `/api/auth/register` - 60 seconds between attempts
+   - AI generation endpoints (prevent abuse and control costs):
+     - `/api/generations` - Consider token bucket or fixed window rate limiting
+
+5. **CORS Configuration:**
+   - Restrict to allowed origins only
+   - For cookie-based auth, ensure `credentials: 'include'` on client-side
+   - Configure proper `Access-Control-Allow-Origin` headers
+
+6. **Database Security:**
+   - Row Level Security (RLS) enabled on all tables
+   - All queries automatically filtered by user context
+   - Defense in depth: Even if API auth fails, database blocks unauthorized access
 
 ---
 
