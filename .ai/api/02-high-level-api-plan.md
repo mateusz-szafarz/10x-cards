@@ -20,7 +20,7 @@ operations.
 
 #### POST /api/auth/register
 
-Creates a new user account.
+Creates a new user account and automatically logs the user in.
 
 **Request Body:**
 
@@ -41,6 +41,21 @@ Creates a new user account.
   }
 }
 ```
+
+**Session Behavior:**
+
+- `supabase.auth.signUp()` **automatically creates a session** when user is registered
+- Session tokens (access_token and refresh_token) are **immediately set as httpOnly cookies** by Supabase Auth
+- User is **logged in immediately** after successful registration - no separate login required
+- Subsequent requests will have user context available in middleware via `locals.user`
+
+**MVP Scope - Email Verification:**
+
+- **Email confirmation is DISABLED for MVP** (Supabase default setting)
+- Users can immediately access all features after registration
+- No verification email is sent
+- `email_confirmed_at` is set to current timestamp automatically
+- **Future enhancement:** Consider enabling email confirmation for production to prevent spam accounts
 
 **Error Responses:**
 
@@ -676,7 +691,12 @@ This approach is optimized for Astro (or Next.js, SvelteKit, etc.) where authent
    ```
 
 2. **Session Flow:**
+    - **Registration:** User calls `/api/auth/register` with email/password
+        - `supabase.auth.signUp()` creates user account **AND** session
+        - Cookies are set automatically - user is logged in immediately
     - **Login:** User calls `/api/auth/login` with email/password
+        - `supabase.auth.signInWithPassword()` validates credentials and creates session
+        - Cookies are set automatically
     - **Cookie Creation:** Supabase Auth automatically sets httpOnly cookies:
         - Cookie name: `sb-<project-ref>-auth-token`
         - Contains: Both access_token and refresh_token (encrypted)
@@ -803,6 +823,17 @@ export const GET: APIRoute = async ({ locals }) => {
     - Row Level Security (RLS) enabled on all tables as a safety net
     - All queries MUST use explicit user_id filters for performance (RLS alone causes full table scans)
     - Defense in depth: RLS blocks unauthorized access even if explicit filter is accidentally omitted
+
+7. **Email Verification (Future Enhancement):**
+    - **MVP:** Email confirmation is DISABLED for faster development/testing
+    - **Production consideration:** Enable email confirmation to:
+        - Prevent spam account creation
+        - Ensure valid email addresses for password reset
+        - Comply with email marketing regulations (if applicable)
+    - Implementation would require:
+        - Supabase email templates configuration
+        - Email service provider integration (e.g., Resend, SendGrid)
+        - Modified RLS policies to restrict unconfirmed users (optional)
 
 ---
 
