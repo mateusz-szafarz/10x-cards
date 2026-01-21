@@ -793,10 +793,11 @@ export const GET: APIRoute = async ({ locals }) => {
     - AI generation endpoints (prevent abuse and control costs):
         - `/api/generations` - Consider token bucket or fixed window rate limiting
 
-5. **CORS Configuration:**
+5. **CORS Configuration (only needed if frontend and API are on different domains):**
     - Restrict to allowed origins only
-    - For cookie-based auth, ensure `credentials: 'include'` on client-side
-    - Configure proper `Access-Control-Allow-Origin` headers
+    - For cookie-based auth, ensure `credentials: 'include'` on client-side fetch requests
+    - Configure proper `Access-Control-Allow-Origin` headers (cannot use `*` with credentials)
+    - Note: Not needed for same-origin requests (e.g., Astro SSR where frontend and API share the same domain)
 
 6. **Database Security:**
     - Row Level Security (RLS) enabled on all tables as a safety net
