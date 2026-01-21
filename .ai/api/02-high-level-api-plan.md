@@ -2,18 +2,19 @@
 
 ## 1. Resources
 
-| Resource | Database Table | Description |
-|----------|----------------|-------------|
-| Users | auth.users (Supabase Auth) | User accounts managed by Supabase Auth |
-| Flashcards | flashcards | User flashcards (both AI-generated and manual) |
-| Generations | generation_sessions | AI generation session metadata |
-| Generation Errors | generation_error_logs | Failed AI generation attempts (internal logging) |
+| Resource          | Database Table             | Description                                      |
+|-------------------|----------------------------|--------------------------------------------------|
+| Users             | auth.users (Supabase Auth) | User accounts managed by Supabase Auth           |
+| Flashcards        | flashcards                 | User flashcards (both AI-generated and manual)   |
+| Generations       | generation_sessions        | AI generation session metadata                   |
+| Generation Errors | generation_error_logs      | Failed AI generation attempts (internal logging) |
 
 ## 2. Endpoints
 
 ### 2.1 Authentication
 
-Authentication is handled by Supabase Auth SDK. The following endpoints wrap Supabase Auth functionality for server-side operations.
+Authentication is handled by Supabase Auth SDK. The following endpoints wrap Supabase Auth functionality for server-side
+operations.
 
 ---
 
@@ -22,6 +23,7 @@ Authentication is handled by Supabase Auth SDK. The following endpoints wrap Sup
 Creates a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -30,6 +32,7 @@ Creates a new user account.
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "user": {
@@ -41,12 +44,12 @@ Creates a new user account.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid email format |
-| 400 | VALIDATION_ERROR | Password must be at least 8 characters |
-| 409 | USER_EXISTS | User with this email already exists |
-| 500 | INTERNAL_ERROR | Registration failed |
+| Status | Code             | Message                                |
+|--------|------------------|----------------------------------------|
+| 400    | VALIDATION_ERROR | Invalid email format                   |
+| 400    | VALIDATION_ERROR | Password must be at least 8 characters |
+| 409    | USER_EXISTS      | User with this email already exists    |
+| 500    | INTERNAL_ERROR   | Registration failed                    |
 
 ---
 
@@ -55,6 +58,7 @@ Creates a new user account.
 Authenticates a user and creates a session.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -63,6 +67,7 @@ Authenticates a user and creates a session.
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "user": {
@@ -73,6 +78,7 @@ Authenticates a user and creates a session.
 ```
 
 **Authentication Mechanism:**
+
 - Session tokens (access_token and refresh_token) are **automatically set as httpOnly cookies** by Supabase Auth
 - Cookies are named `sb-<project-ref>-auth-token` and contain both access and refresh tokens
 - Cookie options: `secure: true`, `httpOnly: true`, `sameSite: 'lax'`
@@ -80,11 +86,11 @@ Authenticates a user and creates a session.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Email and password are required |
-| 401 | INVALID_CREDENTIALS | Invalid email or password |
-| 500 | INTERNAL_ERROR | Login failed |
+| Status | Code                | Message                         |
+|--------|---------------------|---------------------------------|
+| 400    | VALIDATION_ERROR    | Email and password are required |
+| 401    | INVALID_CREDENTIALS | Invalid email or password       |
+| 500    | INTERNAL_ERROR      | Login failed                    |
 
 ---
 
@@ -93,10 +99,12 @@ Authenticates a user and creates a session.
 Terminates the current user session.
 
 **Authentication:**
+
 - User is automatically identified from session cookies (no Authorization header needed)
 - Middleware extracts user context from httpOnly cookies before reaching the endpoint
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Logged out successfully"
@@ -104,15 +112,16 @@ Terminates the current user session.
 ```
 
 **Session Cleanup:**
+
 - Supabase Auth automatically clears session cookies
 - Both access and refresh tokens are invalidated
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | INTERNAL_ERROR | Logout failed |
+| Status | Code           | Message           |
+|--------|----------------|-------------------|
+| 401    | UNAUTHORIZED   | Not authenticated |
+| 500    | INTERNAL_ERROR | Logout failed     |
 
 ---
 
@@ -121,10 +130,12 @@ Terminates the current user session.
 Deletes the user account and all associated data (GDPR compliance).
 
 **Authentication:**
+
 - User is automatically identified from session cookies (no Authorization header needed)
 - Middleware extracts user context from httpOnly cookies before reaching the endpoint
 
 **Response (200 OK):**
+
 ```json
 {
   "message": "Account deleted successfully"
@@ -132,18 +143,19 @@ Deletes the user account and all associated data (GDPR compliance).
 ```
 
 **Data Deletion:**
+
 - Deletes user from `auth.users` table
 - Database CASCADE constraints automatically delete all associated data:
-  - All flashcards (`flashcards.user_id` → CASCADE DELETE)
-  - All generation sessions (`generation_sessions.user_id` → CASCADE DELETE)
-  - All generation error logs (`generation_error_logs.user_id` → CASCADE DELETE)
+    - All flashcards (`flashcards.user_id` → CASCADE DELETE)
+    - All generation sessions (`generation_sessions.user_id` → CASCADE DELETE)
+    - All generation error logs (`generation_error_logs.user_id` → CASCADE DELETE)
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | INTERNAL_ERROR | Account deletion failed |
+| Status | Code           | Message                 |
+|--------|----------------|-------------------------|
+| 401    | UNAUTHORIZED   | Not authenticated       |
+| 500    | INTERNAL_ERROR | Account deletion failed |
 
 ---
 
@@ -158,20 +170,22 @@ All flashcard endpoints require authentication.
 Retrieves a paginated list of user's flashcards.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Only returns flashcards belonging to the authenticated user (enforced by RLS)
+- Only returns flashcards belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| page | integer | No | 1 | Page number (1-indexed) |
-| limit | integer | No | 20 | Items per page (1-100) |
-| source | string | No | - | Filter by source: 'ai_generated' or 'manual' |
-| sort | string | No | created_at | Sort field: 'created_at' or 'updated_at' |
-| order | string | No | desc | Sort order: 'asc' or 'desc' |
+| Parameter | Type    | Required | Default    | Description                                  |
+|-----------|---------|----------|------------|----------------------------------------------|
+| page      | integer | No       | 1          | Page number (1-indexed)                      |
+| limit     | integer | No       | 20         | Items per page (1-100)                       |
+| source    | string  | No       | -          | Filter by source: 'ai_generated' or 'manual' |
+| sort      | string  | No       | created_at | Sort field: 'created_at' or 'updated_at'     |
+| order     | string  | No       | desc       | Sort order: 'asc' or 'desc'                  |
 
 **Response (200 OK):**
+
 ```json
 {
   "flashcards": [
@@ -196,11 +210,11 @@ Retrieves a paginated list of user's flashcards.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid pagination parameters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | INTERNAL_ERROR | Failed to fetch flashcards |
+| Status | Code             | Message                       |
+|--------|------------------|-------------------------------|
+| 400    | VALIDATION_ERROR | Invalid pagination parameters |
+| 401    | UNAUTHORIZED     | Not authenticated             |
+| 500    | INTERNAL_ERROR   | Failed to fetch flashcards    |
 
 ---
 
@@ -209,16 +223,18 @@ Retrieves a paginated list of user's flashcards.
 Retrieves a single flashcard by ID.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Can only retrieve flashcards belonging to the authenticated user (enforced by RLS)
+- Can only retrieve flashcards belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Path Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | UUID | Flashcard ID |
+| Parameter | Type | Description  |
+|-----------|------|--------------|
+| id        | UUID | Flashcard ID |
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -233,12 +249,12 @@ Retrieves a single flashcard by ID.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid flashcard ID format |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 404 | NOT_FOUND | Flashcard not found |
-| 500 | INTERNAL_ERROR | Failed to fetch flashcard |
+| Status | Code             | Message                     |
+|--------|------------------|-----------------------------|
+| 400    | VALIDATION_ERROR | Invalid flashcard ID format |
+| 401    | UNAUTHORIZED     | Not authenticated           |
+| 404    | NOT_FOUND        | Flashcard not found         |
+| 500    | INTERNAL_ERROR   | Failed to fetch flashcard   |
 
 ---
 
@@ -247,10 +263,12 @@ Retrieves a single flashcard by ID.
 Creates a new flashcard manually.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
 - Flashcard is automatically associated with the authenticated user
 
 **Request Body:**
+
 ```json
 {
   "front": "What is the capital of France?",
@@ -259,10 +277,12 @@ Creates a new flashcard manually.
 ```
 
 **Validation:**
+
 - `front`: required, 1-500 characters
 - `back`: required, 1-2000 characters
 
 **Response (201 Created):**
+
 ```json
 {
   "id": "uuid",
@@ -277,14 +297,14 @@ Creates a new flashcard manually.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Front is required |
-| 400 | VALIDATION_ERROR | Front must be between 1 and 500 characters |
-| 400 | VALIDATION_ERROR | Back is required |
-| 400 | VALIDATION_ERROR | Back must be between 1 and 2000 characters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | INTERNAL_ERROR | Failed to create flashcard |
+| Status | Code             | Message                                    |
+|--------|------------------|--------------------------------------------|
+| 400    | VALIDATION_ERROR | Front is required                          |
+| 400    | VALIDATION_ERROR | Front must be between 1 and 500 characters |
+| 400    | VALIDATION_ERROR | Back is required                           |
+| 400    | VALIDATION_ERROR | Back must be between 1 and 2000 characters |
+| 401    | UNAUTHORIZED     | Not authenticated                          |
+| 500    | INTERNAL_ERROR   | Failed to create flashcard                 |
 
 ---
 
@@ -293,16 +313,18 @@ Creates a new flashcard manually.
 Updates an existing flashcard.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Can only update flashcards belonging to the authenticated user (enforced by RLS)
+- Can only update flashcards belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Path Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | UUID | Flashcard ID |
+| Parameter | Type | Description  |
+|-----------|------|--------------|
+| id        | UUID | Flashcard ID |
 
 **Request Body:**
+
 ```json
 {
   "front": "What is the capital of France?",
@@ -311,10 +333,12 @@ Updates an existing flashcard.
 ```
 
 **Validation:**
+
 - `front`: required, 1-500 characters
 - `back`: required, 1-2000 characters
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -329,13 +353,13 @@ Updates an existing flashcard.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Front must be between 1 and 500 characters |
-| 400 | VALIDATION_ERROR | Back must be between 1 and 2000 characters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 404 | NOT_FOUND | Flashcard not found |
-| 500 | INTERNAL_ERROR | Failed to update flashcard |
+| Status | Code             | Message                                    |
+|--------|------------------|--------------------------------------------|
+| 400    | VALIDATION_ERROR | Front must be between 1 and 500 characters |
+| 400    | VALIDATION_ERROR | Back must be between 1 and 2000 characters |
+| 401    | UNAUTHORIZED     | Not authenticated                          |
+| 404    | NOT_FOUND        | Flashcard not found                        |
+| 500    | INTERNAL_ERROR   | Failed to update flashcard                 |
 
 ---
 
@@ -344,25 +368,26 @@ Updates an existing flashcard.
 Deletes a flashcard permanently.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Can only delete flashcards belonging to the authenticated user (enforced by RLS)
+- Can only delete flashcards belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Path Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | UUID | Flashcard ID |
+| Parameter | Type | Description  |
+|-----------|------|--------------|
+| id        | UUID | Flashcard ID |
 
 **Response (204 No Content)**
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid flashcard ID format |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 404 | NOT_FOUND | Flashcard not found |
-| 500 | INTERNAL_ERROR | Failed to delete flashcard |
+| Status | Code             | Message                     |
+|--------|------------------|-----------------------------|
+| 400    | VALIDATION_ERROR | Invalid flashcard ID format |
+| 401    | UNAUTHORIZED     | Not authenticated           |
+| 404    | NOT_FOUND        | Flashcard not found         |
+| 500    | INTERNAL_ERROR   | Failed to delete flashcard  |
 
 ---
 
@@ -377,10 +402,12 @@ Endpoints for AI-powered flashcard generation.
 Initiates an AI generation session. Sends source text to LLM and returns flashcard proposals.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
 - Generation session is automatically associated with the authenticated user
 
 **Request Body:**
+
 ```json
 {
   "source_text": "Long text content between 1000-10000 characters..."
@@ -388,9 +415,11 @@ Initiates an AI generation session. Sends source text to LLM and returns flashca
 ```
 
 **Validation:**
+
 - `source_text`: required, 1000-10000 characters
 
 **Response (201 Created):**
+
 ```json
 {
   "generation_id": "uuid",
@@ -410,15 +439,16 @@ Initiates an AI generation session. Sends source text to LLM and returns flashca
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Source text is required |
-| 400 | VALIDATION_ERROR | Source text must be between 1000 and 10000 characters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | AI_SERVICE_ERROR | Failed to generate flashcards |
-| 503 | AI_SERVICE_UNAVAILABLE | AI service is temporarily unavailable |
+| Status | Code                   | Message                                               |
+|--------|------------------------|-------------------------------------------------------|
+| 400    | VALIDATION_ERROR       | Source text is required                               |
+| 400    | VALIDATION_ERROR       | Source text must be between 1000 and 10000 characters |
+| 401    | UNAUTHORIZED           | Not authenticated                                     |
+| 500    | AI_SERVICE_ERROR       | Failed to generate flashcards                         |
+| 503    | AI_SERVICE_UNAVAILABLE | AI service is temporarily unavailable                 |
 
 **Notes:**
+
 - On success, creates a `generation_sessions` record with `accepted_count = NULL`
 - On failure, creates a `generation_error_logs` record
 - The `flashcards_proposals` are NOT saved to database yet - they are returned for user review
@@ -430,16 +460,18 @@ Initiates an AI generation session. Sends source text to LLM and returns flashca
 Accepts selected flashcard proposals and saves them to the database.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Can only finalize generation sessions belonging to the authenticated user (enforced by RLS)
+- Can only finalize generation sessions belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Path Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | UUID | Generation session ID |
+| Parameter | Type | Description           |
+|-----------|------|-----------------------|
+| id        | UUID | Generation session ID |
 
 **Request Body:**
+
 ```json
 {
   "flashcards": [
@@ -456,12 +488,14 @@ Accepts selected flashcard proposals and saves them to the database.
 ```
 
 **Validation:**
+
 - `flashcards`: required, non-empty array
 - Each flashcard:
-  - `front`: required, 1-500 characters
-  - `back`: required, 1-2000 characters
+    - `front`: required, 1-500 characters
+    - `back`: required, 1-2000 characters
 
 **Response (201 Created):**
+
 ```json
 {
   "flashcards": [
@@ -490,18 +524,19 @@ Accepts selected flashcard proposals and saves them to the database.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Flashcards array is required |
-| 400 | VALIDATION_ERROR | Flashcards array cannot be empty |
-| 400 | VALIDATION_ERROR | Front must be between 1 and 500 characters |
-| 400 | VALIDATION_ERROR | Back must be between 1 and 2000 characters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 404 | NOT_FOUND | Generation session not found |
-| 409 | ALREADY_FINALIZED | Generation session has already been finalized |
-| 500 | INTERNAL_ERROR | Failed to save flashcards |
+| Status | Code              | Message                                       |
+|--------|-------------------|-----------------------------------------------|
+| 400    | VALIDATION_ERROR  | Flashcards array is required                  |
+| 400    | VALIDATION_ERROR  | Flashcards array cannot be empty              |
+| 400    | VALIDATION_ERROR  | Front must be between 1 and 500 characters    |
+| 400    | VALIDATION_ERROR  | Back must be between 1 and 2000 characters    |
+| 401    | UNAUTHORIZED      | Not authenticated                             |
+| 404    | NOT_FOUND         | Generation session not found                  |
+| 409    | ALREADY_FINALIZED | Generation session has already been finalized |
+| 500    | INTERNAL_ERROR    | Failed to save flashcards                     |
 
 **Notes:**
+
 - Updates `generation_sessions.accepted_count` with the number of accepted flashcards
 - All created flashcards have `source = 'ai_generated'` and reference the generation session
 
@@ -512,17 +547,19 @@ Accepts selected flashcard proposals and saves them to the database.
 Retrieves the user's generation history.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Only returns generation sessions belonging to the authenticated user (enforced by RLS)
+- Only returns generation sessions belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| page | integer | No | 1 | Page number (1-indexed) |
-| limit | integer | No | 20 | Items per page (1-100) |
+| Parameter | Type    | Required | Default | Description             |
+|-----------|---------|----------|---------|-------------------------|
+| page      | integer | No       | 1       | Page number (1-indexed) |
+| limit     | integer | No       | 20      | Items per page (1-100)  |
 
 **Response (200 OK):**
+
 ```json
 {
   "generations": [
@@ -546,11 +583,11 @@ Retrieves the user's generation history.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid pagination parameters |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 500 | INTERNAL_ERROR | Failed to fetch generations |
+| Status | Code             | Message                       |
+|--------|------------------|-------------------------------|
+| 400    | VALIDATION_ERROR | Invalid pagination parameters |
+| 401    | UNAUTHORIZED     | Not authenticated             |
+| 500    | INTERNAL_ERROR   | Failed to fetch generations   |
 
 ---
 
@@ -559,16 +596,18 @@ Retrieves the user's generation history.
 Retrieves a single generation session with full details.
 
 **Authentication:**
+
 - User is automatically identified from session cookies
-- Can only retrieve generation sessions belonging to the authenticated user (enforced by RLS)
+- Can only retrieve generation sessions belonging to the authenticated user (explicit filter + RLS as safety net)
 
 **Path Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | UUID | Generation session ID |
+| Parameter | Type | Description           |
+|-----------|------|-----------------------|
+| id        | UUID | Generation session ID |
 
 **Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -590,12 +629,12 @@ Retrieves a single generation session with full details.
 
 **Error Responses:**
 
-| Status | Code | Message |
-|--------|------|---------|
-| 400 | VALIDATION_ERROR | Invalid generation ID format |
-| 401 | UNAUTHORIZED | Not authenticated |
-| 404 | NOT_FOUND | Generation session not found |
-| 500 | INTERNAL_ERROR | Failed to fetch generation session |
+| Status | Code             | Message                            |
+|--------|------------------|------------------------------------|
+| 400    | VALIDATION_ERROR | Invalid generation ID format       |
+| 401    | UNAUTHORIZED     | Not authenticated                  |
+| 404    | NOT_FOUND        | Generation session not found       |
+| 500    | INTERNAL_ERROR   | Failed to fetch generation session |
 
 ---
 
@@ -637,12 +676,12 @@ This approach is optimized for Astro (or Next.js, SvelteKit, etc.) where authent
    ```
 
 2. **Session Flow:**
-   - **Login:** User calls `/api/auth/login` with email/password
-   - **Cookie Creation:** Supabase Auth automatically sets httpOnly cookies:
-     - Cookie name: `sb-<project-ref>-auth-token`
-     - Contains: Both access_token and refresh_token (encrypted)
-   - **Subsequent Requests:** Browser automatically sends cookies with every request
-   - **Middleware Extraction:** Server reads cookies and extracts user context using `supabase.auth.getUser()`
+    - **Login:** User calls `/api/auth/login` with email/password
+    - **Cookie Creation:** Supabase Auth automatically sets httpOnly cookies:
+        - Cookie name: `sb-<project-ref>-auth-token`
+        - Contains: Both access_token and refresh_token (encrypted)
+    - **Subsequent Requests:** Browser automatically sends cookies with every request
+    - **Middleware Extraction:** Server reads cookies and extracts user context using `supabase.auth.getUser()`
 
 3. **Middleware Implementation:**
    ```typescript
@@ -663,38 +702,51 @@ This approach is optimized for Astro (or Next.js, SvelteKit, etc.) where authent
    ```
 
 4. **Token Refresh:**
-   - Handled automatically by Supabase client on the server
-   - When access token expires, refresh token is used transparently
-   - New cookies are set automatically via `setAll()` callback
+    - Handled automatically by Supabase client on the server
+    - When access token expires, refresh token is used transparently
+    - New cookies are set automatically via `setAll()` callback
 
 5. **Why Cookie-Based vs Bearer Tokens?**
-   - **Security:** httpOnly cookies cannot be stolen via XSS attacks
-   - **SSR-Friendly:** Middleware has direct access to cookies without parsing headers
-   - **Automatic Refresh:** Token refresh happens transparently on the server
-   - **Browser Convenience:** No client-side token management needed
+    - **Security:** httpOnly cookies cannot be stolen via XSS attacks
+    - **SSR-Friendly:** Middleware has direct access to cookies without parsing headers
+    - **Automatic Refresh:** Token refresh happens transparently on the server
+    - **Browser Convenience:** No client-side token management needed
 
 ### 3.2 Authorization
 
-**Row Level Security (RLS):**
+**Row Level Security (RLS) - Defense in Depth:**
+
 - All tables have RLS enabled in the database
 - Policies ensure users can only access their own data
-- RLS is enforced at the database level, providing defense in depth
+- RLS is enforced at the database level as a **security safety net**
 - Example policy: `(auth.uid() = user_id)` ensures users only see their own rows
+- **Important:** RLS should NOT be relied upon as the sole filtering mechanism
 
 **Middleware-Level Checks:**
+
 - Middleware extracts user context from session cookies on every request
 - User object is stored in `locals.user` for API endpoints to access
 - Unauthenticated requests:
-  - API routes (starting with `/api/`) → Return 401 JSON response
-  - Page routes → Redirect to `/auth/login`
+    - API routes (starting with `/api/`) → Return 401 JSON response
+    - Page routes → Redirect to `/auth/login`
 
 **API-Level Authorization:**
+
 - Protected endpoints access user ID from `locals.user.id`
 - Supabase client is initialized with user session from cookies
-- RLS policies automatically filter database queries by user ID
-- No manual user ID checks needed in most cases (RLS handles it)
+- **Always use explicit filters in queries** (e.g., `.eq('user_id', userId)`)
+- RLS provides defense in depth but should not replace explicit filtering
 
-**Authorization Flow Example:**
+**Why Explicit Filtering + RLS (Supabase Best Practice):**
+
+- **Performance:** Explicit filters allow query optimizer to work efficiently; RLS alone forces the database to process
+  all rows before filtering
+- **Clarity:** Code explicitly shows data access intent
+- **Debugging:** Easier to troubleshoot when filters are visible in code
+- **Defense in Depth:** RLS acts as a safety net if explicit filter is accidentally omitted
+
+**Authorization Flow Example:*
+
 ```typescript
 // API endpoint: /api/flashcards
 export const GET: APIRoute = async ({ locals }) => {
@@ -707,11 +759,11 @@ export const GET: APIRoute = async ({ locals }) => {
     });
   }
 
-  // Supabase client has user session from cookies
-  // RLS policy automatically filters: WHERE user_id = auth.uid()
+  // Explicit filter + RLS as safety net (Supabase best practice)
   const { data } = await locals.supabase
     .from('flashcards')
-    .select('*');
+    .select('*')
+    .eq('user_id', userId);  // Always filter explicitly for performance
 
   return new Response(JSON.stringify({ flashcards: data }));
 };
@@ -720,36 +772,36 @@ export const GET: APIRoute = async ({ locals }) => {
 ### 3.3 Security Measures
 
 1. **HTTPS Only:**
-   - All API communication must use HTTPS
-   - `secure: true` cookie flag ensures cookies only sent over HTTPS
+    - All API communication must use HTTPS
+    - `secure: true` cookie flag ensures cookies only sent over HTTPS
 
 2. **Cookie Security:**
-   - `httpOnly: true` - Cookies inaccessible to JavaScript (XSS protection)
-   - `sameSite: 'lax'` - CSRF protection for most requests
-   - `secure: true` - Cookies only transmitted over HTTPS
-   - Automatic token encryption by Supabase Auth
+    - `httpOnly: true` - Cookies inaccessible to JavaScript (XSS protection)
+    - `sameSite: 'lax'` - CSRF protection for most requests
+    - `secure: true` - Cookies only transmitted over HTTPS
+    - Automatic token encryption by Supabase Auth
 
 3. **Input Validation:**
-   - All inputs validated server-side before database operations
-   - Use Zod schemas for type-safe validation
-   - Sanitize user inputs to prevent injection attacks
+    - All inputs validated server-side before database operations
+    - Use Zod schemas for type-safe validation
+    - Sanitize user inputs to prevent injection attacks
 
 4. **Rate Limiting:**
-   - Authentication endpoints (prevent brute force attacks):
-     - `/api/auth/login` - 3 seconds between attempts
-     - `/api/auth/register` - 60 seconds between attempts
-   - AI generation endpoints (prevent abuse and control costs):
-     - `/api/generations` - Consider token bucket or fixed window rate limiting
+    - Authentication endpoints (prevent brute force attacks):
+        - `/api/auth/login` - 3 seconds between attempts
+        - `/api/auth/register` - 60 seconds between attempts
+    - AI generation endpoints (prevent abuse and control costs):
+        - `/api/generations` - Consider token bucket or fixed window rate limiting
 
 5. **CORS Configuration:**
-   - Restrict to allowed origins only
-   - For cookie-based auth, ensure `credentials: 'include'` on client-side
-   - Configure proper `Access-Control-Allow-Origin` headers
+    - Restrict to allowed origins only
+    - For cookie-based auth, ensure `credentials: 'include'` on client-side
+    - Configure proper `Access-Control-Allow-Origin` headers
 
 6. **Database Security:**
-   - Row Level Security (RLS) enabled on all tables
-   - All queries automatically filtered by user context
-   - Defense in depth: Even if API auth fails, database blocks unauthorized access
+    - Row Level Security (RLS) enabled on all tables as a safety net
+    - All queries MUST use explicit user_id filters for performance (RLS alone causes full table scans)
+    - Defense in depth: RLS blocks unauthorized access even if explicit filter is accidentally omitted
 
 ---
 
@@ -759,37 +811,37 @@ export const GET: APIRoute = async ({ locals }) => {
 
 #### Authentication Endpoints
 
-| Endpoint | Field | Validation Rules |
-|----------|-------|------------------|
-| POST /api/auth/register | email | Required, valid email format |
+| Endpoint                | Field    | Validation Rules               |
+|-------------------------|----------|--------------------------------|
+| POST /api/auth/register | email    | Required, valid email format   |
 | POST /api/auth/register | password | Required, minimum 8 characters |
-| POST /api/auth/login | email | Required |
-| POST /api/auth/login | password | Required |
+| POST /api/auth/login    | email    | Required                       |
+| POST /api/auth/login    | password | Required                       |
 
 #### Flashcard Endpoints
 
-| Endpoint | Field | Validation Rules |
-|----------|-------|------------------|
-| POST /api/flashcards | front | Required, 1-500 characters |
-| POST /api/flashcards | back | Required, 1-2000 characters |
-| PUT /api/flashcards/:id | front | Required, 1-500 characters |
-| PUT /api/flashcards/:id | back | Required, 1-2000 characters |
-| GET /api/flashcards | page | Optional, positive integer, default 1 |
-| GET /api/flashcards | limit | Optional, 1-100, default 20 |
-| GET /api/flashcards | source | Optional, enum: 'ai_generated', 'manual' |
-| GET /api/flashcards | sort | Optional, enum: 'created_at', 'updated_at' |
-| GET /api/flashcards | order | Optional, enum: 'asc', 'desc' |
+| Endpoint                | Field  | Validation Rules                           |
+|-------------------------|--------|--------------------------------------------|
+| POST /api/flashcards    | front  | Required, 1-500 characters                 |
+| POST /api/flashcards    | back   | Required, 1-2000 characters                |
+| PUT /api/flashcards/:id | front  | Required, 1-500 characters                 |
+| PUT /api/flashcards/:id | back   | Required, 1-2000 characters                |
+| GET /api/flashcards     | page   | Optional, positive integer, default 1      |
+| GET /api/flashcards     | limit  | Optional, 1-100, default 20                |
+| GET /api/flashcards     | source | Optional, enum: 'ai_generated', 'manual'   |
+| GET /api/flashcards     | sort   | Optional, enum: 'created_at', 'updated_at' |
+| GET /api/flashcards     | order  | Optional, enum: 'asc', 'desc'              |
 
 #### Generation Endpoints
 
-| Endpoint | Field | Validation Rules |
-|----------|-------|------------------|
-| POST /api/generations | source_text | Required, 1000-10000 characters |
-| POST /api/generations/:id/accept | flashcards | Required, non-empty array |
-| POST /api/generations/:id/accept | flashcards[].front | Required, 1-500 characters |
-| POST /api/generations/:id/accept | flashcards[].back | Required, 1-2000 characters |
-| GET /api/generations | page | Optional, positive integer, default 1 |
-| GET /api/generations | limit | Optional, 1-100, default 20 |
+| Endpoint                         | Field              | Validation Rules                      |
+|----------------------------------|--------------------|---------------------------------------|
+| POST /api/generations            | source_text        | Required, 1000-10000 characters       |
+| POST /api/generations/:id/accept | flashcards         | Required, non-empty array             |
+| POST /api/generations/:id/accept | flashcards[].front | Required, 1-500 characters            |
+| POST /api/generations/:id/accept | flashcards[].back  | Required, 1-2000 characters           |
+| GET /api/generations             | page               | Optional, positive integer, default 1 |
+| GET /api/generations             | limit              | Optional, 1-100, default 20           |
 
 ### 4.2 Business Logic Implementation
 
@@ -821,7 +873,8 @@ export const GET: APIRoute = async ({ locals }) => {
 10. Return created flashcards
 ```
 
-**Key point:** `generation_sessions` is only created after a **successful** AI call (stores metadata for successful generations). `generation_error_logs` is created only on **failure** (stores logs for failed attempts).
+**Key point:** `generation_sessions` is only created after a **successful** AI call (stores metadata for successful
+generations). `generation_error_logs` is created only on **failure** (stores logs for failed attempts).
 
 #### Manual Flashcard Creation
 
@@ -844,29 +897,28 @@ export const GET: APIRoute = async ({ locals }) => {
 #### Generation Session Finalization
 
 A generation session is considered "finalized" when `accepted_count` is set (not NULL). Once finalized:
+
 - The `accepted_count` cannot be modified
 - Additional flashcards cannot be added to the session
 
 #### Statistics Calculation
 
 For metrics reporting (PRD requirement - 75% acceptance rate target):
+
 ```sql
 -- Acceptance rate per session
-SELECT
-  accepted_count::float / NULLIF(generated_count, 0) * 100 as acceptance_rate
+SELECT accepted_count::float / NULLIF(generated_count, 0) * 100 as acceptance_rate
 FROM generation_sessions
 WHERE accepted_count IS NOT NULL;
 
 -- Overall acceptance rate
-SELECT
-  SUM(accepted_count)::float / NULLIF(SUM(generated_count), 0) * 100 as overall_acceptance_rate
+SELECT SUM(accepted_count) ::float / NULLIF(SUM(generated_count), 0) * 100 as overall_acceptance_rate
 FROM generation_sessions
 WHERE accepted_count IS NOT NULL;
 
 -- Flashcard source distribution
-SELECT
-  source,
-  COUNT(*) as count,
+SELECT source,
+       COUNT(*) as count,
   COUNT(*)::float / SUM(COUNT(*)) OVER () * 100 as percentage
 FROM flashcards
 GROUP BY source;
@@ -886,6 +938,7 @@ All API errors follow a consistent format:
 ```
 
 **Error Code Categories:**
+
 - `VALIDATION_ERROR` - Input validation failures
 - `UNAUTHORIZED` - Authentication required
 - `NOT_FOUND` - Resource not found
@@ -910,6 +963,7 @@ All list endpoints use offset-based pagination:
 ```
 
 **Implementation Notes:**
+
 - Default page size: 20
 - Maximum page size: 100
 - Total count is included for client-side pagination UI
