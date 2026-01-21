@@ -1,8 +1,52 @@
-import { createClient } from "@supabase/supabase-js";
-
+import type { AstroCookies } from "astro";
+import {
+  createServerClient,
+  parseCookieHeader,
+  type CookieOptionsWithName,
+} from "@supabase/ssr";
+import {
+  SUPABASE_URL,
+  SUPABASE_KEY,
+  SUPABASE_SERVICE_ROLE_KEY,
+} from "astro:env/server";
 import type { Database } from "./database.types";
 
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+export const cookieOptions: CookieOptionsWithName = {
+  path: "/",
+  secure: import.meta.env.PROD, // true only in production
+  httpOnly: true,
+  sameSite: "lax",
+};
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+type SupabaseContext = {
+  headers: Headers;
+  cookies: AstroCookies;
+};
+
+const createSupabaseInstance = (apiKey: string, context: SupabaseContext) => {
+  return createServerClient<Database>(SUPABASE_URL, apiKey, {
+    cookieOptions,
+    cookies: {
+      getAll() {
+        const cookieHeader = context.headers.get("Cookie") ?? "";
+        return parseCookieHeader(cookieHeader);
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          context.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+};
+
+export const createSupabaseServerInstance = (context: SupabaseContext) => {
+  return createSupabaseInstance(SUPABASE_KEY, context);
+};
+
+export const createSupabaseAdminInstance = (context: SupabaseContext) => {
+  return createSupabaseInstance(SUPABASE_SERVICE_ROLE_KEY, context);
+};
+
+// Re-export type for convenience
+export type { Database };

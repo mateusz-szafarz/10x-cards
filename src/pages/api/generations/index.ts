@@ -6,12 +6,6 @@ import { GenerationService } from "../../../lib/services/generation.service";
 export const prerender = false;
 
 /**
- * Hardcoded user ID for MVP development.
- * Will be replaced with actual user from authentication context.
- */
-const HARDCODED_USER_ID = "484dc1d3-add5-4701-a9a5-d91b12fb6165";
-
-/**
  * POST /api/generations
  *
  * Initiates AI-powered flashcard generation from source text.
@@ -26,6 +20,8 @@ const HARDCODED_USER_ID = "484dc1d3-add5-4701-a9a5-d91b12fb6165";
  * - 500: Internal server error
  */
 export const POST: APIRoute = async ({ request, locals }) => {
+  // User authenticated by middleware - locals.user is guaranteed to exist
+
   // Parse request body
   let body: unknown;
   try {
@@ -68,7 +64,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Generate flashcards
   try {
-    const result = await generationService.generateFlashcards(validationResult.data.source_text, HARDCODED_USER_ID);
+    const result = await generationService.generateFlashcards(
+      validationResult.data.source_text,
+      locals.user!.id
+    );
 
     return new Response(JSON.stringify(result), {
       status: 201,

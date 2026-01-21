@@ -78,15 +78,6 @@ export interface AuthUserDTO {
 }
 
 /**
- * Session information returned after successful login.
- */
-export interface SessionDTO {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-}
-
-/**
  * Response from POST /api/auth/register
  */
 export interface RegisterResponseDTO {
@@ -98,7 +89,20 @@ export interface RegisterResponseDTO {
  */
 export interface LoginResponseDTO {
   user: AuthUserDTO;
-  session: SessionDTO;
+}
+
+/**
+ * Response from POST /api/auth/logout
+ */
+export interface LogoutResponseDTO {
+  message: string;
+}
+
+/**
+ * Response from DELETE /api/auth/account
+ */
+export interface DeleteAccountResponseDTO {
+  message: string;
 }
 
 // =============================================================================
