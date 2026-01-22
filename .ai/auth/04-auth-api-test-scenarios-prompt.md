@@ -298,6 +298,95 @@ Create separate .http files for each scenario in `.http/scenarios/` directory:
 You can find IntelliJ HTTP Client syntax documentation
 here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 
+**My requirements:**
+
+- For marking header of each request use `# @name Some Descriptive Name` (`@name` based syntax) to give a clear
+  indication of what the request does (do not use three hashes syntax for that).
+- For separating requests use `###` (combined with some comment or not). All requests must be separated by exactly three
+  hashes. This way it will be possible to add some additional comments between requests if needed (for example to mark
+  separate sections of the test scenario).
+
+**Valid example for reference:**
+
+```http
+### ========================================
+### SCENARIUSZ: Kompletny przepływ zakupowy
+### Od rejestracji nowego użytkownika do otrzymania potwierdzenia zamówienia
+### ========================================
+###
+### Ten plik testuje krytyczną ścieżkę biznesową w aplikacji e-commerce.
+### Wszystkie requesty są uruchamiane sekwencyjnie (Run All Requests in File).
+### Każdy request zapisuje dane potrzebne kolejnym krokom.
+###
+### Założenia początkowe:
+### - API jest dostępne pod {{host}}
+### - Email użytkownika testowego nie istnieje w systemie
+### - Produkt testowy (ID: {{testProductId}}) istnieje i ma wystarczający stan magazynowy
+###
+### Oczekiwany rezultat:
+### - Nowy użytkownik został utworzony i zalogowany
+### - Zamówienie zostało złożone i opłacone
+### - Wszystkie asercje przeszły pomyślnie
+### ========================================
+
+# Generujemy unikalny email dla tego uruchomienia testu
+@testRunTimestamp = {{$timestamp}}
+@testUserEmail = test-user-{{testRunTimestamp}}@example.com
+
+### ========================================
+### FAZA 1: REJESTRACJA I AUTORYZACJA
+### ========================================
+
+# @name KROK 1.1: Zarejestruj nowego użytkownika
+# Tworzymy konto dla nowego klienta
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "SecurePassword123!",
+  "firstName": "Jan",
+  "lastName": "Testowy",
+  "acceptTerms": true
+}
+
+> {%
+  client.test("Rejestracja zakończona sukcesem", function() {
+    client.assert(response.status === 201, "Oczekiwano statusu 201");
+    client.assert(response.body.id !== undefined, "Użytkownik powinien mieć ID");
+    client.assert(response.body.email === "{{testUserEmail}}", "Email się nie zgadza");
+  });
+
+  // Zapisujemy ID użytkownika do dalszych operacji
+  client.global.set("userId", response.body.id);
+  console.log("✓ KROK 1.1: Użytkownik zarejestrowany z ID: " + response.body.id);
+%}
+
+###
+
+# @name KROK 1.2: Zaloguj nowo utworzonego użytkownika
+# Otrzymujemy token JWT potrzebny do dalszych operacji
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "SecurePassword123!"
+}
+
+> {%
+  client.test("Logowanie zakończone sukcesem", function() {
+    client.assert(response.status === 200, "Nie udało się zalogować");
+    client.assert(response.body.accessToken !== undefined, "Brak tokena dostępu");
+  });
+
+  // Token będzie używany we wszystkich kolejnych requestach
+  client.global.set("accessToken", response.body.accessToken);
+  client.global.set("refreshToken", response.body.refreshToken);
+  console.log("✓ KROK 1.2: Użytkownik zalogowany pomyślnie");
+%}
+```
+
 ### Cookie Handling
 
 IntelliJ HTTP Client automatically stores cookies from responses and includes them in subsequent requests within the
