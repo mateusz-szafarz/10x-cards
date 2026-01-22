@@ -4,7 +4,7 @@ powinna zawierać odpowiednią walidację, obsługę błędów i podąża za wsz
 Najpierw dokładnie przejrzyj dostarczony plan wdrożenia:
 
 <implementation_plan>
-@.ai/auth/01-auth-api-implementation-plan.md
+@.ai/auth/02-auth-api-implementation-plan.md
 </implementation_plan>
 
 Dodatkowy kontekst i zasoby, które mogą być przydatne podczas implementacji:
