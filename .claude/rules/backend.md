@@ -1,5 +1,5 @@
 ---
-paths: src/db/*.ts, src/middleware/*.ts, src/lib/*.ts
+paths: **/*.ts
 ---
 
 ### Backend and Database
