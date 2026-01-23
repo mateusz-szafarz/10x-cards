@@ -1,11 +1,3 @@
-TODO 1: Źle jest używane @no-cookie-jar, powinno być bez # z przodu, dodatkowo założenie jest błędne
-bo ta dyrektywa działa w kontekście pojedynczego requestu, a nie całego pliku.
-Jako tymczasowy workaround można manualnie usuwać cookies z
-/home/mateusz/projects/plg/10x-cards/.idea/httpRequests/http-client.cookies
-
-TODO 2: Na podstawie tego pliku wygeneruj ogólny instruktaż dla LLM na temat generowania scenariuszy testowych z użyciem
-IntelliJ HTTP Client.
-
 # Prompt: HTTP Test Scenarios for Auth API
 
 Generate comprehensive test scenarios for the authentication API using IntelliJ IDEA HTTP Client format (.http files).
@@ -322,11 +314,9 @@ client.global.set("testUserPassword", "password123");
 - Each new run of the same file loads cookies from previous runs
 - This breaks tests that assume "clean state" (no existing session)
 
-**Solution**: Use `# @no-cookie-jar` directive at the top of each test file.
+**Solution**: Manually delete cookies from `.idea/httpRequests/http-client.cookies` before running test scenarios to ensure a clean state.
 
 ```http
-# @no-cookie-jar
-
 ###
 
 # @name Register New User
@@ -345,14 +335,11 @@ Content-Type: application/json
 }
 ```
 
-**Effect of `# @no-cookie-jar`:**
+**How cookies work:**
 
-- ✅ Cookies are stored ONLY for the duration of this file execution
-- ✅ Next run starts with empty cookie jar (clean state)
-- ✅ Cookies still work WITHIN the same file (register → protected endpoint)
-- ✅ Each test scenario is truly self-contained and repeatable
-
-**REQUIREMENT**: ALL test scenario files MUST start with `# @no-cookie-jar` directive.
+- ✅ Cookies are stored for reuse in subsequent requests
+- ✅ Cookies work WITHIN the same file (register → protected endpoint)
+- ⚠️ Manual cleanup required between test runs for clean state
 
 ### Syntax documentation
 
@@ -499,11 +486,9 @@ Content-Type: application/json
 ### Cookie Handling
 
 IntelliJ HTTP Client automatically stores cookies from responses and includes them in subsequent requests within the
-same file. **IMPORTANT**: Always use `# @no-cookie-jar` directive to ensure clean state on each run.
+same file. **IMPORTANT**: Manually delete cookies from `.idea/httpRequests/http-client.cookies` before running test scenarios to ensure clean state.
 
 ```http
-# @no-cookie-jar
-
 ###
 
 # @name Register User
@@ -550,13 +535,12 @@ Content-Type: application/json
 
 **How it works:**
 
-1. `# @no-cookie-jar` at top → clean start on each run
-2. Pre-request script sets variables in `client.global` store using `Date.now()` for uniqueness
-3. Step 1 registers user → Supabase returns Set-Cookie header
-4. IntelliJ saves cookies for THIS run only
-5. Step 2 automatically includes cookies from Step 1
-6. Variables from Step 1 are still available (via `client.global`) if needed in Step 2
-7. Next run of this file → starts fresh (no cookies from previous run, new timestamp)
+1. Pre-request script sets variables in `client.global` store using `Date.now()` for uniqueness
+2. Step 1 registers user → Supabase returns Set-Cookie header
+3. IntelliJ saves cookies for current session
+4. Step 2 automatically includes cookies from Step 1
+5. Variables from Step 1 are still available (via `client.global`) if needed in Step 2
+6. Manual cookie cleanup needed before next run for clean state
 
 ### Environment Variables
 
@@ -670,8 +654,7 @@ Generate files in this structure:
 
 ## Additional Requirements
 
-1. **MANDATORY: Start each file with `# @no-cookie-jar`**: This ensures clean state on each run and prevents cookie
-   persistence issues between test executions.
+1. **Clean state before execution**: Manually delete cookies from `.idea/httpRequests/http-client.cookies` before running test scenarios to ensure no session persists from previous runs.
 
 2. **Each scenario must be self-contained**: Register a new unique user within each test file. Use pre-request scripts
    with `Date.now()` for unique emails:
@@ -711,7 +694,7 @@ Generate files in this structure:
 ### Issue: "Test fails on second run but works on first run"
 
 **Cause**: Cookies persisting from previous run
-**Solution**: Ensure `# @no-cookie-jar` is at the top of the file
+**Solution**: Manually delete cookies from `.idea/httpRequests/http-client.cookies` before running the test
 
 ### Issue: "Protected endpoint returns 401 even after registration"
 
@@ -760,16 +743,15 @@ client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
 
 Generate complete, runnable .http files with:
 
-- ✅ `# @no-cookie-jar` directive at the top of each file
 - ✅ Pre-request scripts (`< {%`) with `client.global.set()` for variable management
 - ✅ Clear step-by-step flow
 - ✅ Descriptive comments
 - ✅ Response assertions using `client.global.get()` for variable comparisons
-- ✅ Proper cookie handling (automatic within file, clean between runs)
+- ✅ Proper cookie handling (automatic within file, manual cleanup needed between runs)
 - ✅ Error case coverage
 - ✅ Self-contained scenarios (no dependencies between files)
 - ✅ Dynamic test data (`Date.now()` for unique emails)
 - ✅ Both happy path and error cases
 
 Each file should be immediately executable in IntelliJ IDEA HTTP Client without any manual setup (except starting the
-dev server).
+dev server and ensuring clean cookie state).
