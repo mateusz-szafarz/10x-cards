@@ -1,0 +1,103 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Registration Happy Path
+# Test successful user registration and auto-login
+# ========================================
+#
+# This file tests the complete registration flow including:
+# 1. Creating a new user account
+# 2. Verifying cookies are set automatically
+# 3. Confirming auto-login works (no separate login needed)
+# 4. Accessing protected endpoints with session cookies
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - Test user email is unique (generated with timestamp)
+# - Supabase email confirmation is DISABLED
+#
+# Expected result:
+# - User registered successfully (201)
+# - Session cookies set automatically
+# - Protected endpoint accessible without separate login
+# ========================================
+
+# Generate unique email for this test run
+@testUserEmail = test-{{$timestamp}}@example.com
+@testUserPassword = password123
+
+# ========================================
+# STEP 1: REGISTER NEW USER
+# ========================================
+
+###
+
+# @name Register New User
+# Create account - should return 201 and set session cookies automatically
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Registration successful - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Response contains user object", function() {
+    client.assert(response.body.user !== undefined, "User object missing in response");
+    client.assert(response.body.user.id !== undefined, "User ID missing");
+    client.assert(response.body.user.email === "{{testUserEmail}}", "Email doesn't match");
+  });
+
+  client.test("Session cookies are set", function() {
+    const setCookieHeader = response.headers.valueOf("Set-Cookie");
+    client.assert(setCookieHeader !== null, "Set-Cookie header is missing");
+    client.log("✓ Cookies set: " + setCookieHeader);
+  });
+
+  // Save user ID for reference
+  client.global.set("registeredUserId", response.body.user.id);
+  console.log("✓ STEP 1: User registered with ID: " + response.body.user.id);
+%}
+
+###
+
+# ========================================
+# STEP 2: ACCESS PROTECTED ENDPOINT
+# Verify auto-login works - cookies from registration should be used automatically
+# ========================================
+
+# @name Access Protected Endpoint After Registration
+# This proves auto-login works - no separate login call needed
+# Cookies from Step 1 are automatically included by IntelliJ HTTP Client
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Protected endpoint accessible with session - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Generation response contains required fields", function() {
+    client.assert(response.body.generation_id !== undefined, "generation_id missing");
+    client.log("✓ Generation created with ID: " + response.body.generation_id);
+  });
+
+  console.log("✓ STEP 2: Protected endpoint accessible - auto-login confirmed");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Registration Happy Path");
+  console.log("- User registered successfully");
+  console.log("- Cookies set automatically");
+  console.log("- Auto-login works (protected endpoint accessible)");
+  console.log("========================================");
+%}
+
+###

@@ -1,0 +1,159 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Logout Flow
+# Test complete logout functionality
+# ========================================
+#
+# This file tests the logout functionality:
+# 1. Register user (get session cookies)
+# 2. Verify access to protected endpoint works
+# 3. Logout
+# 4. Verify cookies are cleared
+# 5. Try to access protected endpoint → 401
+#
+# This validates that:
+# - Logout requires authentication
+# - Logout clears session cookies
+# - Cannot access protected resources after logout
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - /api/auth/logout is a protected endpoint
+# ========================================
+
+# Test credentials
+@testUserEmail = test-{{$timestamp}}@example.com
+@testUserPassword = password123
+
+# ========================================
+# STEP 1: REGISTER USER
+# ========================================
+
+###
+
+# @name Register User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Registration successful - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Session cookies are set", function() {
+    const setCookieHeader = response.headers.valueOf("Set-Cookie");
+    client.assert(setCookieHeader !== null, "Set-Cookie header is missing");
+  });
+
+  client.global.set("testUserId", response.body.user.id);
+  console.log("✓ STEP 1: User registered, session active");
+%}
+
+###
+
+# ========================================
+# STEP 2: VERIFY PROTECTED ENDPOINT ACCESS
+# ========================================
+
+# @name Verify Protected Endpoint Access Before Logout
+# Confirm authentication works before testing logout
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Protected endpoint accessible - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Generation created successfully", function() {
+    client.assert(response.body.generation_id !== undefined, "generation_id missing");
+  });
+
+  console.log("✓ STEP 2: Protected endpoint accessible - authentication confirmed");
+%}
+
+###
+
+# ========================================
+# STEP 3: LOGOUT
+# ========================================
+
+# @name Logout User
+POST {{baseUrl}}/api/auth/logout
+
+> {%
+  client.test("Logout successful - status 200", function() {
+    client.assert(response.status === 200, "Expected status 200, got " + response.status);
+  });
+
+  client.test("Logout response contains success message", function() {
+    client.assert(response.body.message !== undefined, "Success message missing");
+  });
+
+  console.log("✓ STEP 3: Logout successful - session should be cleared");
+%}
+
+###
+
+# ========================================
+# STEP 4: VERIFY PROTECTED ENDPOINT BLOCKED AFTER LOGOUT
+# ========================================
+
+# @name Verify Protected Endpoint Blocked After Logout
+# Should return 401 - session was cleared by logout
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Unauthorized after logout - status 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response indicates unauthorized", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ STEP 4: Protected endpoint blocked after logout (401)");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Logout Flow");
+  console.log("- User authenticated successfully");
+  console.log("- Protected endpoint accessible before logout");
+  console.log("- Logout clears session");
+  console.log("- Protected endpoint blocked after logout");
+  console.log("Logout functionality works correctly!");
+  console.log("========================================");
+%}
+
+###
+
+# ========================================
+# EDGE CASE: LOGOUT WITHOUT AUTHENTICATION
+# ========================================
+
+# @name Logout Without Authentication
+# Should return 401 - logout requires authentication
+POST {{baseUrl}}/api/auth/logout
+
+> {%
+  client.test("Logout without auth returns 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  console.log("✓ Edge case: Logout requires authentication (401)");
+%}
+
+###

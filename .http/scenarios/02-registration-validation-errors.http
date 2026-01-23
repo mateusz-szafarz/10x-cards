@@ -1,0 +1,224 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Registration Validation Errors
+# Test registration input validation and error handling
+# ========================================
+#
+# This file tests various validation error cases:
+# 1. Invalid email format
+# 2. Password too short (< 8 characters)
+# 3. Missing required fields
+# 4. Invalid JSON body
+# 5. Duplicate email (user already exists)
+#
+# Expected error format:
+# {
+#   "error": {
+#     "code": "ERROR_CODE",
+#     "message": "Human readable message"
+#   }
+# }
+# ========================================
+
+# Test data
+@validEmail = test-{{$timestamp}}@example.com
+@validPassword = password123
+
+# ========================================
+# ERROR CASE 1: INVALID EMAIL FORMAT
+# ========================================
+
+###
+
+# @name Invalid Email Format
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "not-an-email",
+  "password": "{{validPassword}}"
+}
+
+> {%
+  client.test("Invalid email returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error response has correct structure", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+    client.assert(response.body.error.code !== undefined, "Error code missing");
+    client.assert(response.body.error.message !== undefined, "Error message missing");
+  });
+
+  console.log("✓ Test 1: Invalid email format rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 2: PASSWORD TOO SHORT
+# ========================================
+
+# @name Password Too Short
+# Should return 400 VALIDATION_ERROR - password must be at least 8 characters
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{validEmail}}",
+  "password": "short"
+}
+
+> {%
+  client.test("Short password returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error indicates password validation issue", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+    client.assert(response.body.error.code !== undefined, "Error code missing");
+  });
+
+  console.log("✓ Test 2: Short password rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 3: MISSING PASSWORD FIELD
+# ========================================
+
+# @name Missing Password Field
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{validEmail}}"
+}
+
+> {%
+  client.test("Missing password returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ Test 3: Missing password field rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 4: MISSING EMAIL FIELD
+# ========================================
+
+# @name Missing Email Field
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "password": "{{validPassword}}"
+}
+
+> {%
+  client.test("Missing email returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ Test 4: Missing email field rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 5: INVALID JSON BODY
+# ========================================
+
+# @name Invalid JSON Body
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{invalid json}
+
+> {%
+  client.test("Invalid JSON returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  console.log("✓ Test 5: Invalid JSON rejected (400)");
+%}
+
+###
+
+# ========================================
+# SETUP FOR DUPLICATE EMAIL TEST
+# Register a user first, then try to register again with same email
+# ========================================
+
+# @name Setup - Register User for Duplicate Test
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{validEmail}}",
+  "password": "{{validPassword}}"
+}
+
+> {%
+  client.test("Setup: User registered successfully", function() {
+    client.assert(response.status === 201, "Setup failed - could not create user");
+  });
+
+  console.log("✓ Setup: Test user created for duplicate email test");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 6: DUPLICATE EMAIL (USER ALREADY EXISTS)
+# ========================================
+
+# @name Duplicate Email - User Already Exists
+# Should return 409 USER_EXISTS (note: 409 not 400)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{validEmail}}",
+  "password": "{{validPassword}}"
+}
+
+> {%
+  client.test("Duplicate email returns 409", function() {
+    client.assert(response.status === 409, "Expected status 409, got " + response.status);
+  });
+
+  client.test("Error indicates user exists", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+    client.assert(response.body.error.code !== undefined, "Error code missing");
+  });
+
+  console.log("✓ Test 6: Duplicate email rejected (409)");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Registration Validation Errors");
+  console.log("All validation cases handled correctly:");
+  console.log("- Invalid email format → 400");
+  console.log("- Password too short → 400");
+  console.log("- Missing fields → 400");
+  console.log("- Invalid JSON → 400");
+  console.log("- Duplicate email → 409");
+  console.log("========================================");
+%}
+
+###

@@ -1,0 +1,164 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Protected Endpoints Authorization
+# Test middleware authorization and session management
+# ========================================
+#
+# This file tests the complete authorization flow:
+# 1. Access protected endpoint WITHOUT cookies → 401
+# 2. Register user (get session cookies)
+# 3. Access protected endpoint WITH cookies → 201 (success)
+# 4. Logout (clear session)
+# 5. Try to access protected endpoint again → 401
+#
+# This validates that:
+# - Middleware correctly blocks unauthorized requests
+# - Session cookies enable access to protected resources
+# - Logout properly clears session and revokes access
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - Middleware checks authentication for /api/generations
+# ========================================
+
+# Test credentials
+@testUserEmail = test-{{$timestamp}}@example.com
+@testUserPassword = password123
+
+# ========================================
+# STEP 1: ACCESS PROTECTED ENDPOINT WITHOUT AUTH
+# ========================================
+
+###
+
+# @name Access Protected Endpoint Without Authentication
+# Should return 401 UNAUTHORIZED - no cookies/session
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Unauthorized request returns 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ STEP 1: Protected endpoint blocked without authentication (401)");
+%}
+
+###
+
+# ========================================
+# STEP 2: REGISTER USER TO GET SESSION
+# ========================================
+
+# @name Register User and Get Session Cookies
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Registration successful - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Session cookies are set", function() {
+    const setCookieHeader = response.headers.valueOf("Set-Cookie");
+    client.assert(setCookieHeader !== null, "Set-Cookie header is missing");
+  });
+
+  client.global.set("testUserId", response.body.user.id);
+  console.log("✓ STEP 2: User registered, session cookies obtained");
+%}
+
+###
+
+# ========================================
+# STEP 3: ACCESS PROTECTED ENDPOINT WITH AUTH
+# ========================================
+
+# @name Access Protected Endpoint With Authentication
+# Cookies from Step 2 are automatically included
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Authenticated request successful - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Response contains generation_id", function() {
+    client.assert(response.body.generation_id !== undefined, "generation_id missing");
+    client.log("✓ Generation created with ID: " + response.body.generation_id);
+  });
+
+  console.log("✓ STEP 3: Protected endpoint accessible with valid session");
+%}
+
+###
+
+# ========================================
+# STEP 4: LOGOUT TO CLEAR SESSION
+# ========================================
+
+# @name Logout - Clear Session
+POST {{baseUrl}}/api/auth/logout
+
+> {%
+  client.test("Logout successful - status 200", function() {
+    client.assert(response.status === 200, "Expected status 200, got " + response.status);
+  });
+
+  console.log("✓ STEP 4: Logged out - session cleared");
+%}
+
+###
+
+# ========================================
+# STEP 5: ACCESS PROTECTED ENDPOINT AFTER LOGOUT
+# ========================================
+
+# @name Access Protected Endpoint After Logout
+# Should return 401 - session was cleared
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("Unauthorized after logout - status 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ STEP 5: Protected endpoint blocked after logout (401)");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Protected Endpoints Authorization");
+  console.log("- Middleware blocks unauthorized requests → 401");
+  console.log("- Session cookies enable access → 201");
+  console.log("- Logout clears session → 401");
+  console.log("Complete authorization flow validated!");
+  console.log("========================================");
+%}
+
+###

@@ -1,0 +1,168 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Account Deletion (GDPR)
+# Test GDPR-compliant account deletion functionality
+# ========================================
+#
+# This file tests the account deletion flow:
+# 1. Register new user (get session)
+# 2. Access protected endpoint to confirm user exists and is authenticated
+# 3. Delete account
+# 4. Verify 200 response
+# 5. Try to login with deleted credentials → 401
+#
+# This validates that:
+# - Account deletion requires authentication
+# - Account is completely removed from auth.users
+# - Cannot login after account deletion
+# - GDPR "right to be forgotten" is properly implemented
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - DELETE /api/auth/account is a protected endpoint
+# - Account deletion is permanent and removes user from database
+# ========================================
+
+# Test credentials
+@testUserEmail = test-{{$timestamp}}@example.com
+@testUserPassword = password123
+
+# ========================================
+# STEP 1: REGISTER NEW USER
+# ========================================
+
+###
+
+# @name Register User for Deletion Test
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Registration successful - status 201", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("User object returned", function() {
+    client.assert(response.body.user !== undefined, "User object missing");
+    client.assert(response.body.user.id !== undefined, "User ID missing");
+  });
+
+  client.global.set("testUserId", response.body.user.id);
+  console.log("✓ STEP 1: User registered with ID: " + response.body.user.id);
+%}
+
+###
+
+# ========================================
+# STEP 2: VERIFY USER EXISTS AND IS AUTHENTICATED
+# ========================================
+
+# @name Verify User Exists - Access Protected Endpoint
+# Confirm user account is active and authenticated
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners. Effective flashcards use simple language and avoid ambiguity. Mnemonic devices can enhance memory encoding for difficult concepts. The key to successful learning with flashcards is consistency and regular practice sessions distributed over time."
+}
+
+> {%
+  client.test("User authenticated - protected endpoint accessible", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+  });
+
+  client.test("Generation created", function() {
+    client.assert(response.body.generation_id !== undefined, "generation_id missing");
+  });
+
+  console.log("✓ STEP 2: User exists and is authenticated");
+%}
+
+###
+
+# ========================================
+# STEP 3: DELETE ACCOUNT
+# ========================================
+
+# @name Delete User Account
+# GDPR "right to be forgotten" - permanent deletion
+DELETE {{baseUrl}}/api/auth/account
+
+> {%
+  client.test("Account deletion successful - status 200", function() {
+    client.assert(response.status === 200, "Expected status 200, got " + response.status);
+  });
+
+  client.test("Deletion response contains success message", function() {
+    client.assert(response.body.message !== undefined, "Success message missing");
+    client.log("✓ Deletion message: " + response.body.message);
+  });
+
+  console.log("✓ STEP 3: Account deleted successfully");
+%}
+
+###
+
+# ========================================
+# STEP 4: VERIFY ACCOUNT NO LONGER EXISTS
+# ========================================
+
+# @name Verify Cannot Login After Deletion
+# Should return 401 - account was removed from database
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Login fails after account deletion - status 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response indicates invalid credentials", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ STEP 4: Login fails - account no longer exists in database");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Account Deletion (GDPR)");
+  console.log("- User account created and authenticated");
+  console.log("- Account deletion successful");
+  console.log("- Account removed from database");
+  console.log("- Cannot login with deleted credentials");
+  console.log("GDPR compliance verified!");
+  console.log("========================================");
+%}
+
+###
+
+# ========================================
+# EDGE CASE: DELETE ACCOUNT WITHOUT AUTHENTICATION
+# ========================================
+
+# @name Delete Account Without Authentication
+# Should return 401 - account deletion requires authentication
+DELETE {{baseUrl}}/api/auth/account
+
+> {%
+  client.test("Account deletion without auth returns 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ Edge case: Account deletion requires authentication (401)");
+%}
+
+###

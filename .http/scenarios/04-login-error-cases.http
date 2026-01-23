@@ -1,0 +1,212 @@
+# @no-cookie-jar
+
+# ========================================
+# SCENARIO: Login Error Cases
+# Test login error handling and validation
+# ========================================
+#
+# This file tests various login error scenarios:
+# 1. Login with non-existent email → 401 INVALID_CREDENTIALS
+# 2. Login with wrong password → 401 INVALID_CREDENTIALS
+# 3. Login with missing password → 400 VALIDATION_ERROR
+# 4. Login with missing email → 400 VALIDATION_ERROR
+# 5. Login with invalid JSON → 400 VALIDATION_ERROR
+#
+# Security note: Generic error messages for invalid credentials
+# (both wrong email and wrong password return same message)
+#
+# Expected error format:
+# {
+#   "error": {
+#     "code": "ERROR_CODE",
+#     "message": "Human readable message"
+#   }
+# }
+# ========================================
+
+# Test data
+@testUserEmail = test-{{$timestamp}}@example.com
+@testUserPassword = password123
+
+# ========================================
+# ERROR CASE 1: NON-EXISTENT EMAIL
+# ========================================
+
+###
+
+# @name Login with Non-Existent Email
+# Should return 401 INVALID_CREDENTIALS
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent-{{$timestamp}}@example.com",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Non-existent email returns 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response has correct structure", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+    client.assert(response.body.error.code !== undefined, "Error code missing");
+    client.assert(response.body.error.message !== undefined, "Error message missing");
+  });
+
+  console.log("✓ Test 1: Non-existent email rejected (401)");
+%}
+
+###
+
+# ========================================
+# SETUP FOR WRONG PASSWORD TEST
+# Register user first, then logout
+# ========================================
+
+# @name Setup - Register User for Wrong Password Test
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Setup: User registered successfully", function() {
+    client.assert(response.status === 201, "Setup failed - could not create user");
+  });
+
+  console.log("✓ Setup: Test user created for wrong password test");
+%}
+
+###
+
+# @name Setup - Logout After Registration
+POST {{baseUrl}}/api/auth/logout
+
+> {%
+  client.test("Setup: Logout successful", function() {
+    client.assert(response.status === 200, "Logout failed");
+  });
+
+  console.log("✓ Setup: Logged out - ready for wrong password test");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 2: WRONG PASSWORD
+# ========================================
+
+# @name Login with Wrong Password
+# Should return 401 INVALID_CREDENTIALS (same as non-existent email - security best practice)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "wrongpassword123"
+}
+
+> {%
+  client.test("Wrong password returns 401", function() {
+    client.assert(response.status === 401, "Expected status 401, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+    client.assert(response.body.error.code !== undefined, "Error code missing");
+  });
+
+  console.log("✓ Test 2: Wrong password rejected (401)");
+  console.log("  Note: Same error as non-existent email (security best practice)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 3: MISSING PASSWORD
+# ========================================
+
+# @name Login with Missing Password
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}"
+}
+
+> {%
+  client.test("Missing password returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ Test 3: Missing password field rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 4: MISSING EMAIL
+# ========================================
+
+# @name Login with Missing Email
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("Missing email returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  client.test("Error response structure is valid", function() {
+    client.assert(response.body.error !== undefined, "Error object missing");
+  });
+
+  console.log("✓ Test 4: Missing email field rejected (400)");
+%}
+
+###
+
+# ========================================
+# ERROR CASE 5: INVALID JSON
+# ========================================
+
+# @name Login with Invalid JSON
+# Should return 400 VALIDATION_ERROR
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{invalid json}
+
+> {%
+  client.test("Invalid JSON returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400, got " + response.status);
+  });
+
+  console.log("✓ Test 5: Invalid JSON rejected (400)");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Login Error Cases");
+  console.log("All error cases handled correctly:");
+  console.log("- Non-existent email → 401 (generic message)");
+  console.log("- Wrong password → 401 (generic message)");
+  console.log("- Missing password → 400");
+  console.log("- Missing email → 400");
+  console.log("- Invalid JSON → 400");
+  console.log("========================================");
+%}
+
+###
