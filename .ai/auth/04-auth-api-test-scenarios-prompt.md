@@ -366,9 +366,11 @@ here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 @testRunTimestamp = {{$timestamp}}
 @testUserEmail = test-user-{{testRunTimestamp}}@example.com
 
-### ========================================
-### FAZA 1: REJESTRACJA I AUTORYZACJA
-### ========================================
+# ========================================
+# FAZA 1: REJESTRACJA I AUTORYZACJA
+# ========================================
+
+###
 
 # @name KROK 1.1: Zarejestruj nowego użytkownika
 # Tworzymy konto dla nowego klienta
@@ -494,7 +496,7 @@ Use `http-client.env.json` for configuration:
 ### Response Handling
 
 ```http
-### Save response data for later use
+# @name Save response data for later use
 POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
