@@ -32,12 +32,13 @@ export const prerender = false;
  */
 export const GET: APIRoute = async ({ url, locals }) => {
   // Parse and validate query parameters
+  // Convert null to undefined so Zod can apply defaults
   const params = {
-    page: url.searchParams.get("page"),
-    limit: url.searchParams.get("limit"),
-    source: url.searchParams.get("source"),
-    sort: url.searchParams.get("sort"),
-    order: url.searchParams.get("order"),
+    page: url.searchParams.get("page") ?? undefined,
+    limit: url.searchParams.get("limit") ?? undefined,
+    source: url.searchParams.get("source") ?? undefined,
+    sort: url.searchParams.get("sort") ?? undefined,
+    order: url.searchParams.get("order") ?? undefined,
   };
 
   const validationResult = flashcardsQueryParamsSchema.safeParse(params);
