@@ -1,8 +1,3 @@
-TODO: Źle jest używane @no-cookie-jar, powinno być bez # z przodu, dodatkowo założenie jest błędne
-bo ta dyrektywa działa w kontekście pojedynczego requestu, a nie całego pliku.
-Jako tymczasowy workaround można manualnie usuwać cookies z
-/home/mateusz/projects/plg/10x-cards/.idea/httpRequests/http-client.cookies
-
 # Prompt: HTTP Test Scenarios for Auth API
 
 Generate comprehensive test scenarios for the authentication API using IntelliJ IDEA HTTP Client format (.http files).
@@ -177,7 +172,20 @@ Response: 200 + success message
 
 ## Test Scenarios to Generate
 
-Create separate .http files for each scenario in `.http/scenarios/` directory:
+Create separate .http files for each scenario in `.http/scenarios/` directory.
+
+**IMPORTANT**: All scenarios MUST use pre-request scripts with `client.global.set()` for variable management. Use
+`Date.now()` for generating unique emails instead of `{{$timestamp}}`.
+
+Example pattern for every first request in a scenario:
+
+```javascript
+< {%
+client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+client.global.set("testUserPassword", "password123");
+%
+}
+```
 
 ### 1. `01-registration-happy-path.http`
 
@@ -311,14 +319,21 @@ Create separate .http files for each scenario in `.http/scenarios/` directory:
 ```http
 # @no-cookie-jar
 
-### Test scenario starts here with clean cookie state
+###
+
 # @name Register New User
+# Test scenario starts here with clean cookie state
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test-{{$timestamp}}@example.com",
-  "password": "password123"
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
 }
 ```
 
@@ -347,13 +362,27 @@ here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 **Structure pattern:**
 
 ```
-# environment setup
-@testUserEmail = test-user-{{testRunTimestamp}}@example.com
-@testUserPassword = somepassword
-
 # @name First Request
+< {%
+  // Pre-request script: Define variables before request execution
+  client.global.set("testUserEmail", "test-user-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "somepassword");
+%}
+
 POST /endpoint
-...request body...
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  // Post-request script: Assertions and variable storage
+  client.test("Request successful", function() {
+    client.assert(response.status === 200, "Expected 200");
+  });
+%}
 
 ###
 
@@ -365,9 +394,14 @@ POST /another-endpoint
 ###
 ```
 
-**Key principle**: Every request MUST be followed immediately by `###` separator. Any general comments or section
-markers come AFTER the separator, never before. Comments relates directly to request come right below header
-indication (`# @name Description).
+**Key principles**:
+
+- Every request MUST be followed immediately by `###` separator
+- Any general comments or section markers come AFTER the separator, never before
+- Comments related directly to request come right below header indication (`# @name Description`)
+- **Use pre-request scripts (`< {%`) to define variables with `client.global.set()`** - this makes variables available
+  in both request body (`{{variable}}`) and post-request assertions (`client.global.get("variable")`)
+- **DO NOT use `@variable = value` syntax** - it doesn't work with `{{$varialble}}` interpolation in JavaScript blocks
 
 **Valid example for reference:**
 
@@ -392,10 +426,6 @@ indication (`# @name Description).
 # - All assertions passed successfully
 # ========================================
 
-# Generate unique email for this test run
-@testRunTimestamp = {{$timestamp}}
-@testUserEmail = test-user-{{testRunTimestamp}}@example.com
-
 # ========================================
 # PHASE 1: REGISTRATION AND AUTHORIZATION
 # ========================================
@@ -404,12 +434,18 @@ indication (`# @name Description).
 
 # @name STEP 1.1: Register new user
 # Create account for new customer
+< {%
+  // Pre-request: Generate unique email for this test run
+  client.global.set("testUserEmail", "test-user-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "SecurePassword123!");
+%}
+
 POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
   "email": "{{testUserEmail}}",
-  "password": "SecurePassword123!",
+  "password": "{{testUserPassword}}",
   "firstName": "John",
   "lastName": "Doe",
   "acceptTerms": true
@@ -419,7 +455,7 @@ Content-Type: application/json
   client.test("Registration successful", function() {
     client.assert(response.status === 201, "Expected status 201");
     client.assert(response.body.id !== undefined, "User should have an ID");
-    client.assert(response.body.email === "{{testUserEmail}}", "Email doesn't match");
+    client.assert(response.body.email === client.global.get("testUserEmail"), "Email doesn't match");
   });
 
   // Save user ID for further operations
@@ -436,7 +472,7 @@ Content-Type: application/json
 
 {
   "email": "{{testUserEmail}}",
-  "password": "SecurePassword123!"
+  "password": "{{testUserPassword}}"
 }
 
 > {%
@@ -460,14 +496,22 @@ same file. **IMPORTANT**: Always use `# @no-cookie-jar` directive to ensure clea
 ```http
 # @no-cookie-jar
 
-### Step 1: Register (cookies saved automatically within this run)
+###
+
 # @name Register User
+# Step 1: Register (cookies saved automatically within this run)
+< {%
+  // Pre-request: Generate unique email using Date.now()
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test-{{$timestamp}}@example.com",
-  "password": "password123"
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
 }
 
 > {%
@@ -479,8 +523,8 @@ Content-Type: application/json
 
 ###
 
-### Step 2: Access protected endpoint (cookies sent automatically from Step 1)
 # @name Access Protected Resource
+# Step 2: Access protected endpoint (cookies sent automatically from Step 1)
 POST {{baseUrl}}/api/generations
 Content-Type: application/json
 
@@ -499,10 +543,12 @@ Content-Type: application/json
 **How it works:**
 
 1. `# @no-cookie-jar` at top → clean start on each run
-2. Step 1 registers user → Supabase returns Set-Cookie header
-3. IntelliJ saves cookies for THIS run only
-4. Step 2 automatically includes cookies from Step 1
-5. Next run of this file → starts fresh (no cookies from previous run)
+2. Pre-request script sets variables in `client.global` store using `Date.now()` for uniqueness
+3. Step 1 registers user → Supabase returns Set-Cookie header
+4. IntelliJ saves cookies for THIS run only
+5. Step 2 automatically includes cookies from Step 1
+6. Variables from Step 1 are still available (via `client.global`) if needed in Step 2
+7. Next run of this file → starts fresh (no cookies from previous run, new timestamp)
 
 ### Environment Variables
 
@@ -519,14 +565,66 @@ Use `http-client.env.json` for configuration:
 
 ### Dynamic Variables
 
-- `{{$timestamp}}` - Unix timestamp for unique emails
+**IMPORTANT**: Use pre-request scripts with `Date.now()` instead of `{{$timestamp}}` for generating unique values.
+
+**Why?** The `{{$timestamp}}` syntax doesn't work correctly in post-request JavaScript assertions. Using
+`client.global.set()` with `Date.now()` ensures variables are accessible in both request body and assertions.
+
+**Recommended approach:**
+
+```javascript
+< {%
+// Generate unique email using JavaScript Date.now()
+client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+%
+}
+```
+
+Then use in request body: `"email": "{{testUserEmail}}"`
+And in assertions: `client.assert(response.body.email === client.global.get("testUserEmail"))`
+
+**Built-in IntelliJ variables (avoid in our scenarios):**
+
+- `{{$timestamp}}` - Unix timestamp (works in request body, but NOT in JavaScript blocks)
 - `{{$randomInt}}` - Random integer
 - `{{$uuid}}` - Random UUID
+
+### Pre-Request Scripts for Variable Management
+
+**Critical Pattern**: Always define variables in pre-request scripts using `client.global.set()`:
+
+```javascript
+< {%
+client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+client.global.set("testUserPassword", "password123");
+%
+}
+```
+
+**Benefits:**
+
+1. Variables work in request body: `"email": "{{testUserEmail}}"`
+2. Variables work in assertions: `client.assert(response.body.email === client.global.get("testUserEmail"))`
+3. No interpolation issues with `{{variable}}` syntax in JavaScript blocks
+4. Full control over value generation with JavaScript expressions
+
+**DO NOT use this pattern** (old approach):
+
+```
+@testUserEmail = test-{{$timestamp}}@example.com  // ❌ WRONG
+```
+
+**Problem with old approach**: `{{testUserEmail}}` doesn't interpolate in JavaScript assertions, causing comparison
+failures.
 
 ### Response Handling
 
 ```http
 # @name Save response data for later use
+< {%
+  client.global.set("testEmail", "test-" + Date.now() + "@example.com");
+%}
+
 POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
@@ -539,6 +637,7 @@ Content-Type: application/json
     client.test("Registration successful", function() {
         client.assert(response.status === 201, "Response status is not 201");
         client.assert(response.body.user.id !== undefined, "User ID missing");
+        client.assert(response.body.user.email === client.global.get("testEmail"), "Email doesn't match");
     });
     client.global.set("userId", response.body.user.id);
 %}
@@ -566,8 +665,13 @@ Generate files in this structure:
 1. **MANDATORY: Start each file with `# @no-cookie-jar`**: This ensures clean state on each run and prevents cookie
    persistence issues between test executions.
 
-2. **Each scenario must be self-contained**: Register a new unique user within each test file (use `{{$timestamp}}` for
-   unique emails)
+2. **Each scenario must be self-contained**: Register a new unique user within each test file. Use pre-request scripts
+   with `Date.now()` for unique emails:
+   ```javascript
+   < {%
+     client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+   %}
+   ```
 
 3. **Include assertions**: Use IntelliJ's response handlers (`> {% ... %}`) to validate:
     - HTTP status codes
@@ -620,18 +724,43 @@ Generate files in this structure:
 **Cause**: Using curl or external tool instead of IntelliJ
 **Solution**: Use IntelliJ HTTP Client built-in runner (Run request icon or Ctrl+Enter)
 
+### Issue: "Variable interpolation fails in post-request assertions"
+
+**Problem**: Using `@variable = test-{{$timestamp}}@example.com` and then checking
+`response.body.email === "{{testUserEmail}}"` in JavaScript block fails
+
+**Cause**: The `{{variable}}` syntax doesn't interpolate inside JavaScript blocks (inside `> {% ... %}`)
+
+**Solution**: Use pre-request scripts with `client.global`:
+
+```javascript
+// Pre-request:
+< {%
+client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+%
+}
+
+// Post-request assertion:
+>
+{%
+  client.assert(response.body.email === client.global.get("testUserEmail"));
+%
+}
+```
+
 ## Expected Output
 
 Generate complete, runnable .http files with:
 
 - ✅ `# @no-cookie-jar` directive at the top of each file
+- ✅ Pre-request scripts (`< {%`) with `client.global.set()` for variable management
 - ✅ Clear step-by-step flow
 - ✅ Descriptive comments
-- ✅ Response assertions
+- ✅ Response assertions using `client.global.get()` for variable comparisons
 - ✅ Proper cookie handling (automatic within file, clean between runs)
 - ✅ Error case coverage
 - ✅ Self-contained scenarios (no dependencies between files)
-- ✅ Dynamic test data (timestamps for unique emails)
+- ✅ Dynamic test data (`Date.now()` for unique emails)
 - ✅ Both happy path and error cases
 
 Each file should be immediately executable in IntelliJ IDEA HTTP Client without any manual setup (except starting the
