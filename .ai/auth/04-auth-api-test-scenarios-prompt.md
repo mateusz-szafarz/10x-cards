@@ -333,11 +333,32 @@ here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 
 **My requirements:**
 
-- For marking header of each request use `# @name Some Descriptive Name` (`@name` based syntax) to give a clear
-  indication of what the request does (do not use three hashes syntax for that).
-- For separating requests use `###` (combined with some comment or not). All requests must be separated by exactly three
-  hashes. This way it will be possible to add some additional comments between requests if needed (for example to mark
-  separate sections of the test scenario).
+**Syntax rules:**
+
+- `###` = request separator (MUST appear immediately after each request ends)
+- `# @name Description` = request header (not `###`)
+- `#` = comments (can appear after the separator to mark sections, add notes, etc.)
+
+**Structure pattern:**
+
+```
+# @name First Request
+POST /endpoint
+...request body...
+
+###
+
+# Optional: section comment or note here
+# @name Second Request
+POST /another-endpoint
+...request body...
+
+###
+```
+
+**Key principle**: Every request MUST be followed immediately by `###` separator. Any general comments or section
+markers come AFTER the separator, never before. Comments relates directly to request come right below header
+indication (`# @name Description).
 
 **Valid example for reference:**
 
