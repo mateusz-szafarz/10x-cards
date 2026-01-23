@@ -24,10 +24,6 @@
 # }
 # ========================================
 
-# Test data
-@testUserEmail = test-{{$timestamp}}@example.com
-@testUserPassword = password123
-
 # ========================================
 # ERROR CASE 1: NON-EXISTENT EMAIL
 # ========================================
@@ -36,11 +32,17 @@
 
 # @name Login with Non-Existent Email
 # Should return 401 INVALID_CREDENTIALS
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+  client.global.set("nonexistentEmail", "nonexistent-" + Date.now() + "@example.com");
+%}
+
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "nonexistent-{{$timestamp}}@example.com",
+  "email": "{{nonexistentEmail}}",
   "password": "{{testUserPassword}}"
 }
 

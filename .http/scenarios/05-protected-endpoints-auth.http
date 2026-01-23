@@ -22,10 +22,6 @@
 # - Middleware checks authentication for /api/generations
 # ========================================
 
-# Test credentials
-@testUserEmail = test-{{$timestamp}}@example.com
-@testUserPassword = password123
-
 # ========================================
 # STEP 1: ACCESS PROTECTED ENDPOINT WITHOUT AUTH
 # ========================================
@@ -60,6 +56,11 @@ Content-Type: application/json
 # ========================================
 
 # @name Register User and Get Session Cookies
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 

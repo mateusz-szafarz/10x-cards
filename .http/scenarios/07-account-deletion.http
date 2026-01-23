@@ -24,10 +24,6 @@
 # - Account deletion is permanent and removes user from database
 # ========================================
 
-# Test credentials
-@testUserEmail = test-{{$timestamp}}@example.com
-@testUserPassword = password123
-
 # ========================================
 # STEP 1: REGISTER NEW USER
 # ========================================
@@ -35,6 +31,11 @@
 ###
 
 # @name Register User for Deletion Test
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 

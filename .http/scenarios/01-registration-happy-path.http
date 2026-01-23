@@ -22,10 +22,6 @@
 # - Protected endpoint accessible without separate login
 # ========================================
 
-# Generate unique email for this test run
-@testUserEmail = test-{{$timestamp}}@example.com
-@testUserPassword = password123
-
 # ========================================
 # STEP 1: REGISTER NEW USER
 # ========================================
@@ -34,6 +30,13 @@
 
 # @name Register New User
 # Create account - should return 201 and set session cookies automatically
+< {%
+
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "testPassword123!");
+
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -50,7 +53,7 @@ Content-Type: application/json
   client.test("Response contains user object", function() {
     client.assert(response.body.user !== undefined, "User object missing in response");
     client.assert(response.body.user.id !== undefined, "User ID missing");
-    client.assert(response.body.user.email === "{{testUserEmail}}", "Email doesn't match");
+    client.assert(response.body.user.email === client.global.get("testUserEmail"), "Email doesn't match");
   });
 
   client.test("Session cookies are set", function() {

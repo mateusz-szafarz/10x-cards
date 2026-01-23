@@ -22,10 +22,6 @@
 # - /api/auth/logout is a protected endpoint
 # ========================================
 
-# Test credentials
-@testUserEmail = test-{{$timestamp}}@example.com
-@testUserPassword = password123
-
 # ========================================
 # STEP 1: REGISTER USER
 # ========================================
@@ -33,6 +29,11 @@
 ###
 
 # @name Register User
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 

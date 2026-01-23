@@ -21,10 +21,6 @@
 # }
 # ========================================
 
-# Test data
-@validEmail = test-{{$timestamp}}@example.com
-@validPassword = password123
-
 # ========================================
 # ERROR CASE 1: INVALID EMAIL FORMAT
 # ========================================
@@ -33,6 +29,11 @@
 
 # @name Invalid Email Format
 # Should return 400 VALIDATION_ERROR
+< {%
+  client.global.set("validEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("validPassword", "password123");
+%}
+
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
