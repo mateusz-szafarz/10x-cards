@@ -1,0 +1,351 @@
+# ========================================
+# SCENARIO: Flashcards List - Pagination and Filters
+# Test flashcard listing with pagination, filtering, and sorting
+# ========================================
+#
+# This file tests the GET /api/flashcards endpoint with various query parameters:
+# 1. User registration and auto-login
+# 2. Creating multiple manual flashcards
+# 3. Creating AI-generated flashcards (via generation acceptance)
+# 4. Testing default pagination
+# 5. Testing custom page size and page number
+# 6. Testing source filtering (manual, ai_generated)
+# 7. Testing sorting options
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - Default page size is 20 items
+# - Valid sort fields: created_at, updated_at
+# - Valid order: asc, desc
+#
+# Expected result:
+# - Pagination works correctly
+# - Filters return only matching flashcards
+# - User only sees their own flashcards (RLS)
+# - Sorting works as expected
+# ========================================
+
+###
+
+# ========================================
+# PHASE 1: SETUP - USER REGISTRATION
+# ========================================
+
+# @name Register Test User
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "testPassword123!");
+%}
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("User registration successful", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(response.body.user.id !== undefined, "User ID missing");
+  });
+
+  client.global.set("userId", response.body.user.id);
+  console.log("✓ PHASE 1: User registered");
+%}
+
+###
+
+# ========================================
+# PHASE 2: CREATE MANUAL FLASHCARDS
+# ========================================
+
+# @name Create Manual Flashcard 1
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "What is React?",
+  "back": "React is a JavaScript library for building user interfaces."
+}
+
+> {%
+  client.test("Manual flashcard 1 created", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(response.body.source === "manual", "Should be manual source");
+  });
+
+  client.global.set("manualFlashcard1Id", response.body.id);
+  console.log("✓ Created manual flashcard 1");
+%}
+
+###
+
+# @name Create Manual Flashcard 2
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "What is TypeScript?",
+  "back": "TypeScript is a strongly typed programming language that builds on JavaScript."
+}
+
+> {%
+  client.test("Manual flashcard 2 created", function() {
+    client.assert(response.status === 201, "Expected status 201");
+  });
+
+  client.global.set("manualFlashcard2Id", response.body.id);
+  console.log("✓ Created manual flashcard 2");
+%}
+
+###
+
+# @name Create Manual Flashcard 3
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "What is Astro?",
+  "back": "Astro is a modern web framework for building fast, content-focused websites."
+}
+
+> {%
+  client.test("Manual flashcard 3 created", function() {
+    client.assert(response.status === 201, "Expected status 201");
+  });
+
+  console.log("✓ PHASE 2: Created 3 manual flashcards");
+%}
+
+###
+
+# ========================================
+# PHASE 3: CREATE AI-GENERATED FLASHCARDS
+# ========================================
+
+# @name Create Generation Session
+< {%
+  const sourceText = "Web development involves creating and maintaining websites. HTML provides structure, CSS handles styling, and JavaScript adds interactivity. Modern frameworks like React and Vue simplify complex applications by managing state and rendering efficiently. Understanding these fundamentals is crucial for any web developer.".repeat(5); // Repeat to meet 1000-10000 char requirement
+  client.global.set("generationSourceText", sourceText);
+%}
+
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "{{generationSourceText}}"
+}
+
+> {%
+  client.test("Generation created", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(response.body.generation_id !== undefined, "Generation ID missing");
+  });
+
+  client.global.set("generationId", response.body.generation_id);
+  console.log("✓ Generation created with ID: " + response.body.generation_id);
+%}
+
+###
+
+# @name Accept Generated Flashcards
+< {%
+  // Prepare flashcards to accept from generation
+  const flashcardsToAccept = [
+    {
+      "front": "What is HTML?",
+      "back": "HTML (HyperText Markup Language) provides structure to web pages."
+    },
+    {
+      "front": "What is CSS?",
+      "back": "CSS (Cascading Style Sheets) handles the styling and layout of web pages."
+    }
+  ];
+  client.global.set("flashcardsToAccept", JSON.stringify(flashcardsToAccept));
+%}
+
+POST {{baseUrl}}/api/generations/{{generationId}}/accept
+Content-Type: application/json
+
+{
+  "flashcards": {{flashcardsToAccept}}
+}
+
+> {%
+  client.test("Flashcards accepted from generation", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(Array.isArray(response.body.flashcards), "Should return array of flashcards");
+    client.assert(response.body.flashcards.length === 2, "Should create 2 flashcards");
+
+    response.body.flashcards.forEach(function(flashcard) {
+      client.assert(flashcard.source === "ai_generated", "Should have ai_generated source");
+      client.assert(flashcard.generation_id === client.global.get("generationId"), "Should have generation_id");
+    });
+  });
+
+  console.log("✓ PHASE 3: Created 2 AI-generated flashcards");
+  console.log("Total flashcards: 3 manual + 2 AI = 5 total");
+%}
+
+###
+
+# ========================================
+# PHASE 4: TEST DEFAULT LISTING
+# ========================================
+
+# @name List All Flashcards (Default)
+# No query params - should return all flashcards with default pagination
+GET {{baseUrl}}/api/flashcards
+
+> {%
+  client.test("List returns all user flashcards", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(Array.isArray(response.body.flashcards), "Should return items array");
+    client.assert(response.body.flashcards.length === 5, "Should have 5 flashcards total");
+  });
+
+  client.test("Pagination metadata present", function() {
+    client.assert(response.body.pagination.total !== undefined, "Total count missing");
+    client.assert(response.body.pagination.page !== undefined, "Page number missing");
+    client.assert(response.body.pagination.limit !== undefined, "Limit missing");
+    client.assert(response.body.pagination.total === 5, "Total should be 5");
+  });
+
+  console.log("✓ PHASE 4: Default listing works - 5 flashcards found");
+%}
+
+###
+
+# ========================================
+# PHASE 5: TEST PAGINATION
+# ========================================
+
+# @name List Flashcards - Page 1, Limit 2
+GET {{baseUrl}}/api/flashcards?page=1&limit=2
+
+> {%
+  client.test("Pagination page 1 with limit 2", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 2, "Should return exactly 2 items");
+    client.assert(response.body.pagination.page === 1, "Page should be 1");
+    client.assert(response.body.pagination.limit === 2, "Limit should be 2");
+    client.assert(response.body.pagination.total === 5, "Total should still be 5");
+  });
+
+  console.log("✓ Page 1 with limit 2 works");
+%}
+
+###
+
+# @name List Flashcards - Page 2, Limit 2
+GET {{baseUrl}}/api/flashcards?page=2&limit=2
+
+> {%
+  client.test("Pagination page 2 with limit 2", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 2, "Should return exactly 2 items");
+    client.assert(response.body.pagination.page === 2, "Page should be 2");
+  });
+
+  console.log("✓ PHASE 5: Pagination works correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 6: TEST SOURCE FILTERING
+# ========================================
+
+# @name Filter By Source - Manual Only
+GET {{baseUrl}}/api/flashcards?source=manual
+
+> {%
+  client.test("Filter by source=manual", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 3, "Should return 3 manual flashcards");
+
+    response.body.flashcards.forEach(function(flashcard) {
+      client.assert(flashcard.source === "manual", "All flashcards should have source='manual'");
+      client.assert(flashcard.generation_id === null, "Manual flashcards should have null generation_id");
+    });
+  });
+
+  console.log("✓ Filtered by source=manual - 3 flashcards found");
+%}
+
+###
+
+# @name Filter By Source - AI Generated Only
+GET {{baseUrl}}/api/flashcards?source=ai_generated
+
+> {%
+  client.test("Filter by source=ai_generated", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 2, "Should return 2 AI-generated flashcards");
+
+    response.body.flashcards.forEach(function(flashcard) {
+      client.assert(flashcard.source === "ai_generated", "All flashcards should have source='ai_generated'");
+      client.assert(flashcard.generation_id !== null, "AI flashcards should have generation_id");
+    });
+  });
+
+  console.log("✓ PHASE 6: Source filtering works correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 7: TEST SORTING
+# ========================================
+
+# @name Sort By created_at Ascending
+GET {{baseUrl}}/api/flashcards?sort=created_at&order=asc
+
+> {%
+  client.test("Sort by created_at ascending", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 5, "Should return all 5 flashcards");
+
+    // Verify ascending order (oldest first)
+    const items = response.body.flashcards;
+    for (let i = 0; i < items.length - 1; i++) {
+      const current = new Date(items[i].created_at);
+      const next = new Date(items[i + 1].created_at);
+      client.assert(current <= next, "Items should be in ascending order by created_at");
+    }
+  });
+
+  console.log("✓ Sort by created_at ascending works");
+%}
+
+###
+
+# @name Sort By updated_at Descending
+GET {{baseUrl}}/api/flashcards?sort=updated_at&order=desc
+
+> {%
+  client.test("Sort by updated_at descending", function() {
+    client.assert(response.status === 200, "Expected status 200");
+
+    // Verify descending order (newest first)
+    const items = response.body.flashcards;
+    for (let i = 0; i < items.length - 1; i++) {
+      const current = new Date(items[i].updated_at);
+      const next = new Date(items[i + 1].updated_at);
+      client.assert(current >= next, "Items should be in descending order by updated_at");
+    }
+  });
+
+  console.log("✓ PHASE 7: Sorting works correctly");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Flashcards List and Filters");
+  console.log("- Default listing returns all flashcards");
+  console.log("- Pagination works with custom page and limit");
+  console.log("- Source filtering works (manual, ai_generated)");
+  console.log("- Sorting works (created_at, updated_at, asc, desc)");
+  console.log("========================================");
+%}
+
+###

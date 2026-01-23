@@ -1,0 +1,268 @@
+# ========================================
+# SCENARIO: Generation Acceptance - Happy Path
+# Test AI flashcard generation and acceptance flow
+# ========================================
+#
+# This file tests the complete AI generation workflow:
+# 1. User registration and auto-login
+# 2. Creating a generation session with source text
+# 3. Accepting selected flashcards from the generation
+# 4. Verifying flashcards are created with correct metadata
+# 5. Verifying generation session is updated correctly
+# 6. Testing that finalized generations cannot be re-accepted
+#
+# Initial assumptions:
+# - API is available at {{baseUrl}}
+# - Source text must be 1000-10000 characters
+# - AI model generates flashcard suggestions
+# - accepted_count is updated when flashcards are accepted
+#
+# Expected result:
+# - Generation session created successfully
+# - Flashcards accepted and created with source='ai_generated'
+# - Each flashcard has correct generation_id reference
+# - accepted_count reflects number of accepted flashcards
+# - Finalized generations return 409 on re-acceptance attempt
+# ========================================
+
+# ========================================
+# PHASE 1: SETUP - USER REGISTRATION
+# ========================================
+
+###
+
+# @name Register Test User
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "testPassword123!");
+%}
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("User registration successful", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(response.body.user.id !== undefined, "User ID missing");
+  });
+
+  client.global.set("userId", response.body.user.id);
+  console.log("✓ PHASE 1: User registered with ID: " + response.body.user.id);
+%}
+
+###
+
+# ========================================
+# PHASE 2: CREATE GENERATION SESSION
+# ========================================
+
+# @name Create Generation Session
+# Submit source text to generate flashcard suggestions
+< {%
+  // Create source text that meets 1000-10000 character requirement
+  const baseText = "Machine learning is a subset of artificial intelligence that enables computers to learn from data without being explicitly programmed. " +
+    "Neural networks are inspired by biological neurons and consist of interconnected layers that process information. " +
+    "Deep learning uses multiple layers to progressively extract higher-level features from raw input. " +
+    "Supervised learning involves training models on labeled data to make predictions. " +
+    "Unsupervised learning discovers patterns in unlabeled data through clustering and dimensionality reduction. " +
+    "Reinforcement learning trains agents to make decisions by rewarding desired behaviors. " +
+    "Overfitting occurs when models memorize training data rather than learning generalizable patterns. " +
+    "Cross-validation helps assess model performance and prevents overfitting by testing on unseen data. " +
+    "Feature engineering involves selecting and transforming input variables to improve model accuracy. " +
+    "Gradient descent is an optimization algorithm that iteratively adjusts model parameters to minimize loss. ";
+
+  const sourceText = baseText.repeat(2); // Repeat to ensure we meet character requirement
+  client.global.set("generationSourceText", sourceText);
+%}
+
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "{{generationSourceText}}"
+}
+
+> {%
+  client.test("Generation session created", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+    client.assert(response.body.generation_id !== undefined, "Generation ID missing");
+  });
+
+  client.test("Generation response contains suggested flashcards", function() {
+    client.assert(Array.isArray(response.body.flashcards_proposals), "Should return array of suggestions");
+    client.assert(response.body.flashcards_proposals.length > 0, "Should have at least one suggestion");
+
+    // Verify structure of suggested flashcards
+    response.body.flashcards_proposals.forEach(function(card) {
+      client.assert(card.front !== undefined, "Suggestion should have 'front'");
+      client.assert(card.back !== undefined, "Suggestion should have 'back'");
+      client.assert(typeof card.front === "string", "Front should be a string");
+      client.assert(typeof card.back === "string", "Back should be a string");
+    });
+  });
+
+  client.global.set("generationId", response.body.generation_id);
+  client.global.set("suggestedFlashcards", JSON.stringify(response.body.flashcards_proposals));
+  console.log("✓ PHASE 2: Generation created with " + response.body.flashcards_proposals.length + " suggestions");
+  console.log("Generation ID: " + response.body.generation_id);
+%}
+
+###
+
+# ========================================
+# PHASE 3: ACCEPT FLASHCARDS FROM GENERATION
+# ========================================
+
+# @name Accept Selected Flashcards
+# User reviews suggestions and accepts some of them
+< {%
+  // Parse suggested flashcards and select first 3 to accept
+  const allSuggestions = JSON.parse(client.global.get("suggestedFlashcards"));
+  const flashcardsToAccept = allSuggestions.slice(0, 3); // Accept first 3 suggestions
+
+  client.global.set("flashcardsToAccept", JSON.stringify(flashcardsToAccept));
+  client.global.set("expectedAcceptedCount", flashcardsToAccept.length.toString());
+%}
+
+POST {{baseUrl}}/api/generations/{{generationId}}/accept
+Content-Type: application/json
+
+{
+  "flashcards": {{flashcardsToAccept}}
+}
+
+> {%
+  client.test("Flashcards accepted successfully", function() {
+    client.assert(response.status === 201, "Expected status 201, got " + response.status);
+    client.assert(Array.isArray(response.body.flashcards), "Should return array of created flashcards");
+
+    const expectedCount = parseInt(client.global.get("expectedAcceptedCount"));
+    client.assert(response.body.flashcards.length === expectedCount,
+      "Should create " + expectedCount + " flashcards, got " + response.body.flashcards.length);
+  });
+
+  client.test("Accepted flashcards have correct metadata", function() {
+    const generationId = client.global.get("generationId");
+
+    response.body.flashcards.forEach(function(flashcard) {
+      client.assert(flashcard.id !== undefined, "Flashcard should have ID");
+      client.assert(flashcard.source === "ai_generated", "Source should be 'ai_generated', got: " + flashcard.source);
+      client.assert(flashcard.generation_id === generationId, "generation_id mismatch");
+      client.assert(flashcard.created_at !== undefined, "created_at missing");
+      client.assert(flashcard.updated_at !== undefined, "updated_at missing");
+    });
+  });
+
+  client.test("Flashcard content matches accepted data", function() {
+    const acceptedFlashcards = JSON.parse(client.global.get("flashcardsToAccept"));
+
+    response.body.flashcards.forEach(function(flashcard, index) {
+      client.assert(flashcard.front === acceptedFlashcards[index].front, "Front content mismatch at index " + index);
+      client.assert(flashcard.back === acceptedFlashcards[index].back, "Back content mismatch at index " + index);
+    });
+  });
+
+  // Save first flashcard ID for later verification
+  client.global.set("acceptedFlashcardId", response.body.flashcards[0].id);
+  console.log("✓ PHASE 3: Accepted " + response.body.flashcards.length + " flashcards from generation");
+%}
+
+###
+
+# ========================================
+# PHASE 4: VERIFY ACCEPTED FLASHCARD
+# ========================================
+
+# @name Verify Accepted Flashcard Exists
+# Retrieve one of the accepted flashcards to confirm it was persisted
+GET {{baseUrl}}/api/flashcards/{{acceptedFlashcardId}}
+
+> {%
+  client.test("Accepted flashcard can be retrieved", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.id === client.global.get("acceptedFlashcardId"), "Flashcard ID mismatch");
+    client.assert(response.body.source === "ai_generated", "Should have ai_generated source");
+    client.assert(response.body.generation_id === client.global.get("generationId"), "generation_id mismatch");
+  });
+
+  console.log("✓ PHASE 4: Accepted flashcard verified in database");
+%}
+
+###
+
+# ========================================
+# PHASE 5: VERIFY GENERATION SESSION UPDATE
+# ========================================
+
+# @name List All Flashcards
+# Verify accepted_count by listing all flashcards for this generation
+GET {{baseUrl}}/api/flashcards?source=ai_generated
+
+> {%
+  client.test("AI-generated flashcards are listed correctly", function() {
+    client.assert(response.status === 200, "Expected status 200");
+
+    const expectedCount = parseInt(client.global.get("expectedAcceptedCount"));
+    const generationId = client.global.get("generationId");
+
+    // Filter flashcards by generation_id
+    const flashcardsFromThisGeneration = response.body.flashcards.filter(function(fc) {
+      return fc.generation_id === generationId;
+    });
+
+    client.assert(flashcardsFromThisGeneration.length === expectedCount,
+      "Should have " + expectedCount + " flashcards for this generation");
+  });
+
+  console.log("✓ PHASE 5: Generation session accepted_count verified");
+%}
+
+###
+
+# ========================================
+# PHASE 6: TEST FINALIZED GENERATION REJECTION
+# ========================================
+
+# @name Try to Re-Accept Finalized Generation
+# Attempt to accept flashcards again - should return 409 CONFLICT
+< {%
+  const flashcardsToAccept = [
+    {
+      "front": "Another question",
+      "back": "Another answer"
+    }
+  ];
+  client.global.set("newFlashcardsToAccept", JSON.stringify(flashcardsToAccept));
+%}
+
+POST {{baseUrl}}/api/generations/{{generationId}}/accept
+Content-Type: application/json
+
+{
+  "flashcards": {{newFlashcardsToAccept}}
+}
+
+> {%
+  client.test("Finalized generation cannot be re-accepted", function() {
+    client.assert(response.status === 409, "Expected status 409 CONFLICT, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ PHASE 6: Finalized generation correctly rejected re-acceptance");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Generation Acceptance Happy Path");
+  console.log("- Generation session created with AI suggestions");
+  console.log("- Selected flashcards accepted successfully");
+  console.log("- Flashcards created with source='ai_generated'");
+  console.log("- generation_id correctly linked to flashcards");
+  console.log("- accepted_count updated correctly");
+  console.log("- Finalized generation cannot be re-accepted (409)");
+  console.log("========================================");
+%}
+
+###

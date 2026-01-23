@@ -1,0 +1,483 @@
+# ========================================
+# SCENARIO: Flashcards API - Validation Errors
+# Test input validation and error handling
+# ========================================
+#
+# This file tests various validation error scenarios:
+# 1. User registration and auto-login (setup)
+# 2. POST /api/flashcards validation errors
+# 3. GET /api/flashcards/:id validation errors
+# 4. PUT /api/flashcards/:id validation errors
+# 5. DELETE /api/flashcards/:id validation errors
+# 6. POST /api/generations/:id/accept validation errors
+# 7. GET /api/flashcards query parameter validation
+#
+# Initial assumptions:
+# - API returns 400 BAD REQUEST for validation errors
+# - API returns 404 NOT FOUND for non-existent resources
+# - Error responses include descriptive error messages
+#
+# Expected result:
+# - All validation errors are caught and return appropriate status codes
+# - Error messages are descriptive and helpful
+# ========================================
+
+# ========================================
+# PHASE 1: SETUP - USER REGISTRATION
+# ========================================
+
+###
+
+# @name Register Test User
+< {%
+  client.global.set("testUserEmail", "test-" + Date.now() + "@example.com");
+  client.global.set("testUserPassword", "testPassword123!");
+%}
+
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{testUserEmail}}",
+  "password": "{{testUserPassword}}"
+}
+
+> {%
+  client.test("User registration successful", function() {
+    client.assert(response.status === 201, "Expected status 201");
+  });
+
+  console.log("✓ PHASE 1: User registered and authenticated");
+%}
+
+###
+
+# ========================================
+# PHASE 2: POST /api/flashcards VALIDATION ERRORS
+# ========================================
+
+# @name Create Flashcard - Missing Front Field
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "back": "This flashcard is missing the front field."
+}
+
+> {%
+  client.test("Missing front field returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ Missing front field properly rejected");
+%}
+
+###
+
+# @name Create Flashcard - Missing Back Field
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "This flashcard is missing the back field."
+}
+
+> {%
+  client.test("Missing back field returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ Missing back field properly rejected");
+%}
+
+###
+
+# @name Create Flashcard - Front Too Long
+< {%
+  // Generate string longer than 500 characters
+  const longFront = "A".repeat(501);
+  client.global.set("longFront", longFront);
+%}
+
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "{{longFront}}",
+  "back": "Valid back content."
+}
+
+> {%
+  client.test("Front field too long returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ Front field length validation works");
+%}
+
+###
+
+# @name Create Flashcard - Back Too Long
+< {%
+  // Generate string longer than 2000 characters
+  const longBack = "B".repeat(2001);
+  client.global.set("longBack", longBack);
+%}
+
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "Valid front content.",
+  "back": "{{longBack}}"
+}
+
+> {%
+  client.test("Back field too long returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ PHASE 2: POST /api/flashcards validation working correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 3: GET /api/flashcards/:id VALIDATION ERRORS
+# ========================================
+
+# @name Get Flashcard - Invalid UUID Format
+GET {{baseUrl}}/api/flashcards/not-a-valid-uuid
+
+> {%
+  client.test("Invalid UUID format returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ Invalid UUID format properly rejected");
+%}
+
+###
+
+# @name Get Flashcard - Non-Existent ID
+# Use valid UUID format but non-existent ID
+GET {{baseUrl}}/api/flashcards/00000000-0000-4000-8000-000000000000
+
+> {%
+  client.test("Non-existent flashcard returns 404", function() {
+    client.assert(response.status === 404, "Expected status 404 NOT FOUND, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ PHASE 3: GET /api/flashcards/:id validation working correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 4: PUT /api/flashcards/:id VALIDATION ERRORS
+# ========================================
+
+# @name Update Flashcard - Invalid UUID Format
+PUT {{baseUrl}}/api/flashcards/invalid-uuid-format
+Content-Type: application/json
+
+{
+  "front": "Updated front",
+  "back": "Updated back"
+}
+
+> {%
+  client.test("Invalid UUID format returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid UUID in PUT properly rejected");
+%}
+
+###
+
+# @name Update Flashcard - Non-Existent ID
+PUT {{baseUrl}}/api/flashcards/00000000-0000-4000-8000-000000000000
+Content-Type: application/json
+
+{
+  "front": "Updated front",
+  "back": "Updated back"
+}
+
+> {%
+  client.test("Non-existent flashcard returns 404", function() {
+    client.assert(response.status === 404, "Expected status 404 NOT FOUND, got " + response.status);
+  });
+
+  console.log("✓ Non-existent ID in PUT returns 404");
+%}
+
+###
+
+# @name Update Flashcard - Missing Required Fields
+# First create a flashcard to have a valid ID
+POST {{baseUrl}}/api/flashcards
+Content-Type: application/json
+
+{
+  "front": "Original front",
+  "back": "Original back"
+}
+
+> {%
+  client.test("Flashcard created for update test", function() {
+    client.assert(response.status === 201, "Expected status 201");
+  });
+
+  client.global.set("testFlashcardId", response.body.id);
+%}
+
+###
+
+# @name Update Flashcard - Missing Front Field
+PUT {{baseUrl}}/api/flashcards/{{testFlashcardId}}
+Content-Type: application/json
+
+{
+  "back": "Updated back only"
+}
+
+> {%
+  client.test("Missing front in update returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ PHASE 4: PUT /api/flashcards/:id validation working correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 5: DELETE /api/flashcards/:id VALIDATION ERRORS
+# ========================================
+
+# @name Delete Flashcard - Invalid UUID Format
+DELETE {{baseUrl}}/api/flashcards/not-a-valid-uuid
+
+> {%
+  client.test("Invalid UUID in DELETE returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid UUID in DELETE properly rejected");
+%}
+
+###
+
+# @name Delete Flashcard - Non-Existent ID
+DELETE {{baseUrl}}/api/flashcards/00000000-0000-4000-8000-000000000000
+
+> {%
+  client.test("Non-existent flashcard DELETE returns 404", function() {
+    client.assert(response.status === 404, "Expected status 404 NOT FOUND, got " + response.status);
+  });
+
+  console.log("✓ PHASE 5: DELETE /api/flashcards/:id validation working correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 6: POST /api/generations/:id/accept VALIDATION ERRORS
+# ========================================
+
+# @name Accept Generation - Invalid UUID Format
+POST {{baseUrl}}/api/generations/not-a-valid-uuid/accept
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Question",
+      "back": "Answer"
+    }
+  ]
+}
+
+> {%
+  client.test("Invalid generation ID format returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid generation ID format properly rejected");
+%}
+
+###
+
+# @name Accept Generation - Non-Existent ID
+POST {{baseUrl}}/api/generations/00000000-0000-4000-8000-000000000000/accept
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Question",
+      "back": "Answer"
+    }
+  ]
+}
+
+> {%
+  client.test("Non-existent generation ID returns 404", function() {
+    client.assert(response.status === 404, "Expected status 404 NOT FOUND, got " + response.status);
+  });
+
+  console.log("✓ Non-existent generation ID returns 404");
+%}
+
+###
+
+# @name Accept Generation - Empty Flashcards Array
+# First create a valid generation
+< {%
+  const sourceText = "This is test content for flashcard generation. Machine learning enables computers to learn from data. ".repeat(10);
+  client.global.set("testSourceText", sourceText);
+%}
+
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+
+{
+  "source_text": "{{testSourceText}}"
+}
+
+> {%
+  client.test("Generation created for validation test", function() {
+    client.assert(response.status === 201, "Expected status 201");
+  });
+
+  client.global.set("testGenerationId", response.body.generation_id);
+%}
+
+###
+
+# @name Accept Generation - Empty Flashcards Array
+POST {{baseUrl}}/api/generations/{{testGenerationId}}/accept
+Content-Type: application/json
+
+{
+  "flashcards": []
+}
+
+> {%
+  client.test("Empty flashcards array returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+    client.assert(response.body.error !== undefined, "Error object should be present");
+  });
+
+  console.log("✓ Empty flashcards array properly rejected");
+%}
+
+###
+
+# @name Accept Generation - Invalid Flashcard Data (Missing Front)
+POST {{baseUrl}}/api/generations/{{testGenerationId}}/accept
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "back": "Answer without question"
+    }
+  ]
+}
+
+> {%
+  client.test("Invalid flashcard data returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ PHASE 6: POST /api/generations/:id/accept validation working correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 7: GET /api/flashcards QUERY VALIDATION
+# ========================================
+
+# @name List Flashcards - Invalid Page Number
+GET {{baseUrl}}/api/flashcards?page=0
+
+> {%
+  client.test("Invalid page number returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid page number properly rejected");
+%}
+
+###
+
+# @name List Flashcards - Invalid Limit
+GET {{baseUrl}}/api/flashcards?limit=0
+
+> {%
+  client.test("Invalid limit returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid limit properly rejected");
+%}
+
+###
+
+# @name List Flashcards - Invalid Source Filter
+GET {{baseUrl}}/api/flashcards?source=invalid_source
+
+> {%
+  client.test("Invalid source filter returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid source filter properly rejected");
+%}
+
+###
+
+# @name List Flashcards - Invalid Sort Field
+GET {{baseUrl}}/api/flashcards?sort=invalid_field
+
+> {%
+  client.test("Invalid sort field returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ Invalid sort field properly rejected");
+%}
+
+###
+
+# @name List Flashcards - Invalid Order
+GET {{baseUrl}}/api/flashcards?order=invalid_order
+
+> {%
+  client.test("Invalid order returns 400", function() {
+    client.assert(response.status === 400, "Expected status 400 BAD REQUEST, got " + response.status);
+  });
+
+  console.log("✓ PHASE 7: GET /api/flashcards query validation working correctly");
+  console.log("========================================");
+  console.log("✅ SCENARIO PASSED: Validation Errors");
+  console.log("- POST /api/flashcards validation working");
+  console.log("- GET /api/flashcards/:id validation working");
+  console.log("- PUT /api/flashcards/:id validation working");
+  console.log("- DELETE /api/flashcards/:id validation working");
+  console.log("- POST /api/generations/:id/accept validation working");
+  console.log("- GET /api/flashcards query validation working");
+  console.log("========================================");
+%}
+
+###
