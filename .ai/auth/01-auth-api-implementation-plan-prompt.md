@@ -19,7 +19,7 @@ istniejącym endpoincie @/home/mateusz/projects/plg/10x-cards/src/pages/api/gene
 sesji.
 
 Wyegenrowany plan zapisz w formacie markdown w istniejącym pliku
-@/home/mateusz/projects/plg/10x-cards/.ai/auth/01-auth-api-implementation-plan.md
+@/home/mateusz/projects/plg/10x-cards/.ai/auth/02-auth-api-implementation-plan.md
 (obecnie jest pusty).
 
   ---
