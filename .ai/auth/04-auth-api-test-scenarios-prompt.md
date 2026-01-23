@@ -342,6 +342,10 @@ here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 **Structure pattern:**
 
 ```
+# environment setup
+@testUserEmail = test-user-{{testRunTimestamp}}@example.com
+@testUserPassword = somepassword
+
 # @name First Request
 POST /endpoint
 ...request body...
@@ -364,64 +368,64 @@ indication (`# @name Description).
 
 ```http
 # ========================================
-# SCENARIUSZ: Kompletny przepływ zakupowy
-# Od rejestracji nowego użytkownika do otrzymania potwierdzenia zamówienia
+# SCENARIO: Complete purchase flow
+# From new user registration to order confirmation
 # ========================================
-###
-# Ten plik testuje krytyczną ścieżkę biznesową w aplikacji e-commerce.
-# Wszystkie requesty są uruchamiane sekwencyjnie (Run All Requests in File).
-# Każdy request zapisuje dane potrzebne kolejnym krokom.
 #
-# Założenia początkowe:
-# - API jest dostępne pod {{host}}
-# - Email użytkownika testowego nie istnieje w systemie
-# - Produkt testowy (ID: {{testProductId}}) istnieje i ma wystarczający stan magazynowy
+# This file tests the critical business path in an e-commerce application.
+# All requests are executed sequentially (Run All Requests in File).
+# Each request saves data needed by subsequent steps.
 #
-# Oczekiwany rezultat:
-# - Nowy użytkownik został utworzony i zalogowany
-# - Zamówienie zostało złożone i opłacone
-# - Wszystkie asercje przeszły pomyślnie
+# Initial assumptions:
+# - API is available at {{host}}
+# - Test user email does not exist in the system
+# - Test product (ID: {{testProductId}}) exists and has sufficient stock
+#
+# Expected result:
+# - New user created and logged in
+# - Order placed and paid
+# - All assertions passed successfully
 # ========================================
 
-# Generujemy unikalny email dla tego uruchomienia testu
+# Generate unique email for this test run
 @testRunTimestamp = {{$timestamp}}
 @testUserEmail = test-user-{{testRunTimestamp}}@example.com
 
 # ========================================
-# FAZA 1: REJESTRACJA I AUTORYZACJA
+# PHASE 1: REGISTRATION AND AUTHORIZATION
 # ========================================
 
 ###
 
-# @name KROK 1.1: Zarejestruj nowego użytkownika
-# Tworzymy konto dla nowego klienta
+# @name STEP 1.1: Register new user
+# Create account for new customer
 POST {{host}}/api/auth/register
 Content-Type: application/json
 
 {
   "email": "{{testUserEmail}}",
   "password": "SecurePassword123!",
-  "firstName": "Jan",
-  "lastName": "Testowy",
+  "firstName": "John",
+  "lastName": "Doe",
   "acceptTerms": true
 }
 
 > {%
-  client.test("Rejestracja zakończona sukcesem", function() {
-    client.assert(response.status === 201, "Oczekiwano statusu 201");
-    client.assert(response.body.id !== undefined, "Użytkownik powinien mieć ID");
-    client.assert(response.body.email === "{{testUserEmail}}", "Email się nie zgadza");
+  client.test("Registration successful", function() {
+    client.assert(response.status === 201, "Expected status 201");
+    client.assert(response.body.id !== undefined, "User should have an ID");
+    client.assert(response.body.email === "{{testUserEmail}}", "Email doesn't match");
   });
 
-  // Zapisujemy ID użytkownika do dalszych operacji
+  // Save user ID for further operations
   client.global.set("userId", response.body.id);
-  console.log("✓ KROK 1.1: Użytkownik zarejestrowany z ID: " + response.body.id);
+  console.log("✓ STEP 1.1: User registered with ID: " + response.body.id);
 %}
 
 ###
 
-# @name KROK 1.2: Zaloguj nowo utworzonego użytkownika
-# Otrzymujemy token JWT potrzebny do dalszych operacji
+# @name STEP 1.2: Login newly created user
+# Obtain JWT token needed for further operations
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
@@ -431,15 +435,15 @@ Content-Type: application/json
 }
 
 > {%
-  client.test("Logowanie zakończone sukcesem", function() {
-    client.assert(response.status === 200, "Nie udało się zalogować");
-    client.assert(response.body.accessToken !== undefined, "Brak tokena dostępu");
+  client.test("Login successful", function() {
+    client.assert(response.status === 200, "Login failed");
+    client.assert(response.body.accessToken !== undefined, "Access token missing");
   });
 
-  // Token będzie używany we wszystkich kolejnych requestach
+  // Token will be used in all subsequent requests
   client.global.set("accessToken", response.body.accessToken);
   client.global.set("refreshToken", response.body.refreshToken);
-  console.log("✓ KROK 1.2: Użytkownik zalogowany pomyślnie");
+  console.log("✓ STEP 1.2: User logged in successfully");
 %}
 ```
 
