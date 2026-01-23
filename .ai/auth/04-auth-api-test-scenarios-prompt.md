@@ -1,3 +1,8 @@
+TODO: Źle jest używane @no-cookie-jar, powinno być bez # z przodu, dodatkowo założenie jest błędne
+bo ta dyrektywa działa w kontekście pojedynczego requestu, a nie całego pliku.
+Jako tymczasowy workaround można manualnie usuwać cookies z
+/home/mateusz/projects/plg/10x-cards/.idea/httpRequests/http-client.cookies
+
 # Prompt: HTTP Test Scenarios for Auth API
 
 Generate comprehensive test scenarios for the authentication API using IntelliJ IDEA HTTP Client format (.http files).
