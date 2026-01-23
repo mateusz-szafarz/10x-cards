@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/db/database.types.ts";
-import type { FlashcardProposalDTO, GenerationResponseDTO } from "../../types";
+import type {
+  FlashcardProposalDTO,
+  GenerationResponseDTO,
+  AcceptGenerationResponseDTO,
+} from "../../types";
 import type { AIService } from "./ai.service";
 
 /**
@@ -50,6 +54,46 @@ export class GenerationService {
       generation_id: data.id,
       flashcards_proposals: proposals,
       generated_count: proposals.length,
+    };
+  }
+
+  /**
+   * Accepts selected flashcard proposals and saves them to the database.
+   * Uses RPC function to ensure transactional consistency.
+   *
+   * @param generationId - The generation session ID
+   * @param flashcards - Array of flashcard proposals to accept
+   * @param userId - The user ID
+   * @returns AcceptGenerationResponseDTO with created flashcards
+   * @throws Error with specific codes: NOT_FOUND, ALREADY_FINALIZED, INTERNAL_ERROR
+   */
+  async acceptFlashcards(
+    generationId: string,
+    flashcards: FlashcardProposalDTO[],
+    userId: string
+  ): Promise<AcceptGenerationResponseDTO> {
+    // Call RPC function for transactional accept
+    const { data, error } = await this.supabase.rpc("accept_generation", {
+      p_generation_id: generationId,
+      p_user_id: userId,
+      p_flashcards: flashcards,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Handle error response from RPC
+    if (data && "error" in data) {
+      const err = data.error as { code: string; message: string };
+      const error = new Error(err.message) as Error & { code: string };
+      error.code = err.code;
+      throw error;
+    }
+
+    return {
+      flashcards: data.flashcards,
+      accepted_count: data.accepted_count,
     };
   }
 }
