@@ -293,6 +293,39 @@ Create separate .http files for each scenario in `.http/scenarios/` directory:
 
 ## IntelliJ HTTP Client Specifics
 
+### CRITICAL: Cookie Persistence and Clean State
+
+**Problem**: IntelliJ HTTP Client persists cookies between runs by default.
+
+- Cookies are stored in `.idea/httpRequests/http-client.cookies`
+- Each new run of the same file loads cookies from previous runs
+- This breaks tests that assume "clean state" (no existing session)
+
+**Solution**: Use `# @no-cookie-jar` directive at the top of each test file.
+
+```http
+# @no-cookie-jar
+
+### Test scenario starts here with clean cookie state
+# @name Register New User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test-{{$timestamp}}@example.com",
+  "password": "password123"
+}
+```
+
+**Effect of `# @no-cookie-jar`:**
+
+- ✅ Cookies are stored ONLY for the duration of this file execution
+- ✅ Next run starts with empty cookie jar (clean state)
+- ✅ Cookies still work WITHIN the same file (register → protected endpoint)
+- ✅ Each test scenario is truly self-contained and repeatable
+
+**REQUIREMENT**: ALL test scenario files MUST start with `# @no-cookie-jar` directive.
+
 ### Syntax documentation
 
 You can find IntelliJ HTTP Client syntax documentation
@@ -309,25 +342,25 @@ here: https://www.jetbrains.com/help/idea/exploring-http-syntax.html
 **Valid example for reference:**
 
 ```http
-### ========================================
-### SCENARIUSZ: Kompletny przepływ zakupowy
-### Od rejestracji nowego użytkownika do otrzymania potwierdzenia zamówienia
-### ========================================
+# ========================================
+# SCENARIUSZ: Kompletny przepływ zakupowy
+# Od rejestracji nowego użytkownika do otrzymania potwierdzenia zamówienia
+# ========================================
 ###
-### Ten plik testuje krytyczną ścieżkę biznesową w aplikacji e-commerce.
-### Wszystkie requesty są uruchamiane sekwencyjnie (Run All Requests in File).
-### Każdy request zapisuje dane potrzebne kolejnym krokom.
-###
-### Założenia początkowe:
-### - API jest dostępne pod {{host}}
-### - Email użytkownika testowego nie istnieje w systemie
-### - Produkt testowy (ID: {{testProductId}}) istnieje i ma wystarczający stan magazynowy
-###
-### Oczekiwany rezultat:
-### - Nowy użytkownik został utworzony i zalogowany
-### - Zamówienie zostało złożone i opłacone
-### - Wszystkie asercje przeszły pomyślnie
-### ========================================
+# Ten plik testuje krytyczną ścieżkę biznesową w aplikacji e-commerce.
+# Wszystkie requesty są uruchamiane sekwencyjnie (Run All Requests in File).
+# Każdy request zapisuje dane potrzebne kolejnym krokom.
+#
+# Założenia początkowe:
+# - API jest dostępne pod {{host}}
+# - Email użytkownika testowego nie istnieje w systemie
+# - Produkt testowy (ID: {{testProductId}}) istnieje i ma wystarczający stan magazynowy
+#
+# Oczekiwany rezultat:
+# - Nowy użytkownik został utworzony i zalogowany
+# - Zamówienie zostało złożone i opłacone
+# - Wszystkie asercje przeszły pomyślnie
+# ========================================
 
 # Generujemy unikalny email dla tego uruchomienia testu
 @testRunTimestamp = {{$timestamp}}
@@ -390,26 +423,54 @@ Content-Type: application/json
 ### Cookie Handling
 
 IntelliJ HTTP Client automatically stores cookies from responses and includes them in subsequent requests within the
-same file. Use this syntax:
+same file. **IMPORTANT**: Always use `# @no-cookie-jar` directive to ensure clean state on each run.
 
 ```http
-### Step 1: Register (cookies saved automatically)
-POST http://localhost:3000/api/auth/register
+# @no-cookie-jar
+
+### Step 1: Register (cookies saved automatically within this run)
+# @name Register User
+POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "test-{{$timestamp}}@example.com",
   "password": "password123"
 }
 
-### Step 2: Access protected endpoint (cookies sent automatically)
-POST http://localhost:3000/api/auth/generations
+> {%
+    client.test("Registration successful", function() {
+        client.assert(response.status === 201, "Expected 201 status");
+        client.assert(response.headers.valueOf("Set-Cookie") !== null, "Cookies should be set");
+    });
+%}
+
+###
+
+### Step 2: Access protected endpoint (cookies sent automatically from Step 1)
+# @name Access Protected Resource
+POST {{baseUrl}}/api/generations
 Content-Type: application/json
 
 {
-  "source_text": "... at least 1000 characters ..."
+  "source_text": "This is comprehensive test content for flashcard generation. The text needs to be between 1000 and 10000 characters to pass validation. Learning through flashcards has been proven effective for memory retention. The spaced repetition algorithm optimizes review intervals based on forgetting curves. Active recall strengthens neural pathways more effectively than passive review. Each flashcard should focus on a single concept to avoid confusion. Clear questions and concise answers make cards more effective. Context and examples help cement understanding. Regular review is essential for long-term retention. The testing effect shows that retrieval practice is superior to re-reading. Metacognition awareness of your own learning helps improve study strategies. Breaking complex topics into smaller chunks makes learning more manageable and less overwhelming for learners."
 }
+
+> {%
+    client.test("Protected endpoint accessible with session", function() {
+        client.assert(response.status === 201, "Expected 201 status");
+        client.assert(response.body.generation_id !== undefined, "Should return generation_id");
+    });
+%}
 ```
+
+**How it works:**
+
+1. `# @no-cookie-jar` at top → clean start on each run
+2. Step 1 registers user → Supabase returns Set-Cookie header
+3. IntelliJ saves cookies for THIS run only
+4. Step 2 automatically includes cookies from Step 1
+5. Next run of this file → starts fresh (no cookies from previous run)
 
 ### Environment Variables
 
@@ -470,20 +531,23 @@ Generate files in this structure:
 
 ## Additional Requirements
 
-1. **Each scenario must be self-contained**: Register a new unique user within each test file (use `{{$timestamp}}` for
+1. **MANDATORY: Start each file with `# @no-cookie-jar`**: This ensures clean state on each run and prevents cookie
+   persistence issues between test executions.
+
+2. **Each scenario must be self-contained**: Register a new unique user within each test file (use `{{$timestamp}}` for
    unique emails)
 
-2. **Include assertions**: Use IntelliJ's response handlers (`> {% ... %}`) to validate:
+3. **Include assertions**: Use IntelliJ's response handlers (`> {% ... %}`) to validate:
     - HTTP status codes
     - Response body structure
     - Presence of required fields
     - Cookie headers (Set-Cookie)
 
-3. **Add comments**: Explain what each request tests and expected behavior
+4. **Add comments**: Explain what each request tests and expected behavior
 
-4. **Test data**: For `/api/generations`, use valid source_text (1000-10000 characters)
+5. **Test data**: For `/api/generations`, use valid source_text (1000-10000 characters)
 
-5. **Error format validation**: All errors should match:
+6. **Error format validation**: All errors should match:
    ```json
    {
      "error": {
@@ -498,14 +562,41 @@ Generate files in this structure:
 - **Never commit real credentials**: Use test data only
 - **Cleanup**: Consider adding cleanup requests at the end (delete test accounts)
 
+## Troubleshooting Common Issues
+
+### Issue: "Test fails on second run but works on first run"
+
+**Cause**: Cookies persisting from previous run
+**Solution**: Ensure `# @no-cookie-jar` is at the top of the file
+
+### Issue: "Protected endpoint returns 401 even after registration"
+
+**Cause**: Cookies not being sent automatically
+**Solution**:
+
+- Check that both requests are in the same .http file
+- Verify there are `###` separators between requests
+- Ensure first request returned Set-Cookie header (check response)
+
+### Issue: "Registration works but I can't access protected endpoints"
+
+**Cause**: Email verification might be enabled in Supabase
+**Solution**: Verify in Supabase Dashboard → Authentication → Email Auth → Confirm email is DISABLED
+
+### Issue: "Cannot see Set-Cookie headers in response"
+
+**Cause**: Using curl or external tool instead of IntelliJ
+**Solution**: Use IntelliJ HTTP Client built-in runner (Run request icon or Ctrl+Enter)
+
 ## Expected Output
 
 Generate complete, runnable .http files with:
 
+- ✅ `# @no-cookie-jar` directive at the top of each file
 - ✅ Clear step-by-step flow
 - ✅ Descriptive comments
 - ✅ Response assertions
-- ✅ Cookie handling
+- ✅ Proper cookie handling (automatic within file, clean between runs)
 - ✅ Error case coverage
 - ✅ Self-contained scenarios (no dependencies between files)
 - ✅ Dynamic test data (timestamps for unique emails)
