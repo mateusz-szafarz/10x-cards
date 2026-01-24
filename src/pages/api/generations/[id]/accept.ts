@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { acceptGenerationSchema } from "../../../../lib/schemas/generation.schema";
 import { GenerationService } from "../../../../lib/services/generation.service";
-import { MockAIService } from "../../../../lib/services/ai.service";
 import { validateUUID } from "../../../../lib/utils";
 import type { AcceptGenerationResponseDTO, ErrorResponseDTO } from "../../../../types";
 
@@ -82,8 +81,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   // Get dependencies
   const supabase = locals.supabase;
-  const aiService = new MockAIService();
-  const generationService = new GenerationService(supabase, aiService);
+  const generationService = new GenerationService(supabase);
 
   // Accept flashcards
   try {

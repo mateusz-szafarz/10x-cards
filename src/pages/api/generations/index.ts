@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { createGenerationSchema } from "../../../lib/schemas/generation.schema";
-import { MockAIService } from "../../../lib/services/ai.service";
+import { createAIService } from "../../../lib/services/ai.service";
 import { GenerationService } from "../../../lib/services/generation.service";
 
 export const prerender = false;
@@ -59,14 +59,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // Get dependencies
   const supabase = locals.supabase;
-  const aiService = new MockAIService();
-  const generationService = new GenerationService(supabase, aiService);
+  const generationService = new GenerationService(supabase);
+  const aiService = createAIService();
 
   // Generate flashcards
   try {
     const result = await generationService.generateFlashcards(
       validationResult.data.source_text,
-      locals.user!.id
+      locals.user!.id,
+      aiService
     );
 
     return new Response(JSON.stringify(result), {

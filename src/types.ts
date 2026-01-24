@@ -260,3 +260,56 @@ export interface GenerationDetailDTO {
   created_at: string;
   flashcards: GenerationFlashcardDTO[];
 }
+
+// =============================================================================
+// OpenRouter Service Types
+// =============================================================================
+
+/**
+ * Configuration for OpenRouterService.
+ * Used during service initialization.
+ */
+export interface OpenRouterConfig {
+  apiKey: string; // OpenRouter API key from environment
+  baseUrl?: string; // API endpoint (default: 'https://openrouter.ai/api/v1')
+  modelName?: string; // Model identifier (default: 'google/gemma-3-27b-it:free')
+  timeout?: number; // Request timeout in ms (default: 30000)
+  maxRetries?: number; // Retry attempts for transient errors (default: 2)
+  httpReferer?: string; // HTTP-Referer header for OpenRouter analytics (optional)
+  appTitle?: string; // X-Title header for OpenRouter analytics (optional)
+}
+
+/**
+ * OpenRouter API request payload structure.
+ * Follows OpenRouter's chat completion API format with structured output.
+ */
+export interface OpenRouterRequest {
+  model: string;
+  messages: {
+    role: "system" | "user";
+    content: string;
+  }[];
+  response_format: {
+    type: "json_schema";
+    json_schema: {
+      name: string;
+      strict: boolean;
+      schema: object;
+    };
+  };
+  temperature: number;
+  max_tokens: number;
+  top_p: number;
+}
+
+/**
+ * OpenRouter API response structure.
+ * Contains the AI-generated content in the first choice.
+ */
+export interface OpenRouterResponse {
+  choices: {
+    message: {
+      content: string;
+    };
+  }[];
+}

@@ -23,11 +23,7 @@ export function validateUUID(id: string): boolean {
  * @param total - Total number of items
  * @returns Pagination metadata object
  */
-export function buildPaginationMetadata(
-  page: number,
-  limit: number,
-  total: number
-): PaginationDTO {
+export function buildPaginationMetadata(page: number, limit: number, total: number): PaginationDTO {
   return {
     page,
     limit,

@@ -1,9 +1,6 @@
 import type { APIRoute } from "astro";
 import { createSupabaseAdminInstance } from "../../../db/supabase.client";
-import type {
-  DeleteAccountResponseDTO,
-  ErrorResponseDTO,
-} from "../../../types";
+import type { DeleteAccountResponseDTO, ErrorResponseDTO } from "../../../types";
 
 export const prerender = false;
 

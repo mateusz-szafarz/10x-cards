@@ -1,10 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/db/database.types.ts";
-import type {
-  FlashcardProposalDTO,
-  GenerationResponseDTO,
-  AcceptGenerationResponseDTO,
-} from "../../types";
+import type { FlashcardProposalDTO, GenerationResponseDTO, AcceptGenerationResponseDTO } from "../../types";
 import type { AIService } from "./ai.service";
 
 /**
@@ -12,10 +8,7 @@ import type { AIService } from "./ai.service";
  * Orchestrates AI service calls and database persistence.
  */
 export class GenerationService {
-  constructor(
-    private readonly supabase: SupabaseClient<Database>,
-    private readonly aiService: AIService
-  ) {}
+  constructor(private readonly supabase: SupabaseClient<Database>) {}
 
   /**
    * Generates flashcard proposals from source text.
@@ -27,12 +20,13 @@ export class GenerationService {
    *
    * @param sourceText - The source text to generate flashcards from
    * @param userId - The user ID to associate with the generation session
+   * @param aiService - The AI service instance to use for generation
    * @returns GenerationResponseDTO with proposals and metadata
    * @throws Error if database operation fails
    */
-  async generateFlashcards(sourceText: string, userId: string): Promise<GenerationResponseDTO> {
+  async generateFlashcards(sourceText: string, userId: string, aiService: AIService): Promise<GenerationResponseDTO> {
     // Generate flashcard proposals via AI service
-    const proposals: FlashcardProposalDTO[] = await this.aiService.generateFlashcardProposals(sourceText);
+    const proposals: FlashcardProposalDTO[] = await aiService.generateFlashcardProposals(sourceText);
 
     // Save generation session to database
     const { data, error } = await this.supabase
@@ -41,7 +35,7 @@ export class GenerationService {
         source_text: sourceText,
         user_id: userId,
         generated_count: proposals.length,
-        model_used: "mock-gpt-4", // MVP: hardcoded mock model name
+        model_used: aiService.modelName,
       })
       .select("id")
       .single();

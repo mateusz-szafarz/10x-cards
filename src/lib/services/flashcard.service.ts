@@ -26,10 +26,7 @@ export class FlashcardService {
    * @returns Created flashcard with generated ID and timestamps
    * @throws Error if database operation fails
    */
-  async createFlashcard(
-    command: CreateFlashcardCommand,
-    userId: string
-  ): Promise<FlashcardDTO> {
+  async createFlashcard(command: CreateFlashcardCommand, userId: string): Promise<FlashcardDTO> {
     const { data, error } = await this.supabase
       .from("flashcards")
       .insert({
@@ -58,11 +55,7 @@ export class FlashcardService {
    * @returns Updated flashcard or null if not found/no access
    * @throws Error if database operation fails
    */
-  async updateFlashcard(
-    id: string,
-    command: UpdateFlashcardCommand,
-    userId: string
-  ): Promise<FlashcardDTO | null> {
+  async updateFlashcard(id: string, command: UpdateFlashcardCommand, userId: string): Promise<FlashcardDTO | null> {
     const { data, error } = await this.supabase
       .from("flashcards")
       .update({
@@ -142,10 +135,7 @@ export class FlashcardService {
    * @returns List of flashcards with pagination metadata
    * @throws Error if database operation fails
    */
-  async listFlashcards(
-    params: FlashcardsQueryParams,
-    userId: string
-  ): Promise<FlashcardsListDTO> {
+  async listFlashcards(params: FlashcardsQueryParams, userId: string): Promise<FlashcardsListDTO> {
     const { page = 1, limit = 20, source, sort = "created_at", order = "desc" } = params;
 
     // Calculate offset for pagination

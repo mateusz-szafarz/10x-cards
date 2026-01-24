@@ -41,10 +41,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const flashcard = await flashcardService.getFlashcardById(
-      flashcardId,
-      locals.user!.id
-    );
+    const flashcard = await flashcardService.getFlashcardById(flashcardId, locals.user!.id);
 
     if (!flashcard) {
       return new Response(
@@ -147,11 +144,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const flashcard = await flashcardService.updateFlashcard(
-      flashcardId,
-      validationResult.data,
-      locals.user!.id
-    );
+    const flashcard = await flashcardService.updateFlashcard(flashcardId, validationResult.data, locals.user!.id);
 
     if (!flashcard) {
       return new Response(
@@ -218,10 +211,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const deleted = await flashcardService.deleteFlashcard(
-      flashcardId,
-      locals.user!.id
-    );
+    const deleted = await flashcardService.deleteFlashcard(flashcardId, locals.user!.id);
 
     if (!deleted) {
       return new Response(

@@ -1,14 +1,7 @@
 import type { APIRoute } from "astro";
-import {
-  createFlashcardSchema,
-  flashcardsQueryParamsSchema,
-} from "../../../lib/schemas/flashcard.schema";
+import { createFlashcardSchema, flashcardsQueryParamsSchema } from "../../../lib/schemas/flashcard.schema";
 import { FlashcardService } from "../../../lib/services/flashcard.service";
-import type {
-  FlashcardDTO,
-  FlashcardsListDTO,
-  ErrorResponseDTO,
-} from "../../../types";
+import type { FlashcardDTO, FlashcardsListDTO, ErrorResponseDTO } from "../../../types";
 
 export const prerender = false;
 
@@ -60,10 +53,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const result = await flashcardService.listFlashcards(
-      validationResult.data,
-      locals.user!.id
-    );
+    const result = await flashcardService.listFlashcards(validationResult.data, locals.user!.id);
 
     return new Response(JSON.stringify(result satisfies FlashcardsListDTO), {
       status: 200,
@@ -135,10 +125,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const result = await flashcardService.createFlashcard(
-      validationResult.data,
-      locals.user!.id
-    );
+    const result = await flashcardService.createFlashcard(validationResult.data, locals.user!.id);
 
     return new Response(JSON.stringify(result satisfies FlashcardDTO), {
       status: 201,
