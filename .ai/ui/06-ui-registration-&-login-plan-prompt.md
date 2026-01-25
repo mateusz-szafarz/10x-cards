@@ -1,45 +1,52 @@
-Wciel się w rolę doświadczonego programisty frontendu. Twoi zadaniem jest stworzenie szczegółowego planu wdrożenia nowych widoków związanych z autentykacją w aplikacji 10x-cards. Plan ten powinien być kompleksowy i wystarczająco jasny dla innego programisty frontendowego, aby mógł poprawnie i wydajnie wdrożyć nowe widoki.
+Wciel się w rolę doświadczonego programisty frontendu. Twoi zadaniem jest stworzenie szczegółowego planu wdrożenia nowych widoków związanych z autentykacją w aplikacji 10x-cards. Plan ten powinien być kompleksowy i wystarczająco jasny dla innego programisty frontendowego, aby mógł poprawnie i wydajnie wdrożyć nowe widoki. Implementowanie widoki:
+- logowanie
+- rejestracja użytkownika
+- ...
+
+**Ważne:** plan implementacji ma być w języku angielskim. Plan ma się skupić na samej implementacji UI (z uwzględnieniem aspektu testowalności kodu, ale bez implementacji testów na tym etapie).
 
 Najpierw przejrzyj następujące informacje:
 
-1. Product Requirements Document (PRD):
-   <prd>
-   </prd>
+1. Product Requirements Document (PRD): @.ai/prd.md
 
-2. High level UI plan (for the whole app - required to understand how new views fit in):
-   <view_description>
-   </view_description>
+2. High level UI plan (for the whole app - required to understand how new views fit in): @.ai/ui/05-ui-high-level-plan.md
 
 3. Potentially useful API Endpoints Implementation:
-   <api_endpoints_implementation>
-   </api_endpoints_implementation>
+- @src/pages/api/auth/login.ts
+- @src/pages/api/auth/register.ts
 
-4. Type Definitions:
-   <type_definitions>
-   </type_definitions>
+4. Type Definitions: @src/types.ts
 
-5. Tech Stack:
-   <tech_stack>
-   </tech_stack>
+5. Tech Stack: @.ai/tech-stack.md
+ 
+6. Related project rules:
+- @.claude/rules/frontend.md
+- @.claude/rules/astro.md
+- @.claude/rules/react.md
+- @.claude/on-demand-rules/ui-shadcn-helper.md
 
 Przed utworzeniem ostatecznego planu wdrożenia przeprowadź analizę i planowanie wewnątrz tagów <implementation_breakdown> w swoim bloku myślenia. Ta sekcja może być długa, ponieważ obejmuje szczegółowe przeanalizowanie wszystkich aspektów implementacji widoku.
 
 W swojej analizie wykonaj następujące kroki:
-1. Dla każdej sekcji wejściowej (punkty 1-5 powyżej):
+0. Dla każdej sekcji wejściowej (punkty 1-6 powyżej):
 - Podsumuj kluczowe punkty
 - Wymień wszelkie wymagania lub ograniczenia
 - Zwróć uwagę na wszelkie potencjalne wyzwania lub ważne kwestie
-2. Wyodrębnienie i wypisanie kluczowych wymagań z PRD
-3. Wypisanie wszystkich potrzebnych głównych komponentów, wraz z krótkim opisem ich opisu, potrzebnych typów, obsługiwanych zdarzeń i warunków walidacji
-4. Stworzenie wysokopoziomowego diagramu drzewa komponentów
-5. Zidentyfikuj wymagane DTO i niestandardowe typy ViewModel dla każdego komponentu widoku. Szczegółowo wyjaśnij te nowe typy, dzieląc ich pola i powiązane typy.
-6. Zidentyfikuj potencjalne zmienne stanu i niestandardowe hooki, wyjaśniając ich cel i sposób ich użycia
-7. Wymień wymagane wywołania API i odpowiadające im akcje frontendowe
-8. Zmapuj każdej historii użytkownika do konkretnych szczegółów implementacji, komponentów lub funkcji
+1. Przeanalizuj obecny codebase pod kątem:
+- Przegląd struktury projektu w katalogu ./src
+- Identyfikacja istniejących wzorców (komponenty, hooki, utilities)
+- Analiza istniejących implementacji formularzy (jeśli istnieją) w celu zachowania spójności
+2. Wyodrębnij i wypisz kluczowe wymagania z PRD (dotyczące implementowanych widoków).
+3. Wymień wszystkie podstawowe komponenty, które będą potrzebne wraz z krótkim opisem ich przeznaczenia, typów, których będą wymagały, obsługiwanych zdarzeń i warunków walidacji
+4. Stwórz wysokopoziomowy diagram drzewa komponentów.
+5. Zidentyfikuj wymagane DTO i niestandardowe typy ViewModel dla każdego komponentu widoku. Preferuj reużycie istniejących typów. Szczegółowo wyjaśnij nowe typy, określając ich pola i powiązane typy.
+6. Zidentyfikuj potencjalne zmienne stanu i niestandardowe hooki, wyjaśniając ich cel i sposób ich użycia.
+7. Wymień wymagane wywołania API i odpowiadające im akcje frontendowe.
+8. Zmapuj każdą powiązaną "user story" z PRD do konkretnych szczegółów implementacji, komponentów lub funkcji.
 9. Wymień interakcje użytkownika i ich oczekiwane wyniki
-10. Wymień warunki wymagane przez API i jak je weryfikować na poziomie komponentów
-11. Zidentyfikuj potencjalne scenariusze błędów i zasugeruj, jak sobie z nimi poradzić
-12. Wymień potencjalne wyzwania związane z wdrożeniem tego widoku i zasugeruj możliwe rozwiązania
+10. Wymień warunki wymagane przez API i jak je weryfikować na poziomie komponentów.
+11. Zidentyfikuj potencjalne scenariusze błędów i zasugeruj, jak sobie z nimi poradzić.
+12. Wymień potencjalne wyzwania związane z wdrożeniem tego widoku i zasugeruj możliwe rozwiązania.
 
 Po przeprowadzeniu analizy dostarcz plan wdrożenia w formacie Markdown z następującymi sekcjami:
 
@@ -63,7 +70,7 @@ Po przeprowadzeniu analizy dostarcz plan wdrożenia w formacie Markdown z nastę
 
 Upewnij się, że Twój plan jest zgodny z PRD, historyjkami użytkownika i uwzględnia dostarczony stack technologiczny.
 
-Wygenerowany plan zapisz w pliku .ai/ui/07-ui-registration-&-login-plan.md (plik obecnie istnieje i jest pusty).
+Wygenerowany plan zapisz w pliku /home/mateusz/projects/plg/10x-cards/.ai/ui/07-ui-registration-&-login-plan.md (plik już istnieje i jest pusty).
 
 Oto przykład tego, jak powinien wyglądać plik wyjściowy (treść jest do zastąpienia):
 
