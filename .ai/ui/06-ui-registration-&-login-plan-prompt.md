@@ -1,9 +1,12 @@
 Wciel się w rolę doświadczonego programisty frontendu. Twoi zadaniem jest stworzenie szczegółowego planu wdrożenia nowych widoków związanych z autentykacją w aplikacji 10x-cards. Plan ten powinien być kompleksowy i wystarczająco jasny dla innego programisty frontendowego, aby mógł poprawnie i wydajnie wdrożyć nowe widoki. Implementowanie widoki:
 - logowanie
 - rejestracja użytkownika
-- ...
+- scaffolding widoku "Moje fiszki" (/flashcards) tak, aby po zalogowaniu użytkownik był przekierowany do tego widoku.
 
-**Ważne:** plan implementacji ma być w języku angielskim. Plan ma się skupić na samej implementacji UI (z uwzględnieniem aspektu testowalności kodu, ale bez implementacji testów na tym etapie).
+**Ważne:**
+- Plan implementacji ma być w języku angielskim
+- Plan ma się skupić na samej implementacji UI (z uwzględnieniem aspektu testowalności kodu, ale bez implementacji testów na tym etapie).
+- Prompt zawiera referencję do high level planu UI, w którym znajduje się wiele cennych informacji, bardzo ważne jest, aby generowany plna implementacji zawierał WSZYSTKIE informacje, które są istotne z perspektywy implementowanych widoków.
 
 Najpierw przejrzyj następujące informacje:
 
