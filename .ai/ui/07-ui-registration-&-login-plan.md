@@ -7,10 +7,12 @@ This plan covers the implementation of authentication views (login and registrat
 **Key Features:**
 - User registration with email and password
 - User login with session management via httpOnly cookies
-- Automatic login after registration (Supabase handles session creation)
+- Redirect to login page after successful registration (email confirmation required in production)
 - Route protection for authenticated pages
 - Responsive design (mobile-first approach)
-- Accessibility compliance (ARIA attributes, keyboard navigation)
+- Basic accessibility (semantic HTML, label associations, aria-invalid)
+
+**UI Language:** English (all user-facing text in English)
 
 **User Stories Covered:**
 - US-001: Registration
@@ -24,12 +26,17 @@ This plan covers the implementation of authentication views (login and registrat
 | `/login` | Login page | BaseLayout (no nav) | No (redirect to /flashcards if logged in) |
 | `/register` | Registration page | BaseLayout (no nav) | No (redirect to /flashcards if logged in) |
 | `/flashcards` | My Flashcards page | AppLayout (with nav) | Yes |
+| `/generate` | Generate Flashcards page | AppLayout (with nav) | Yes |
 | `/` | Home/Landing | N/A | Redirect based on auth status |
 
 **Redirect Logic (handled by middleware):**
 - Logged-in user accessing `/login` or `/register` → redirect to `/flashcards`
 - Non-logged-in user accessing `/flashcards` → redirect to `/login`
 - `/` route → redirect to `/flashcards` (logged in) or `/login` (not logged in)
+
+**Note on Dev vs Production behavior:**
+- **Production (email confirmation ON):** After registration, user lands on `/login` and must confirm email before logging in.
+- **Development (email confirmation OFF):** After registration, user is redirected to `/login`, but middleware detects active session (email implicitly confirmed) and immediately redirects to `/flashcards`.
 
 ## 3. Component Structure
 
@@ -53,7 +60,8 @@ src/
 │   ├── index.astro               # Redirect logic only
 │   ├── login.astro               # Login page
 │   ├── register.astro            # Registration page
-│   └── flashcards.astro          # My Flashcards page (scaffolding)
+│   ├── flashcards.astro          # My Flashcards page (scaffolding)
+│   └── generate.astro            # Generate Flashcards page (scaffolding)
 │
 └── middleware/
     └── index.ts                  # Extended with page route protection
@@ -86,6 +94,7 @@ src/
 
 /register
 └── BaseLayout.astro
+    ├── Toaster (from sonner, for success toast)
     └── <main> (centered flex container)
         └── RegisterForm.tsx [client:load]
             └── Card
@@ -111,12 +120,14 @@ src/
     ├── Navbar.tsx [client:load]
     │   ├── Logo (link to /flashcards)
     │   ├── NavLinks
-    │   │   ├── "Generowanie" → /generate
-    │   │   └── "Moje fiszki" → /flashcards (active)
+    │   │   ├── "Generate" → /generate
+    │   │   └── "My Flashcards" → /flashcards (active)
     │   └── UserDropdown
     │       └── DropdownMenu
     │           ├── User email display
-    │           └── "Wyloguj się" button
+    │           └── "Log out" button
+    │   └── MobileMenu (Sheet)
+    │       └── Same links as NavLinks
     └── <main>
         └── Page content placeholder (scaffolding)
 ```
@@ -126,6 +137,8 @@ src/
 ### 4.1 BaseLayout.astro
 
 **Description:** Base HTML layout for authentication pages. Provides minimal structure without navigation, centering the content vertically and horizontally.
+
+**Note:** Refactor from existing `src/layouts/Layout.astro` - reuse HTML head structure, add centering styles.
 
 **Main Elements:**
 - `<!DOCTYPE html>`, `<html>`, `<head>`, `<body>`
@@ -181,7 +194,7 @@ interface Props {
 
 **Main Elements:**
 - `<Card>` - container for the form
-- `<CardHeader>` - logo, title ("Zaloguj się"), description
+- `<CardHeader>` - logo text "10x Cards", title ("Log in"), description
 - `<CardContent>` - form fields and actions
 - `<form>` - wraps all inputs
 - Email field: `<Label>`, `<Input type="email">`, error message `<p>`
@@ -226,9 +239,11 @@ interface LoginFormProps {}
 
 **Main Elements:**
 - Same structure as LoginForm
-- Title: "Zarejestruj się"
-- Description: "Utwórz konto, aby zacząć korzystać z aplikacji"
+- Logo text: "10x Cards"
+- Title: "Create an account"
+- Description: "Enter your email below to create your account"
 - Link to login page instead of register
+- Success toast (using Sonner) before redirect: "Account created successfully. Please check your email to confirm."
 
 **Handled Interactions:**
 
@@ -265,12 +280,12 @@ interface RegisterFormProps {}
 **Description:** Top navigation bar for authenticated pages. Displays logo, navigation links, and user dropdown menu.
 
 **Main Elements:**
-- `<header>` or `<nav>` - semantic container
-- Logo/brand link to `/flashcards`
-- Navigation links container (desktop)
-- `<a>` links: "Generowanie" (`/generate`), "Moje fiszki" (`/flashcards`)
-- User dropdown with email display and logout button
-- Mobile menu button (hamburger) - for future implementation, can show simple dropdown initially
+- `<header>` - semantic container with `sticky top-0 z-50 h-16`
+- Logo/brand text "10x Cards" linking to `/flashcards` (`font-bold text-xl`)
+- Navigation links container (desktop, hidden on mobile < 640px)
+- `<a>` links: "Generate" (`/generate`), "My Flashcards" (`/flashcards`)
+- User dropdown (DropdownMenu from Shadcn) with email display and "Log out" button
+- Mobile menu (Sheet from Shadcn) - hamburger button triggering side drawer with same nav links
 
 **Handled Interactions:**
 
@@ -297,10 +312,12 @@ interface NavbarProps {
 ```
 
 **Styling:**
-- Fixed height header
-- Responsive: Links hidden on mobile (< 640px), hamburger menu shown
-- Active link styling (underline or background)
-- Dropdown positioned correctly
+- Sticky header: `sticky top-0 z-50`
+- Fixed height: `h-16` (64px)
+- Background: `bg-background border-b`
+- Responsive: Desktop nav hidden below `sm:` (640px), Sheet menu shown on mobile
+- Active link styling (underline or different color)
+- Container with max-width for content alignment
 
 ---
 
@@ -316,7 +333,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import LoginForm from "../components/auth/LoginForm";
 ---
 
-<BaseLayout title="Zaloguj się - 10x Cards">
+<BaseLayout title="Log in - 10x Cards">
   <LoginForm client:load />
 </BaseLayout>
 ```
@@ -331,7 +348,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import RegisterForm from "../components/auth/RegisterForm";
 ---
 
-<BaseLayout title="Zarejestruj się - 10x Cards">
+<BaseLayout title="Create account - 10x Cards">
   <RegisterForm client:load />
 </BaseLayout>
 ```
@@ -347,10 +364,29 @@ import AppLayout from "../layouts/AppLayout.astro";
 const user = Astro.locals.user;
 ---
 
-<AppLayout title="Moje fiszki - 10x Cards" user={user} currentPath="/flashcards">
+<AppLayout title="My Flashcards - 10x Cards" user={user} currentPath="/flashcards">
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold">Moje fiszki</h1>
-    <p class="text-muted-foreground mt-2">Ta strona jest w budowie.</p>
+    <h1 class="text-2xl font-bold">My Flashcards</h1>
+    <p class="text-muted-foreground mt-2">This page is under construction.</p>
+  </div>
+</AppLayout>
+```
+
+#### generate.astro (scaffolding)
+
+**Description:** Astro page for the Generate view (scaffolding only).
+
+```astro
+---
+import AppLayout from "../layouts/AppLayout.astro";
+
+const user = Astro.locals.user;
+---
+
+<AppLayout title="Generate Flashcards - 10x Cards" user={user} currentPath="/generate">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold">Generate Flashcards</h1>
+    <p class="text-muted-foreground mt-2">This page is under construction.</p>
   </div>
 </AppLayout>
 ```
@@ -543,6 +579,7 @@ For these simple authentication forms, standard `useState` is sufficient. Custom
 **Error Responses:**
 - 400: `{ error: { code: "VALIDATION_ERROR", message: "..." } }`
 - 401: `{ error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password" } }`
+- 403: `{ error: { code: "EMAIL_NOT_CONFIRMED", message: "Please confirm your email before logging in" } }` (production only)
 
 **Frontend Implementation:**
 ```typescript
@@ -582,7 +619,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   } catch (error) {
     // 5. Network error
-    setErrors({ form: "Nie można połączyć z serwerem. Sprawdź połączenie." });
+    setErrors({ form: "Unable to connect to server. Please check your connection." });
   } finally {
     setIsSubmitting(false);
   }
@@ -612,7 +649,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     "email": "user@example.com"
   }
 }
-// + Session cookies set automatically (auto-login)
+// Note: In production, email confirmation will be required before first login
 ```
 
 **Error Responses:**
@@ -620,7 +657,25 @@ const handleSubmit = async (e: React.FormEvent) => {
 - 409: `{ error: { code: "USER_EXISTS", message: "User with this email already exists" } }`
 - 500: `{ error: { code: "INTERNAL_ERROR", message: "Registration failed" } }`
 
-**Frontend Implementation:** Same pattern as login, with different endpoint and validation schema.
+**Frontend Implementation:** Same pattern as login, with different endpoint and validation schema. Key difference: on success, redirect to `/login` instead of `/flashcards`:
+
+```typescript
+// In RegisterForm handleSubmit:
+if (!response.ok) {
+  const errorData = data as ErrorResponseDTO;
+  setErrors({ form: mapErrorMessage(errorData.error.code) });
+  return;
+}
+
+// Success - redirect to login page
+// PROD: User must confirm email before logging in
+// DEV: Middleware will auto-redirect to /flashcards (session already active)
+window.location.href = "/login";
+```
+
+**Important:** The `supabase.auth.signUp()` call sets session cookies regardless of email confirmation setting. The difference is:
+- **Email confirmation ON (prod):** `email_confirmed_at` is `null` → user cannot authenticate until email is confirmed
+- **Email confirmation OFF (dev):** `email_confirmed_at` is set automatically → session is fully active immediately
 
 ### 7.3 Logout Flow
 
@@ -663,12 +718,12 @@ const handleLogout = async () => {
 | 3 | Leaves email field (blur) | Validates email format, shows error if invalid |
 | 4 | Types in password field | Input value updates |
 | 5 | Leaves password field (blur) | Validates password is not empty |
-| 6 | Clicks "Zaloguj się" button | Form validates all fields |
+| 6 | Clicks "Log in" button | Form validates all fields |
 | 6a | - Validation fails | Error messages shown under respective fields |
 | 6b | - Validation passes | Button shows loading state, API called |
 | 7 | API responds with success | User redirected to `/flashcards` |
 | 8 | API responds with error | Error alert shown, button re-enabled |
-| 9 | Clicks "Zarejestruj się" link | Navigates to `/register` |
+| 9 | Clicks "Create an account" link | Navigates to `/register` |
 
 ### 8.2 Registration Page Interactions
 
@@ -679,34 +734,40 @@ const handleLogout = async () => {
 | 3 | Leaves email field (blur) | Validates email format |
 | 4 | Types in password field | Input value updates |
 | 5 | Leaves password field (blur) | Validates password length (min 8) |
-| 6 | Clicks "Zarejestruj się" button | Form validates all fields |
+| 6 | Clicks "Create account" button | Form validates all fields |
 | 6a | - Validation fails | Error messages shown |
 | 6b | - Validation passes | Button shows loading state, API called |
-| 7 | API responds with success | User auto-logged in, redirected to `/flashcards` |
+| 7 | API responds with success | Success toast shown, then redirect to `/login` |
+| 7a | - Production (email conf. ON) | User sees login page, must confirm email first |
+| 7b | - Development (email conf. OFF) | Middleware auto-redirects to `/flashcards` |
 | 8 | API responds with error | Error alert shown (e.g., "User exists") |
-| 9 | Clicks "Zaloguj się" link | Navigates to `/login` |
+| 9 | Clicks "Log in" link | Navigates to `/login` |
 
 ### 8.3 Flashcards Page Interactions (Navbar only for scaffolding)
 
 | # | User Action | System Response |
 |---|-------------|-----------------|
 | 1 | Clicks logo | Navigates to `/flashcards` |
-| 2 | Clicks "Generowanie" link | Navigates to `/generate` (future) |
-| 3 | Clicks "Moje fiszki" link | Stays on `/flashcards` (active state) |
+| 2 | Clicks "Generate" link | Navigates to `/generate` |
+| 3 | Clicks "My Flashcards" link | Stays on `/flashcards` (active state) |
 | 4 | Clicks user dropdown trigger | Dropdown menu opens |
 | 5 | Clicks outside dropdown | Dropdown closes |
-| 6 | Clicks "Wyloguj się" | API called, redirected to `/login` |
+| 6 | Clicks "Log out" | API called, redirected to `/login` |
+| 7 | (Mobile) Clicks hamburger menu | Sheet opens with nav links |
+| 8 | (Mobile) Clicks nav link in Sheet | Sheet closes, navigates to page |
 
 ## 9. Validation Conditions
 
 ### 9.1 Client-Side Validation
 
-| Field | Form | Condition | Error Message (Polish) |
-|-------|------|-----------|----------------------|
-| Email | Both | Required | "Email jest wymagany" |
-| Email | Both | Valid format | "Nieprawidłowy format email" |
-| Password | Login | Required | "Hasło jest wymagane" |
-| Password | Register | Min 8 characters | "Hasło musi mieć co najmniej 8 znaków" |
+| Field | Form | Condition | Error Message |
+|-------|------|-----------|---------------|
+| Email | Both | Required | "Email is required" |
+| Email | Both | Valid format | "Invalid email format" |
+| Password | Login | Required | "Password is required" |
+| Password | Register | Min 8 characters | "Password must be at least 8 characters" |
+
+**Note:** Error messages match Zod schema messages from `src/lib/schemas/auth.schema.ts`.
 
 ### 9.2 Validation Timing
 
@@ -755,15 +816,16 @@ const validateForm = (data: LoginFormState): LoginFormErrors => {
 
 ### 10.1 Error Message Mapping
 
-| API Error Code | User-Facing Message (Polish) |
-|----------------|------------------------------|
-| `VALIDATION_ERROR` | Display API message or "Sprawdź wprowadzone dane" |
-| `INVALID_CREDENTIALS` | "Nieprawidłowy email lub hasło" |
-| `USER_EXISTS` | "Użytkownik o tym adresie email już istnieje" |
-| `INTERNAL_ERROR` | "Wystąpił błąd. Spróbuj ponownie później." |
-| `UNAUTHORIZED` | "Sesja wygasła. Zaloguj się ponownie." |
-| Network error | "Nie można połączyć z serwerem. Sprawdź połączenie." |
-| Timeout | "Przekroczono czas oczekiwania. Spróbuj ponownie." |
+| API Error Code | User-Facing Message |
+|----------------|---------------------|
+| `VALIDATION_ERROR` | Display API message or "Please check your input" |
+| `INVALID_CREDENTIALS` | "Invalid email or password" |
+| `EMAIL_NOT_CONFIRMED` | "Please confirm your email before logging in" |
+| `USER_EXISTS` | "An account with this email already exists" |
+| `INTERNAL_ERROR` | "Something went wrong. Please try again later." |
+| `UNAUTHORIZED` | "Your session has expired. Please log in again." |
+| Network error | "Unable to connect to server. Please check your connection." |
+| Timeout | "Request timed out. Please try again." |
 
 ### 10.2 Error Display Strategy
 
@@ -776,14 +838,15 @@ const validateForm = (data: LoginFormState): LoginFormErrors => {
 ```typescript
 const mapApiErrorToMessage = (code: string): string => {
   const errorMessages: Record<string, string> = {
-    VALIDATION_ERROR: "Sprawdź wprowadzone dane",
-    INVALID_CREDENTIALS: "Nieprawidłowy email lub hasło",
-    USER_EXISTS: "Użytkownik o tym adresie email już istnieje",
-    INTERNAL_ERROR: "Wystąpił błąd. Spróbuj ponownie później.",
-    UNAUTHORIZED: "Sesja wygasła. Zaloguj się ponownie.",
+    VALIDATION_ERROR: "Please check your input",
+    INVALID_CREDENTIALS: "Invalid email or password",
+    EMAIL_NOT_CONFIRMED: "Please confirm your email before logging in",
+    USER_EXISTS: "An account with this email already exists",
+    INTERNAL_ERROR: "Something went wrong. Please try again later.",
+    UNAUTHORIZED: "Your session has expired. Please log in again.",
   };
 
-  return errorMessages[code] ?? "Wystąpił nieoczekiwany błąd.";
+  return errorMessages[code] ?? "An unexpected error occurred.";
 };
 ```
 
@@ -799,36 +862,52 @@ const mapApiErrorToMessage = (code: string): string => {
 
 #### Step 1.1: Install Required Shadcn Components
 ```bash
-npx shadcn@latest add card input label alert
+npx shadcn@latest add card input label alert dropdown-menu sheet sonner
 ```
+
+**Note:** `button` is already installed.
 
 #### Step 1.2: Update Middleware for Page Route Protection
 
-Extend `src/middleware/index.ts` to handle page redirects:
+Extend `src/middleware/index.ts` to handle page redirects and fix email nullability:
 
 ```typescript
 // Add protected page paths
 const PROTECTED_PAGE_PATHS = ["/flashcards", "/generate"];
 const AUTH_PAGE_PATHS = ["/login", "/register"];
 
-// In onRequest handler, after API protection:
+// In onRequest handler:
+
+// Assign user to locals (if authenticated) - with email guard
+if (user) {
+  // Guard: email should always exist for email/password auth
+  // If missing, treat as unauthenticated
+  if (!user.email) {
+    locals.user = undefined;
+  } else {
+    locals.user = {
+      id: user.id,
+      email: user.email, // Now guaranteed to be string
+    };
+  }
+}
 
 // Protected pages - redirect to login if not authenticated
-if (!user && PROTECTED_PAGE_PATHS.some(p => url.pathname.startsWith(p))) {
+if (!locals.user && PROTECTED_PAGE_PATHS.some(p => url.pathname.startsWith(p))) {
   return context.redirect("/login");
 }
 
 // Auth pages - redirect to flashcards if already authenticated
-if (user && AUTH_PAGE_PATHS.includes(url.pathname)) {
+if (locals.user && AUTH_PAGE_PATHS.includes(url.pathname)) {
   return context.redirect("/flashcards");
 }
 ```
 
-#### Step 1.3: Create BaseLayout.astro
-- Create `src/layouts/BaseLayout.astro`
-- Minimal HTML structure
-- Centered content container
-- Import global.css
+#### Step 1.3: Refactor Layout.astro → BaseLayout.astro
+- Rename existing `src/layouts/Layout.astro` to `src/layouts/BaseLayout.astro`
+- Keep HTML head structure (already imports global.css)
+- Add centered flex container for auth pages
+- Update any existing imports if needed
 
 #### Step 1.4: Create AppLayout.astro
 - Create `src/layouts/AppLayout.astro`
@@ -867,11 +946,12 @@ if (user && AUTH_PAGE_PATHS.includes(url.pathname)) {
 
 #### Step 3.1: Create Navbar Component
 - Create `src/components/layout/Navbar.tsx`
-- Logo with link to /flashcards
-- Navigation links (Generowanie, Moje fiszki)
-- User dropdown with logout button
-- Active state for current page
-- Responsive design (mobile menu can be simplified initially)
+- Logo text "10x Cards" with link to /flashcards
+- Navigation links (Generate, My Flashcards)
+- User dropdown (DropdownMenu) with email display and logout button
+- Active state styling for current page
+- Mobile menu using Sheet component (hamburger → side drawer)
+- Sticky positioning with `sticky top-0 z-50 h-16`
 
 #### Step 3.2: Create Flashcards Page Scaffolding
 - Create `src/pages/flashcards.astro`
@@ -879,44 +959,61 @@ if (user && AUTH_PAGE_PATHS.includes(url.pathname)) {
 - Simple placeholder content
 - Access user from Astro.locals
 
-#### Step 3.3: Update Home Page
+#### Step 3.3: Create Generate Page Scaffolding
+- Create `src/pages/generate.astro`
+- Use AppLayout with Navbar
+- Simple placeholder content (same pattern as flashcards)
+
+#### Step 3.4: Update Home Page
 - Update `src/pages/index.astro`
 - Add redirect logic based on auth status
 
-### Phase 4: Polish and Accessibility
+### Phase 4: Polish and Basic Accessibility
 
-#### Step 4.1: Accessibility Enhancements
-- Add proper `aria-label` attributes to form fields
-- Add `aria-describedby` for error messages
-- Ensure focus management on form submission errors
-- Add `aria-live` region for dynamic error messages
+#### Step 4.1: Basic Accessibility (implemented during component creation)
+- Semantic HTML elements (`<form>`, `<label>`, `<button>`)
+- Label-input associations via `htmlFor`/`id`
+- `aria-invalid` on inputs with errors
+- `aria-describedby` linking inputs to error messages
+- Proper button `type="submit"`
+
+**Note:** Advanced accessibility (aria-live regions, focus management) deferred to post-MVP.
 
 #### Step 4.2: Responsive Design Review
 - Test on mobile viewport (< 640px)
 - Ensure form is usable on small screens
-- Navbar collapses appropriately
+- Navbar Sheet menu works correctly on mobile
 
 #### Step 4.3: Loading States
 - Add loading spinner to submit buttons
 - Disable form inputs during submission
-- Cursor feedback on interactive elements
+- Button shows "Loading..." or spinner icon
 
 ### Implementation Checklist
 
-- [ ] Install Shadcn components (card, input, label, alert)
-- [ ] Create BaseLayout.astro
+- [ ] Install Shadcn components (card, input, label, alert, dropdown-menu, sheet, sonner)
+- [ ] Refactor Layout.astro → BaseLayout.astro
 - [ ] Create AppLayout.astro
-- [ ] Update middleware with page route protection
+- [ ] Update middleware with page route protection and email guard
 - [ ] Create LoginForm.tsx
 - [ ] Create RegisterForm.tsx
 - [ ] Create login.astro page
 - [ ] Create register.astro page
-- [ ] Create Navbar.tsx
+- [ ] Create Navbar.tsx (with Sheet for mobile)
 - [ ] Create flashcards.astro page (scaffolding)
+- [ ] Create generate.astro page (scaffolding)
 - [ ] Update index.astro with redirect logic
-- [ ] Add aria attributes for accessibility
-- [ ] Test responsive design
-- [ ] Test complete login flow
-- [ ] Test complete registration flow
-- [ ] Test logout flow
-- [ ] Test route protection (redirect behavior)
+- [ ] Basic accessibility (label associations, aria-invalid)
+- [ ] Responsive design testing
+
+### Manual Testing Checklist
+
+- [ ] Test complete login flow (valid credentials → redirected to /flashcards)
+- [ ] Test login with invalid credentials (error message displayed)
+- [ ] Test complete registration flow (new user → toast → redirect to /login)
+- [ ] Test registration with existing email (error message displayed)
+- [ ] Test logout flow (click Log out → redirected to /login)
+- [ ] Test route protection: unauthenticated user → /flashcards → redirect to /login
+- [ ] Test route protection: authenticated user → /login → redirect to /flashcards
+- [ ] Test mobile menu (Sheet opens, navigation works)
+- [ ] Test responsive design on mobile viewport

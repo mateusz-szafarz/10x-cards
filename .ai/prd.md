@@ -55,7 +55,7 @@ Opis: Jako nowy użytkownik chcę się zarejestrować, aby mieć dostęp do wła
 Kryteria akceptacji:
 - Formularz rejestracyjny zawiera pola na adres e-mail i hasło.
 - Po poprawnym wypełnieniu formularza i weryfikacji danych konto jest aktywowane.
-- Użytkownik otrzymuje potwierdzenie pomyślnej rejestracji i zostaje zalogowany.
+- Użytkownik otrzymuje potwierdzenie pomyślnej rejestracji i zostaje przekierowany do strony logowania.
 
 ID: US-002
 Tytuł: Logowanie do aplikacji

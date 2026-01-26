@@ -128,13 +128,14 @@ opiera się na następujących założeniach:
 - Email: wymagany, format email
 - Hasło: wymagane, minimum 8 znaków
 
-**Automatyczne logowanie po rejestracji (MVP):**
+**Przepływ po rejestracji:**
 
-- `supabase.auth.signUp()` **automatycznie tworzy sesję** podczas rejestracji
-- Session tokens są ustawiane jako **httpOnly cookies** przez Supabase Auth
-- Po pomyślnej rejestracji użytkownik jest **automatycznie zalogowany**
-- Aplikacja przekierowuje bezpośrednio na `/flashcards` - **nie ma potrzeby osobnego logowania**
-- Email confirmation jest **WYŁĄCZONE dla MVP** - użytkownik ma natychmiastowy dostęp do aplikacji
+- Po pomyślnej rejestracji użytkownik jest **przekierowywany do strony logowania** (`/login`)
+- `supabase.auth.signUp()` tworzy konto użytkownika i ustawia cookies sesji
+- **PRODUKCJA (email confirmation WŁĄCZONE):** Użytkownik musi potwierdzić email przed pierwszym logowaniem. Pole `email_confirmed_at` w bazie jest `null` dopóki użytkownik nie kliknie linku w emailu.
+- **DEVELOPMENT (email confirmation WYŁĄCZONE):** Email jest "implicitly confirmed" przez Supabase - pole `email_confirmed_at` jest ustawiane automatycznie. Użytkownik po przekierowaniu do `/login` zostanie od razu przekierowany do `/flashcards` (middleware wykryje aktywną sesję).
+
+> **Uwaga dla developmentu:** W środowisku dev użytkownik po rejestracji zostanie przekierowany do `/login`, ale ponieważ sesja jest już aktywna (brak wymogu potwierdzenia email), middleware natychmiast przekieruje go do `/flashcards`. To oczekiwane zachowanie.
 
 ---
 
@@ -354,7 +355,8 @@ flowchart TD
         A -->|Zalogowany| C["/flashcards"]
         B -->|Sukces logowania| C
         B -->|Brak konta| D["/register"]
-        D -->|" Sukces rejestracji<br/>(auto-login via cookies) "| C
+        D -->|Sukces rejestracji| B
+        B -->|"Dev: sesja aktywna<br/>(auto-redirect)"| C
     end
 
     subgraph Main["Główne przepływy"]
@@ -372,14 +374,17 @@ flowchart TD
 
 **Wyjaśnienie przepływu rejestracji:**
 
-Po pomyślnej rejestracji (`POST /api/auth/register`) użytkownik jest **automatycznie zalogowany** dzięki sesji
-utworzonej przez `supabase.auth.signUp()`. Session tokens są ustawiane jako httpOnly cookies, więc przeglądarka
-automatycznie wysyła je w kolejnych requestach. Middleware rozpoznaje sesję i przepuszcza użytkownika do
-`/flashcards` bez konieczności osobnego logowania.
+Po pomyślnej rejestracji (`POST /api/auth/register`) użytkownik jest **przekierowywany do strony logowania** (`/login`).
+
+- **Produkcja (email confirmation ON):** Użytkownik musi sprawdzić email i kliknąć link potwierdzający. Dopiero po potwierdzeniu może się zalogować. Middleware sprawdza czy sesja istnieje i czy email jest potwierdzony.
+
+- **Development (email confirmation OFF):** `supabase.auth.signUp()` automatycznie ustawia `email_confirmed_at`, więc sesja jest od razu aktywna. Gdy użytkownik zostanie przekierowany do `/login`, middleware wykryje aktywną sesję i natychmiast przekieruje go do `/flashcards`.
 
 ### 3.2 Szczegółowe przepływy użytkownika
 
 #### Flow 1: Rejestracja i pierwsze użycie
+
+**Scenariusz produkcyjny (email confirmation ON):**
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -389,17 +394,36 @@ automatycznie wysyła je w kolejnych requestach. Middleware rozpoznaje sesję i 
 │  2   │ Klik "Zarejestruj się"     │ Przejście na /register                             │
 │  3   │ Wypełnienie formularza     │ Walidacja on-blur                                  │
 │  4   │ Klik "Zarejestruj"         │ POST /api/auth/register                            │
-│  5   │ -                          │ Supabase.signUp() tworzy user + sesję              │
-│  6   │ -                          │ Cookies ustawione automatycznie (httpOnly)         │
-│  7   │ -                          │ Response 201: { user: {...} }                      │
-│  8   │ -                          │ Client-side redirect → /flashcards                 │
-│  9   │ Widzi empty state          │ Middleware: sesja OK, wyświetla CTA "Generuj"      │
-│ 10   │ Klik "Generuj fiszki"      │ Przejście na /generate                             │
+│  5   │ -                          │ Supabase.signUp() tworzy user (email_confirmed=null)│
+│  6   │ -                          │ Response 201: { user: {...} }                      │
+│  7   │ -                          │ Client-side redirect → /login                      │
+│  8   │ Widzi stronę logowania     │ Komunikat: "Sprawdź email aby potwierdzić konto"   │
+│  9   │ Klika link w emailu        │ Email zostaje potwierdzony (email_confirmed_at set)│
+│ 10   │ Loguje się na /login       │ POST /api/auth/login → redirect /flashcards        │
+│ 11   │ Widzi empty state          │ Middleware: sesja OK, wyświetla CTA "Generuj"      │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Uwaga:** Użytkownik NIE musi logować się po rejestracji - sesja jest automatycznie utworzona i aktywna dzięki
-cookies ustawionym przez Supabase Auth w kroku 6.
+**Scenariusz developerski (email confirmation OFF):**
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ KROK │ AKCJA UŻYTKOWNIKA          │ ODPOWIEDŹ SYSTEMU                                  │
+├──────┼────────────────────────────┼────────────────────────────────────────────────────┤
+│  1   │ Wejście na /               │ Middleware: brak sesji → redirect /login           │
+│  2   │ Klik "Zarejestruj się"     │ Przejście na /register                             │
+│  3   │ Wypełnienie formularza     │ Walidacja on-blur                                  │
+│  4   │ Klik "Zarejestruj"         │ POST /api/auth/register                            │
+│  5   │ -                          │ Supabase.signUp() tworzy user + implicitly confirms│
+│  6   │ -                          │ Cookies sesji ustawione (httpOnly)                 │
+│  7   │ -                          │ Response 201: { user: {...} }                      │
+│  8   │ -                          │ Client-side redirect → /login                      │
+│  9   │ -                          │ Middleware: sesja aktywna → redirect /flashcards   │
+│ 10   │ Widzi empty state          │ Wyświetla CTA "Generuj"                            │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Uwaga:** W środowisku dev użytkownik jest automatycznie przekierowywany z `/login` do `/flashcards` ponieważ sesja jest aktywna (email implicitly confirmed). W produkcji musi najpierw potwierdzić email.
 
 #### Flow 2: Generowanie fiszek przez AI
 
@@ -774,12 +798,13 @@ const handleSubmit = async (e: FormEvent) => {
   }
 
   // 2. Response zawiera tylko { user: {...} }
-  // Session tokens są już w httpOnly cookies (ustawione przez Supabase Auth)
+  // Session tokens są w httpOnly cookies (ustawione przez Supabase Auth)
   const data = await response.json()
 
-  // 3. Redirect do /flashcards
-  // Middleware automatycznie rozpozna sesję z cookies
-  window.location.href = '/flashcards'
+  // 3. Redirect do /login
+  // W PROD: użytkownik musi potwierdzić email przed zalogowaniem
+  // W DEV: middleware wykryje aktywną sesję i przekieruje do /flashcards
+  window.location.href = '/login'
 }
 ```
 
@@ -788,8 +813,7 @@ const handleSubmit = async (e: FormEvent) => {
 - **Credentials: 'include'**: Niezbędne aby przeglądarka zaakceptowała httpOnly cookies z cross-origin responses
   (choć w Astro SSR będzie same-origin)
 - **Brak localStorage/sessionStorage**: Tokeny są w httpOnly cookies - niedostępne dla JavaScript
-- **Automatyczna sesja**: `window.location.href` wymusza full page reload, middleware czyta cookies i przepuszcza do
-  `/flashcards`
+- **Redirect do /login**: Po rejestracji użytkownik jest kierowany do logowania. W dev (bez email confirmation) middleware automatycznie przekieruje do `/flashcards` bo sesja jest aktywna. W prod użytkownik musi najpierw potwierdzić email.
 
 ### 6.2 Timeouty per endpoint
 
