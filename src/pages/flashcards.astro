@@ -1,0 +1,16 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+
+// User is guaranteed to exist by middleware for protected pages
+const user = Astro.locals.user!;
+---
+
+<AppLayout title="My Flashcards - 10x Cards" user={user} currentPath="/flashcards">
+  <div class="space-y-4">
+    <h1 class="text-3xl font-bold">My Flashcards</h1>
+    <p class="text-muted-foreground">
+      This page is under construction. Future iterations will display your flashcard collection
+      with filtering, sorting, and study session options.
+    </p>
+  </div>
+</AppLayout>

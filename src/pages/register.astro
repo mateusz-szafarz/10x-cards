@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import RegisterForm from "../components/auth/RegisterForm";
+import { Toaster } from "../components/ui/sonner";
+---
+
+<BaseLayout title="Create account - 10x Cards">
+  <RegisterForm client:load />
+  <Toaster client:load />
+</BaseLayout>

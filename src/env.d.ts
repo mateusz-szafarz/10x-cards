@@ -7,7 +7,7 @@ declare global {
       supabase: SupabaseClient<Database>;
       user?: {
         id: string;
-        email: string | null;
+        email: string; // Guaranteed by middleware email guard
       };
     }
   }

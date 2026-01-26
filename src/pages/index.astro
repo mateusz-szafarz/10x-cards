@@ -1,8 +1,10 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
----
+// Redirect based on authentication status
+const user = Astro.locals.user;
 
-<Layout>
-  <Welcome />
-</Layout>
+if (user) {
+  return Astro.redirect("/flashcards");
+}
+
+return Astro.redirect("/login");
+---
