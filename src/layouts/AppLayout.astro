@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Navbar from "../components/layout/Navbar";
+import { Toaster } from "../components/ui/sonner";
 
 interface Props {
   title?: string;
@@ -32,5 +33,6 @@ const { title = "10x Cards", user, currentPath } = Astro.props;
         <slot />
       </div>
     </main>
+    <Toaster client:load />
   </body>
 </html>
