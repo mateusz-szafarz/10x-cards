@@ -16,6 +16,7 @@ export const prerender = false;
  * - source: Filter by source ("ai_generated" or "manual")
  * - sort: Sort field ("created_at" or "updated_at", default: "created_at")
  * - order: Sort order ("asc" or "desc", default: "desc")
+ * - search: Text search in front and back fields (case-insensitive, max: 200 characters)
  *
  * Returns:
  * - 200: FlashcardsListDTO with flashcards array and pagination metadata
@@ -32,6 +33,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     source: url.searchParams.get("source") ?? undefined,
     sort: url.searchParams.get("sort") ?? undefined,
     order: url.searchParams.get("order") ?? undefined,
+    search: url.searchParams.get("search") ?? undefined,
   };
 
   const validationResult = flashcardsQueryParamsSchema.safeParse(params);

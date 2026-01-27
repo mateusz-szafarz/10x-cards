@@ -143,6 +143,7 @@ export interface FlashcardsQueryParams {
   source?: FlashcardSource;
   sort?: "created_at" | "updated_at";
   order?: "asc" | "desc";
+  search?: string;
 }
 
 /**

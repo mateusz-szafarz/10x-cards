@@ -339,12 +339,144 @@ GET {{baseUrl}}/api/flashcards?sort=updated_at&order=desc
   });
 
   console.log("✓ PHASE 7: Sorting works correctly");
+%}
+
+###
+
+# ========================================
+# PHASE 8: TEST SEARCH
+# ========================================
+
+# @name Search By Word In Front
+# Search for "React" - should find the manual flashcard "What is React?"
+GET {{baseUrl}}/api/flashcards?search=React
+
+> {%
+  client.test("Search by word in front field", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 1, "Should return exactly 1 flashcard");
+
+    const flashcard = response.body.flashcards[0];
+    client.assert(flashcard.front === "What is React?", "Should find 'What is React?' flashcard");
+  });
+
+  console.log("✓ Search by word in front works");
+%}
+
+###
+
+# @name Search By Word In Back
+# Search for "programming language" - should find TypeScript flashcard
+GET {{baseUrl}}/api/flashcards?search=programming%20language
+
+> {%
+  client.test("Search by word in back field", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 1, "Should return exactly 1 flashcard");
+
+    const flashcard = response.body.flashcards[0];
+    client.assert(flashcard.front === "What is TypeScript?", "Should find TypeScript flashcard");
+    client.assert(flashcard.back.includes("programming language"), "Back should contain 'programming language'");
+  });
+
+  console.log("✓ Search by word in back works");
+%}
+
+###
+
+# @name Search With No Results
+# Search for non-existent text
+GET {{baseUrl}}/api/flashcards?search=nonexistent_xyz_query
+
+> {%
+  client.test("Search with no results", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 0, "Should return 0 flashcards");
+    client.assert(response.body.pagination.total === 0, "Total should be 0");
+  });
+
+  console.log("✓ Search with no results works");
+%}
+
+###
+
+# @name Search Combined With Source Filter
+# Search for "React" with source=manual
+GET {{baseUrl}}/api/flashcards?search=React&source=manual
+
+> {%
+  client.test("Search combined with source filter", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 1, "Should return exactly 1 flashcard");
+
+    const flashcard = response.body.flashcards[0];
+    client.assert(flashcard.source === "manual", "Should be manual source");
+    client.assert(flashcard.front === "What is React?", "Should find 'What is React?' flashcard");
+  });
+
+  console.log("✓ Search combined with source filter works");
+%}
+
+###
+
+# @name Search Combined With Pagination
+# Search for "What" with pagination - all flashcards have "What" in front
+GET {{baseUrl}}/api/flashcards?search=What&limit=1&page=1
+
+> {%
+  client.test("Search combined with pagination", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 1, "Should return exactly 1 item (limit)");
+    client.assert(response.body.pagination.total === 5, "Total should be 5 (all flashcards match)");
+    client.assert(response.body.pagination.page === 1, "Page should be 1");
+    client.assert(response.body.pagination.limit === 1, "Limit should be 1");
+  });
+
+  console.log("✓ Search combined with pagination works");
+%}
+
+###
+
+# @name Search With Empty String
+# Empty search string should behave as no search (return all flashcards)
+GET {{baseUrl}}/api/flashcards?search=
+
+> {%
+  client.test("Search with empty string", function() {
+    client.assert(response.status === 200, "Expected status 200");
+    client.assert(response.body.flashcards.length === 5, "Should return all 5 flashcards");
+    client.assert(response.body.pagination.total === 5, "Total should be 5");
+  });
+
+  console.log("✓ Empty search string works (returns all flashcards)");
+%}
+
+###
+
+# @name Search Exceeding Max Length
+# Search string longer than 200 characters should fail validation
+< {%
+  const longSearch = "a".repeat(201); // 201 characters
+  client.global.set("longSearch", longSearch);
+%}
+
+GET {{baseUrl}}/api/flashcards?search={{longSearch}}
+
+> {%
+  client.test("Search exceeding max length", function() {
+    client.assert(response.status === 400, "Expected status 400");
+    client.assert(response.body.error.code === "VALIDATION_ERROR", "Should return VALIDATION_ERROR");
+    client.assert(response.body.error.message.includes("200"), "Error message should mention 200 character limit");
+  });
+
+  console.log("✓ PHASE 8: Search functionality works correctly");
   console.log("========================================");
   console.log("✅ SCENARIO PASSED: Flashcards List and Filters");
   console.log("- Default listing returns all flashcards");
   console.log("- Pagination works with custom page and limit");
   console.log("- Source filtering works (manual, ai_generated)");
   console.log("- Sorting works (created_at, updated_at, asc, desc)");
+  console.log("- Search works (front, back, combined with filters and pagination)");
   console.log("========================================");
 %}
 

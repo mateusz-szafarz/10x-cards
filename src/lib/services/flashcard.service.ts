@@ -10,6 +10,17 @@ import type {
 import { buildPaginationMetadata } from "../utils";
 
 /**
+ * Escapes PostgreSQL ILIKE wildcard characters (% and _) in a search string.
+ * Prevents user input from being interpreted as wildcard patterns.
+ *
+ * @param str - The search string to escape
+ * @returns Escaped string safe for use in ILIKE patterns
+ */
+function escapeIlikePattern(str: string): string {
+  return str.replace(/[%_]/g, "\\$&");
+}
+
+/**
  * Service responsible for flashcard CRUD operations.
  *
  * Handles manual flashcard creation, updates, deletions, and listing
@@ -130,13 +141,13 @@ export class FlashcardService {
   /**
    * Lists flashcards with pagination and filtering.
    *
-   * @param params - Query parameters (page, limit, source, sort, order)
+   * @param params - Query parameters (page, limit, source, sort, order, search)
    * @param userId - ID of the user (ensures ownership)
    * @returns List of flashcards with pagination metadata
    * @throws Error if database operation fails
    */
   async listFlashcards(params: FlashcardsQueryParams, userId: string): Promise<FlashcardsListDTO> {
-    const { page = 1, limit = 20, source, sort = "created_at", order = "desc" } = params;
+    const { page = 1, limit = 20, source, sort = "created_at", order = "desc", search } = params;
 
     // Calculate offset for pagination
     const from = (page - 1) * limit;
@@ -153,6 +164,12 @@ export class FlashcardService {
     // Optional source filter
     if (source) {
       query = query.eq("source", source);
+    }
+
+    // Optional text search filter
+    if (search) {
+      const escapedSearch = escapeIlikePattern(search);
+      query = query.or(`front.ilike.%${escapedSearch}%,back.ilike.%${escapedSearch}%`);
     }
 
     // Sorting

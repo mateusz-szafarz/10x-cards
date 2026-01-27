@@ -33,6 +33,12 @@ export const flashcardsQueryParamsSchema = z.object({
   source: z.enum(["ai_generated", "manual"]).optional(),
   sort: z.enum(["created_at", "updated_at"]).default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
+  search: z
+    .string()
+    .trim()
+    .max(200, "Search query must not exceed 200 characters")
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
 });
 
 export type CreateFlashcardInput = z.infer<typeof createFlashcardSchema>;
