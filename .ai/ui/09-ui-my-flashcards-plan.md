@@ -376,8 +376,6 @@ The form state is initialized/reset via a `useEffect` that watches the `flashcar
 | **Timeout** | 10 seconds |
 | **Called by** | `useFlashcards` hook on mount, search, pagination |
 
-**Note on search:** The current backend API (`GET /api/flashcards`) does not support a `search` query parameter. The `flashcardsQueryParamsSchema` and `FlashcardService.listFlashcards()` only support `page`, `limit`, `source`, `sort`, and `order`. **Before implementing the search UI, the backend must be extended** to accept a `search` query parameter that performs text matching on `front` and `back` fields (e.g., using PostgreSQL `ilike` or full-text search). Until then, the search input should be included in the UI but the backend integration should be deferred. The hook should be designed to pass the `search` parameter when the backend supports it.
-
 ### 7.2 Endpoint: Create Flashcard
 
 | Aspect | Detail |
