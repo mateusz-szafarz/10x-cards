@@ -68,19 +68,19 @@ src/components/
 
 - **Description:** Main container component that orchestrates the entire "My Flashcards" view. Manages the top-level state via the `useFlashcards` custom hook, renders the search input, flashcard grid (or empty/loading/error states), pagination, and hosts the edit and delete dialogs. This is the single React entry point hydrated by `client:load` in the Astro page.
 - **Main elements:**
-  - Page header: `<h1>` with title "Moje fiszki" and a `<Button>` "+ Nowa fiszka" aligned right
-  - Search: `<Input>` with placeholder "Szukaj fiszek..." and a search icon (Lucide `Search`)
+  - Page header: `<h1>` with title "My Flashcards" and a `<Button>` "+ New Flashcard" aligned right
+  - Search: `<Input>` with placeholder "Search flashcards..." and a search icon (Lucide `Search`)
   - Content area (conditional rendering):
     - **Loading:** Grid of 6 `<Skeleton>` cards matching `FlashcardCard` dimensions
-    - **Error:** `<Alert variant="destructive">` with error message and a "Spróbuj ponownie" retry `<Button>`
+    - **Error:** `<Alert variant="destructive">` with error message and a "Try again" retry `<Button>`
     - **Empty (no flashcards at all):** `<FlashcardEmpty />`
-    - **Empty (search with no results):** Inline message "Brak wyników dla podanego zapytania"
+    - **Empty (search with no results):** Inline message "No results found"
     - **Data:** Responsive grid of `<FlashcardCard>` components
   - Pagination: Shadcn `<Pagination>` component below the grid
   - `<FlashcardEditDialog>` (single instance, visibility controlled by state)
   - `<FlashcardDeleteDialog>` (single instance, visibility controlled by state)
 - **Handled interactions:**
-  - Click "+ Nowa fiszka" → open `FlashcardEditDialog` in create mode
+  - Click "+ New Flashcard" → open `FlashcardEditDialog` in create mode
   - Type in search → debounced search (300ms), reset to page 1
   - Click pagination → fetch page N
   - Receive `onEdit` from `FlashcardCard` → open `FlashcardEditDialog` in edit mode
@@ -109,9 +109,9 @@ src/components/
   - `<CardFooter>`:
     - Source indicator: icon + label (`"AI"` with Bot icon or `"Manual"` with Pen icon from Lucide)
     - Formatted creation date (e.g., "15.01.2024")
-    - Action buttons row: "Edytuj" `<Button variant="ghost" size="sm">` and delete `<Button variant="ghost" size="sm">` with Trash2 icon
+    - Action buttons row: "Edit" `<Button variant="ghost" size="sm">` and delete `<Button variant="ghost" size="sm">` with Trash2 icon
 - **Handled interactions:**
-  - Click "Edytuj" → calls `onEdit()` prop
+  - Click "Edit" → calls `onEdit()` prop
   - Click delete icon → calls `onDelete()` prop
 - **Validation:** None
 - **Types:**
@@ -131,18 +131,18 @@ src/components/
 - **Description:** Modal dialog for creating a new flashcard or editing an existing one. Uses Shadcn `Dialog` component. Contains a form with two textareas (front and back), character counters, and action buttons. Performs client-side validation using the shared Zod schema before calling the parent's save callback.
 - **Main elements:**
   - `<Dialog>` with `<DialogContent>`
-  - `<DialogHeader>`: Title "Edytuj fiszkę" (edit mode) or "Nowa fiszka" (create mode)
+  - `<DialogHeader>`: Title "Edit Flashcard" (edit mode) or "New Flashcard" (create mode)
   - Form body:
-    - Label "Przód fiszki" + `<Textarea>` for front + character counter "X/500 znaków" + error message
-    - Label "Tył fiszki" + `<Textarea>` for back + character counter "X/2000 znaków" + error message
+    - Label "Front" + `<Textarea>` for front + character counter "X/500 characters" + error message
+    - Label "Back" + `<Textarea>` for back + character counter "X/2000 characters" + error message
   - `<DialogFooter>`:
-    - "Anuluj" `<Button variant="outline">` → calls `onClose()`
-    - "Zapisz" `<Button>` → validates and calls `onSave()` with form data
+    - "Cancel" `<Button variant="outline">` → calls `onClose()`
+    - "Save" `<Button>` → validates and calls `onSave()` with form data
 - **Handled interactions:**
   - Change textarea content → update local form state, clear field error, update char counter
   - Blur textarea → validate field (on-blur validation)
-  - Click "Zapisz" → full form validation → call `onSave(data)` if valid
-  - Click "Anuluj" or close dialog → call `onClose()`
+  - Click "Save" → full form validation → call `onSave(data)` if valid
+  - Click "Cancel" or close dialog → call `onClose()`
   - Dialog close (ESC key, overlay click) → call `onClose()`
 - **Validation (matching API schema):**
   - Front: required, 1–500 characters (`createFlashcardSchema.shape.front`)
@@ -169,14 +169,14 @@ src/components/
 - **Main elements:**
   - `<AlertDialog>` with `<AlertDialogContent>`
   - `<AlertDialogHeader>`:
-    - Title: "Usunąć fiszkę?"
-    - Description: "Ta operacja jest nieodwracalna. Fiszka zostanie trwale usunięta." + preview of flashcard front text (truncated)
+    - Title: "Delete Flashcard?"
+    - Description: "This operation is irreversible. The flashcard will be permanently deleted." + preview of flashcard front text (truncated)
   - `<AlertDialogFooter>`:
-    - "Anuluj" `<AlertDialogCancel>` → closes dialog
-    - "Usuń" `<AlertDialogAction>` with destructive variant → calls `onConfirm()`
+    - "Cancel" `<AlertDialogCancel>` → closes dialog
+    - "Delete" `<AlertDialogAction>` with destructive variant → calls `onConfirm()`
 - **Handled interactions:**
-  - Click "Usuń" → calls `onConfirm()` prop
-  - Click "Anuluj" or close → calls `onCancel()` prop
+  - Click "Delete" → calls `onConfirm()` prop
+  - Click "Cancel" or close → calls `onCancel()` prop
 - **Validation:** None
 - **Types:**
   - `FlashcardDTO` (for displaying context)
@@ -196,13 +196,13 @@ src/components/
 - **Main elements:**
   - Centered container with vertical layout
   - Book icon (Lucide `BookOpen`, large)
-  - Heading: "Nie masz jeszcze fiszek"
-  - Description: "Wygeneruj swoje pierwsze fiszki z tekstu lub dodaj je ręcznie."
-  - CTA: `<Button>` "Generuj fiszki" → navigates to `/generate`
-  - Secondary CTA: `<Button variant="outline">` "+ Nowa fiszka" → calls `onCreateNew()`
+  - Heading: "No flashcards yet"
+  - Description: "Generate your first flashcards from text or add them manually."
+  - CTA: `<Button>` "Generate Flashcards" → navigates to `/generate`
+  - Secondary CTA: `<Button variant="outline">` "+ New Flashcard" → calls `onCreateNew()`
 - **Handled interactions:**
-  - Click "Generuj fiszki" → `window.location.href = '/generate'`
-  - Click "+ Nowa fiszka" → calls `onCreateNew()` prop
+  - Click "Generate Flashcards" → `window.location.href = '/generate'`
+  - Click "+ New Flashcard" → calls `onCreateNew()` prop
 - **Validation:** None
 - **Types:** None
 - **Props:**
@@ -447,7 +447,7 @@ const response = await fetch(url, {
 |------|-------------|-----------------|
 | 1 | Type in search input | Input value updates immediately |
 | 2 | - | After 300ms debounce: `isLoading=true`, fetch `GET /api/flashcards?search=...&page=1` |
-| 3 | - | Display results or "Brak wyników dla podanego zapytania" message |
+| 3 | - | Display results or "No results found" message |
 | 4 | Clear search input | Reset to page 1, fetch all flashcards |
 
 ### 8.3 Navigate Pages
@@ -461,22 +461,22 @@ const response = await fetch(url, {
 
 | Step | User Action | System Response |
 |------|-------------|-----------------|
-| 1 | Click "+ Nowa fiszka" | Open `FlashcardEditDialog` with empty form (create mode) |
-| 2 | Fill in "Przód fiszki" and "Tył fiszki" | Live character counters update |
-| 3 | Click "Zapisz" | Client-side validation → if invalid, show field errors |
+| 1 | Click "+ New Flashcard" | Open `FlashcardEditDialog` with empty form (create mode) |
+| 2 | Fill in "Front" and "Back" | Live character counters update |
+| 3 | Click "Save" | Client-side validation → if invalid, show field errors |
 | 4 | - | If valid: `isSubmitting=true`, `POST /api/flashcards` |
-| 5 | - | On success: close dialog, `toast.success("Utworzono fiszkę")`, reset to page 1, clear search, refetch |
+| 5 | - | On success: close dialog, `toast.success("Flashcard created")`, reset to page 1, clear search, refetch |
 | 6 | - | On failure: `toast.error(...)`, dialog stays open |
 
 ### 8.5 Edit Flashcard
 
 | Step | User Action | System Response |
 |------|-------------|-----------------|
-| 1 | Click "Edytuj" on a flashcard card | Open `FlashcardEditDialog` pre-filled with flashcard data (edit mode) |
-| 2 | Modify "Przód fiszki" and/or "Tył fiszki" | Live character counters update |
-| 3 | Click "Zapisz" | Client-side validation → if invalid, show field errors |
+| 1 | Click "Edit" on a flashcard card | Open `FlashcardEditDialog` pre-filled with flashcard data (edit mode) |
+| 2 | Modify "Front" and/or "Back" | Live character counters update |
+| 3 | Click "Save" | Client-side validation → if invalid, show field errors |
 | 4 | - | If valid: `isSubmitting=true`, `PUT /api/flashcards/:id` |
-| 5 | - | On success: close dialog, `toast.success("Zaktualizowano fiszkę")`, refetch current view |
+| 5 | - | On success: close dialog, `toast.success("Flashcard updated")`, refetch current view |
 | 6 | - | On failure: `toast.error(...)`, dialog stays open |
 
 ### 8.6 Delete Flashcard
@@ -484,11 +484,11 @@ const response = await fetch(url, {
 | Step | User Action | System Response |
 |------|-------------|-----------------|
 | 1 | Click delete icon (Trash2) on a flashcard card | Open `FlashcardDeleteDialog` with flashcard context |
-| 2 | Click "Usuń" | Close dialog immediately |
+| 2 | Click "Delete" | Close dialog immediately |
 | 3 | - | Optimistic: remove card from grid instantly |
 | 4 | - | `DELETE /api/flashcards/:id` |
-| 5 | - | On success: `toast.success("Usunięto fiszkę")`, refetch to fix pagination |
-| 6 | - | On failure: rollback (re-add card to grid), `toast.error("Nie udało się usunąć fiszki")` |
+| 5 | - | On success: `toast.success("Flashcard deleted")`, refetch to fix pagination |
+| 6 | - | On failure: rollback (re-add card to grid), `toast.error("Failed to delete flashcard")` |
 
 ## 9. Conditions and Validation
 
@@ -528,7 +528,7 @@ Uses the shared Zod schema `createFlashcardSchema` from `src/lib/schemas/flashca
 
 | Condition | Behavior |
 |-----------|----------|
-| `isSubmitting === true` | Button disabled, shows spinner and "Zapisywanie..." text |
+| `isSubmitting === true` | Button disabled, shows spinner and "Saving..." text |
 | Both fields empty | Button enabled (validation happens on click) |
 | Form has validation errors | Button enabled (user can retry after fixing) |
 
@@ -539,11 +539,11 @@ Uses the shared Zod schema `createFlashcardSchema` from `src/lib/schemas/flashca
 | API Error Code | User-Facing Message | Display Method |
 |----------------|---------------------|----------------|
 | `VALIDATION_ERROR` | Error message from API response | Toast error or form field error |
-| `NOT_FOUND` | "Nie znaleziono fiszki. Mogła zostać już usunięta." | Toast error |
-| `UNAUTHORIZED` | "Sesja wygasła. Zaloguj się ponownie." | Toast error + redirect to `/login` |
-| `INTERNAL_ERROR` | "Wystąpił błąd. Spróbuj ponownie później." | Toast error or Alert with retry |
-| Network error | "Nie udało się połączyć z serwerem. Sprawdź połączenie." | Toast error or Alert with retry |
-| Timeout (`AbortError`) | "Przekroczono czas oczekiwania na odpowiedź." | Toast error or Alert with retry |
+| `NOT_FOUND` | "Flashcard not found. It may have been deleted already." | Toast error |
+| `UNAUTHORIZED` | "Session expired. Please log in again." | Toast error + redirect to `/login` |
+| `INTERNAL_ERROR` | "An error occurred. Please try again later." | Toast error or Alert with retry |
+| Network error | "Failed to connect to the server. Check your connection." | Toast error or Alert with retry |
+| Timeout (`AbortError`) | "Request timed out." | Toast error or Alert with retry |
 
 ### 10.2 Error Handling by Context
 
@@ -600,8 +600,8 @@ Create `src/components/hooks/useFlashcards.ts`:
 Create `src/components/flashcards/FlashcardEmpty.tsx`:
 
 1. Centered layout with BookOpen icon, heading, description, and two CTA buttons
-2. "Generuj fiszki" button navigates to `/generate`
-3. "+ Nowa fiszka" button calls `onCreateNew` prop
+2. "Generate Flashcards" button navigates to `/generate`
+3. "+ New Flashcard" button calls `onCreateNew` prop
 
 ### Step 6: Implement `FlashcardCard` Component
 
@@ -611,7 +611,7 @@ Create `src/components/flashcards/FlashcardCard.tsx`:
 2. Truncate front and back text (e.g., 150 chars with `...`)
 3. Source badge with appropriate icon (Bot for AI, Pen for Manual)
 4. Format `created_at` date to locale string (e.g., "15.01.2024")
-5. "Edytuj" button and Trash2 icon button with `aria-label="Usuń fiszkę"`
+5. "Edit" button and Trash2 icon button with `aria-label="Delete flashcard"`
 6. Apply `React.memo()` for performance (prevents re-render when parent state changes but this card's data hasn't)
 
 ### Step 7: Implement `FlashcardDeleteDialog` Component
@@ -620,7 +620,7 @@ Create `src/components/flashcards/FlashcardDeleteDialog.tsx`:
 
 1. Use Shadcn `AlertDialog` with all subcomponents
 2. Show truncated flashcard front text in the description for context
-3. "Anuluj" and "Usuń" (destructive variant) buttons
+3. "Cancel" and "Delete" (destructive variant) buttons
 4. Controlled open/close via props
 
 ### Step 8: Implement `FlashcardEditDialog` Component
@@ -643,7 +643,7 @@ Create `src/components/flashcards/FlashcardEditDialog.tsx`:
 Create `src/components/flashcards/FlashcardList.tsx`:
 
 1. Use `useFlashcards` hook with initial data from props
-2. Render page header with title and "+ Nowa fiszka" button
+2. Render page header with title and "+ New Flashcard" button
 3. Render search `Input` with search icon and debounce connection to hook
 4. Conditional rendering: loading skeletons / error alert / empty state / flashcard grid
 5. Responsive grid: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`

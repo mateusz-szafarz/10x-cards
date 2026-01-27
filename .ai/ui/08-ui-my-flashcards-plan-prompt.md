@@ -2,7 +2,7 @@ Wciel się w rolę doświadczonego programisty frontendu. Twoim zadaniem jest st
 - "My Flashcards" (/flashcards)
 
 **Ważne:**
-- Plan implementacji ma być w języku angielskim.
+- Plan implementacji oraz interfejs użytkownika mają być w języku angielskim.
 - Plan ma się skupić na samej implementacji UI (z uwzględnieniem aspektu testowalności kodu, ale bez implementacji testów na tym etapie).
 - Prompt zawiera referencję do high level planu UI, w którym znajduje się wiele cennych informacji, bardzo ważne jest, aby generowany plan implementacji zawierał WSZYSTKIE informacje, które są istotne z perspektywy implementowanego widoku.
 
