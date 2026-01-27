@@ -23,8 +23,8 @@ src/pages/flashcards.astro                  (Astro page - SSR data fetching)
 └── AppLayout.astro                         (Layout with Navbar)
     └── FlashcardList                       (React, client:load - main container)
         ├── Page header area
-        │   ├── <h1> "Moje fiszki"
-        │   └── Button "+ Nowa fiszka"
+        │   ├── <h1> "My Flashcards"
+        │   └── Button "+ New Flashcard"
         ├── Search Input                    (text input with search icon)
         ├── [Loading state] → Skeleton cards grid (6 placeholders)
         ├── [Error state] → Alert with retry button
@@ -51,13 +51,15 @@ src/pages/flashcards.astro                  (Astro page - SSR data fetching)
 **File structure:**
 
 ```
-src/components/
-├── flashcards/
-│   ├── FlashcardList.tsx
-│   ├── FlashcardCard.tsx
-│   ├── FlashcardEditDialog.tsx
-│   ├── FlashcardDeleteDialog.tsx
-│   └── FlashcardEmpty.tsx
+src/
+├── components/
+│   └── flashcards/
+│       ├── FlashcardList.tsx
+│       ├── FlashcardCard.tsx
+│       ├── FlashcardEditDialog.tsx
+│       ├── FlashcardDeleteDialog.tsx
+│       ├── FlashcardEmpty.tsx
+│       └── types.ts
 └── hooks/
     └── useFlashcards.ts
 ```
@@ -69,8 +71,8 @@ src/components/
 - **Description:** Main container component that orchestrates the entire "My Flashcards" view. Manages the top-level state via the `useFlashcards` custom hook, renders the search input, flashcard grid (or empty/loading/error states), pagination, and hosts the edit and delete dialogs. This is the single React entry point hydrated by `client:load` in the Astro page.
 - **Main elements:**
   - Page header: `<h1>` with title "My Flashcards" and a `<Button>` "+ New Flashcard" aligned right
-  - Search: `<Input>` with placeholder "Search flashcards..." and a search icon (Lucide `Search`)
-  - Content area (conditional rendering):
+  - Search: `<Input>` with placeholder "Search flashcards...", a search icon (Lucide `Search`), `maxLength={200}`, and `aria-label="Search flashcards"`
+  - Content area (wrapped in `<div aria-live="polite" aria-busy={isLoading}>` for screen reader announcements of dynamic content changes):
     - **Loading:** Grid of 6 `<Skeleton>` cards matching `FlashcardCard` dimensions
     - **Error:** `<Alert variant="destructive">` with error message and a "Try again" retry `<Button>`
     - **Empty (no flashcards at all):** `<FlashcardEmpty />`
@@ -96,6 +98,7 @@ src/components/
   interface FlashcardListProps {
     initialFlashcards: FlashcardDTO[];
     initialPagination: PaginationDTO;
+    initialError?: string;  // Set when SSR fetch fails — triggers Alert with retry
   }
   ```
 
@@ -175,7 +178,7 @@ src/components/
     - "Cancel" `<AlertDialogCancel>` → closes dialog
     - "Delete" `<AlertDialogAction>` with destructive variant → calls `onConfirm()`
 - **Handled interactions:**
-  - Click "Delete" → calls `onConfirm()` prop
+  - Click "Delete" → disables the button immediately to prevent double-clicks, then calls `onConfirm()` prop. The dialog closes optimistically right after.
   - Click "Cancel" or close → calls `onCancel()` prop
 - **Validation:** None
 - **Types:**
@@ -185,6 +188,7 @@ src/components/
   interface FlashcardDeleteDialogProps {
     flashcard: FlashcardDTO | null;
     isOpen: boolean;
+    isDeleting: boolean;  // Disables "Delete" button to prevent double-clicks
     onCancel: () => void;
     onConfirm: () => void;
   }
@@ -226,7 +230,7 @@ These types are already defined and should be reused as-is:
 | `FlashcardsListDTO` | `flashcards: FlashcardDTO[]`, `pagination: PaginationDTO` | API GET response type |
 | `CreateFlashcardCommand` | `{ front: string, back: string }` | API POST request body |
 | `UpdateFlashcardCommand` | `{ front: string, back: string }` | API PUT request body |
-| `FlashcardsQueryParams` | `page?: number`, `limit?: number`, `source?: FlashcardSource`, `sort?: "created_at" \| "updated_at"`, `order?: "asc" \| "desc"` | API GET query parameters |
+| `FlashcardsQueryParams` | `page?: number`, `limit?: number`, `source?: FlashcardSource`, `sort?: "created_at" \| "updated_at"`, `order?: "asc" \| "desc"`, `search?: string` | API GET query parameters |
 | `ErrorResponseDTO` | `{ error: { code: string, message: string } }` | API error response handling |
 
 ### 5.2 Existing Zod Schemas (from `src/lib/schemas/flashcard.schema.ts`)
@@ -266,7 +270,7 @@ Each component defines its own props interface (detailed in Section 4). These ar
 
 ### 6.1 Custom Hook: `useFlashcards`
 
-**File:** `src/components/hooks/useFlashcards.ts`
+**File:** `src/hooks/useFlashcards.ts`
 
 This hook encapsulates all data fetching and mutation logic for the flashcards view. It manages the flashcard list state, handles API communication, and exposes actions for CRUD operations, search, and pagination.
 
@@ -275,6 +279,7 @@ This hook encapsulates all data fetching and mutation logic for the flashcards v
 interface UseFlashcardsParams {
   initialFlashcards: FlashcardDTO[];
   initialPagination: PaginationDTO;
+  initialError?: string;  // Propagated from SSR — sets initial error state
 }
 ```
 
@@ -305,7 +310,7 @@ interface UseFlashcardsReturn {
 
 1. **Initialization:** Uses `initialFlashcards` and `initialPagination` as default state values (from SSR).
 
-2. **Fetch function (`fetchFlashcards`):** Internal function that builds query string from `currentPage`, `searchQuery`, and fixed defaults (`limit=20`, `sort=created_at`, `order=desc`). Calls `GET /api/flashcards?...` and updates `flashcards` and `pagination` state.
+2. **Fetch function (`fetchFlashcards`):** Internal function that builds query string from `currentPage`, `searchQuery`, and fixed defaults (`limit=20`, `sort=created_at`, `order=desc`). Calls `GET /api/flashcards?...` and updates `flashcards` and `pagination` state. **Note:** The `source` filter parameter is intentionally omitted in this version — the view shows all flashcards regardless of source. Source filtering may be added as a future enhancement.
 
 3. **Search debounce:** Uses a `useRef` for the debounce timer. When `setSearchQuery` is called, it updates the query state immediately (for input binding) and schedules a fetch after 300ms. Each new call resets the timer. Search always resets `currentPage` to 1.
 
@@ -329,6 +334,10 @@ interface UseFlashcardsReturn {
    ```
 
 7. **Error handling:** Sets `error` state with user-friendly message. The `retry` function re-executes the last fetch.
+
+8. **Request cancellation (`AbortController`):** The hook maintains an `AbortController` ref. Each new fetch (from search, pagination, or retry) aborts the previous pending request via `controller.abort()` before creating a new one. This prevents race conditions where a stale response from a slower request could overwrite a newer one. Aborted requests (caught as `AbortError`) are silently ignored and do not trigger error state.
+
+9. **Empty page after delete:** After a successful delete refetch, if the returned `flashcards` array is empty and `currentPage > 1`, the hook automatically navigates to `currentPage - 1` (i.e., `Math.min(currentPage, response.pagination.total_pages || 1)`) to avoid showing an empty page.
 
 ### 6.2 Dialog State in `FlashcardList`
 
@@ -369,7 +378,7 @@ The form state is initialized/reset via a `useEffect` that watches the `flashcar
 |--------|--------|
 | **Method** | `GET` |
 | **URL** | `/api/flashcards` |
-| **Query Params** | `page` (number), `limit` (number, default 20), `sort` (string, default "created_at"), `order` (string, default "desc") |
+| **Query Params** | `page` (number), `limit` (number, default 20), `sort` (string, default "created_at"), `order` (string, default "desc"), `search` (string, optional, max 200 chars — case-insensitive text search in front and back fields) |
 | **Request Type** | N/A (query params only) |
 | **Response Type (200)** | `FlashcardsListDTO` → `{ flashcards: FlashcardDTO[], pagination: PaginationDTO }` |
 | **Error Response** | `ErrorResponseDTO` → `{ error: { code: string, message: string } }` |
@@ -515,6 +524,7 @@ Uses the shared Zod schema `createFlashcardSchema` from `src/lib/schemas/flashca
 | Empty search query | Fetch all flashcards (no filter) |
 | Non-empty search query | Debounce 300ms, fetch with `search` param, reset to page 1 |
 | Search query changed while loading | Cancel previous debounce timer, start new 300ms countdown |
+| Search input length | `maxLength={200}` attribute on `<Input>` element to match API schema limit (200 chars) |
 
 ### 9.3 Pagination
 
@@ -549,7 +559,7 @@ Uses the shared Zod schema `createFlashcardSchema` from `src/lib/schemas/flashca
 
 | Context | Error Display | Recovery |
 |---------|---------------|----------|
-| **Initial page load (SSR fails)** | Show `Alert` with retry button in place of grid | Click retry to re-fetch client-side |
+| **Initial page load (SSR fails)** | SSR passes `initialError` prop with empty data arrays. React renders `Alert` with retry button in place of grid. On retry, hook performs client-side fetch. | Click retry to re-fetch client-side |
 | **Search / pagination fetch** | Show `Alert` with retry button, preserve last good data below | Click retry or change search/page |
 | **Create flashcard** | `toast.error(message)`, dialog stays open | Fix form and retry |
 | **Update flashcard** | `toast.error(message)`, dialog stays open | Fix form and retry |
@@ -572,9 +582,12 @@ npx shadcn@latest add dialog alert-dialog textarea pagination skeleton
 
 **Components to install:** `dialog`, `alert-dialog`, `textarea`, `pagination`, `skeleton`
 
-### Step 2: Add Toaster to AppLayout
+### Step 2: Fix Sonner Toaster for Astro & Add to AppLayout
 
-Ensure the Sonner `<Toaster />` component is rendered in `AppLayout.astro` so toast notifications work on protected pages. Import and render it as a React component with `client:load`.
+The default Shadcn `sonner.tsx` imports `useTheme` from `next-themes`, which is incompatible with Astro. Before adding the Toaster to the layout:
+
+1. **Modify `src/components/ui/sonner.tsx`:** Remove the `useTheme` import from `next-themes` and the `"use client"` directive. Replace the dynamic theme with a hardcoded value `theme="light"` (or implement a custom Astro-compatible theme hook later).
+2. **Add `<Toaster />` to `AppLayout.astro`:** Import and render Sonner's Toaster as a React component with `client:load` so toast notifications work on all protected pages.
 
 ### Step 3: Create ViewModel Types
 
@@ -582,18 +595,19 @@ Create `src/components/flashcards/types.ts` with `FlashcardFormData` and `Flashc
 
 ### Step 4: Implement `useFlashcards` Custom Hook
 
-Create `src/components/hooks/useFlashcards.ts`:
+Create `src/hooks/useFlashcards.ts`:
 
-1. Accept `initialFlashcards` and `initialPagination` as parameters
-2. Implement state for: `flashcards`, `pagination`, `isLoading`, `error`, `searchQuery`, `currentPage`
+1. Accept `initialFlashcards`, `initialPagination`, and optional `initialError` as parameters
+2. Implement state for: `flashcards`, `pagination`, `isLoading`, `error` (initialized from `initialError`), `searchQuery`, `currentPage`
 3. Implement `fetchFlashcards(page, search)` — builds URL with query params, calls `GET /api/flashcards`, updates state
 4. Implement debounced search with `useRef` timer (300ms)
 5. Implement `createFlashcard` — calls `POST /api/flashcards`, resets to page 1, clears search, refetches
 6. Implement `updateFlashcard` — calls `PUT /api/flashcards/:id`, refetches current view
-7. Implement `deleteFlashcard` — optimistic removal, calls `DELETE /api/flashcards/:id`, refetches or rollbacks
+7. Implement `deleteFlashcard` — optimistic removal, calls `DELETE /api/flashcards/:id`, refetches or rollbacks. After refetch, if `flashcards.length === 0 && currentPage > 1`, navigate to previous page.
 8. Implement `retry` — re-executes last fetch
 9. Handle 401 responses with redirect to `/login`
 10. Use `useCallback` for stable action references passed to child components
+11. Implement `AbortController` ref — each new fetch aborts the previous pending request to prevent race conditions. Silently ignore `AbortError` (do not set error state for aborted requests).
 
 ### Step 5: Implement `FlashcardEmpty` Component
 
@@ -620,8 +634,9 @@ Create `src/components/flashcards/FlashcardDeleteDialog.tsx`:
 
 1. Use Shadcn `AlertDialog` with all subcomponents
 2. Show truncated flashcard front text in the description for context
-3. "Cancel" and "Delete" (destructive variant) buttons
+3. "Cancel" and "Delete" (destructive variant) buttons — "Delete" button is disabled when `isDeleting` is true to prevent double-clicks
 4. Controlled open/close via props
+5. Accept `isDeleting` prop from parent to control button disabled state
 
 ### Step 8: Implement `FlashcardEditDialog` Component
 
@@ -658,10 +673,39 @@ Create `src/components/flashcards/FlashcardList.tsx`:
 Update `src/pages/flashcards.astro`:
 
 1. Import `FlashcardService` from `src/lib/services/flashcard.service`
-2. In Astro frontmatter: create service instance, fetch initial flashcards with default params
-3. Handle SSR fetch errors gracefully (pass empty arrays as fallback)
+2. In Astro frontmatter: create service instance using `Astro.locals.supabase`, fetch initial flashcards with explicit default params: `{ page: 1, limit: 20, sort: "created_at", order: "desc" }`
+3. Handle SSR fetch errors gracefully — pass empty arrays **and** `initialError` string to the React component
 4. Render `FlashcardList` with `client:load` directive and initial data props
 5. Ensure data passed as props is serializable (plain objects)
+
+**SSR fetch pattern:**
+
+```typescript
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import FlashcardList from "../components/flashcards/FlashcardList";
+import { FlashcardService } from "../lib/services/flashcard.service";
+import type { FlashcardDTO, PaginationDTO } from "../types";
+
+const user = Astro.locals.user!;
+
+let initialFlashcards: FlashcardDTO[] = [];
+let initialPagination: PaginationDTO = { page: 1, limit: 20, total: 0, total_pages: 0 };
+let initialError: string | undefined;
+
+try {
+  const service = new FlashcardService(Astro.locals.supabase);
+  const result = await service.listFlashcards(
+    { page: 1, limit: 20, sort: "created_at", order: "desc" },
+    user.id
+  );
+  initialFlashcards = result.flashcards;
+  initialPagination = result.pagination;
+} catch (e) {
+  initialError = "Failed to load flashcards. Please try again.";
+}
+---
+```
 
 ### Step 11: Verify and Polish
 
