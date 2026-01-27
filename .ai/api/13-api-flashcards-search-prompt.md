@@ -44,14 +44,17 @@ Add `search?: string` to `FlashcardsQueryParams` interface to keep it in sync wi
 In `listFlashcards` method:
 - Destructure `search` from `params` alongside existing fields
 - When `search` is provided (non-undefined), add a Supabase `or` filter with `ilike` on both `front` and `back` columns
-- Escape `%` and `_` characters in the search string before embedding in the `ilike` pattern (these are PostgreSQL wildcard characters in LIKE/ILIKE expressions). Create a small local helper function `escapeIlikePattern(str: string): string` for this
-- The filter should be: `front.ilike.%{escaped_search}%,back.ilike.%{escaped_search}%`
+- Escape `%` and `_` characters in the search string before embedding in the `ilike` pattern (these are PostgreSQL wildcard characters in LIKE/ILIKE expressions). Create a private standalone function `escapeIlikePattern(str: string): string` in `flashcard.service.ts`, outside the class, as it's specific to this service
+- The filter should use a template literal: `.or(\`front.ilike.%${escapedSearch}%,back.ilike.%${escapedSearch}%\`)`
+- Add the `.or()` filter after the existing optional `source` filter and before the `.order()` call
 - The `search` filter must compose correctly with the existing optional `source` filter (both should apply when present)
+- Note: Supabase PostgREST automatically parameterizes queries, so SQL injection is not a concern here. The escaping is only needed for ILIKE wildcard characters (`%` and `_`)
 
 ### 4. Endpoint Layer (`index.ts`)
 
 In the GET handler:
 - Parse `search` from `url.searchParams` the same way as existing params (with `?? undefined` for null-to-undefined conversion)
+- Update the JSDoc comment to include `search` in the list of query parameters
 - No other changes needed — the Zod schema and service handle the rest
 
 ### 5. HTTP Client Test Scenario (`02-flashcards-list-and-filters.http`)
@@ -60,11 +63,13 @@ Add a new **PHASE 8: TEST SEARCH** section after the existing Phase 7. Follow th
 
 Test cases to add:
 
-1. **Search by exact word in `front`** — Search for `"React"` → should return flashcards that contain "React" in front or back (expect at least 1 result; the manual flashcard "What is React?" and possibly the AI-generated one about React should match)
-2. **Search by word present only in `back`** — Search for `"programming language"` → should match the TypeScript flashcard (whose back says "strongly typed programming language")
+1. **Search by exact word in `front`** — Search for `"React"` → expect exactly 1 result — the manual flashcard "What is React?"
+2. **Search by word present only in `back`** — Search for `"programming language"` → expect exactly 1 result — the TypeScript flashcard (whose back says "strongly typed programming language")
 3. **Search with no results** — Search for `"nonexistent_xyz_query"` → should return 0 flashcards with pagination total=0
-4. **Search combined with source filter** — Search for `"What"` with `source=manual` → should return only manual flashcards matching the query
-5. **Search combined with pagination** — Search for `"What"` with `limit=1&page=1` → should return exactly 1 item with correct pagination total
+4. **Search combined with source filter** — Search for `"React"` with `source=manual` → should return exactly 1 result (the manual "What is React?" flashcard), verifying that both search and source filters narrow down results together
+5. **Search combined with pagination** — Search for `"What"` with `limit=1&page=1` → should return exactly 1 item with pagination total=5 (all flashcards contain "What" in their front)
+6. **Search with empty string** — Search for `""` (empty) → should behave the same as no search parameter (return all flashcards), verifying the empty-to-undefined transform
+7. **Search exceeding max length** — Search with a string longer than 200 characters → should return 400 with VALIDATION_ERROR
 
 Update the final summary `console.log` block to include search in the list of tested features.
 
