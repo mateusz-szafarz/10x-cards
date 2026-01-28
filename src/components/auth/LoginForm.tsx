@@ -159,6 +159,7 @@ export default function LoginForm() {
               disabled={isSubmitting}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
+              data-testid="login-email-input"
             />
             {errors.email && (
               <p id="email-error" className="text-sm text-destructive">
@@ -180,6 +181,7 @@ export default function LoginForm() {
               disabled={isSubmitting}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
+              data-testid="login-password-input"
             />
             {errors.password && (
               <p id="password-error" className="text-sm text-destructive">
@@ -196,7 +198,12 @@ export default function LoginForm() {
           )}
 
           {/* Submit button */}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+            data-testid="login-submit-button"
+          >
             {isSubmitting ? "Logging in..." : "Log in"}
           </Button>
 

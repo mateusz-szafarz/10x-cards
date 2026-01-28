@@ -26,5 +26,7 @@ pnpm-debug.log*
 # local dev workflow files
 tools/
 
-# test coverage reports
+# test reports
 coverage/
+playwright-report/
+test-results/

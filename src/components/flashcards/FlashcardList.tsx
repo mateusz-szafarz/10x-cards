@@ -115,7 +115,7 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">My Flashcards</h1>
-        <Button onClick={handleCreateNew}>+ New Flashcard</Button>
+        <Button onClick={handleCreateNew} data-testid="new-flashcard-button">+ New Flashcard</Button>
       </div>
 
       {/* Search */}

@@ -163,6 +163,7 @@ export default function RegisterForm() {
               disabled={isSubmitting}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
+              data-testid="register-email-input"
             />
             {errors.email && (
               <p id="email-error" className="text-sm text-destructive">
@@ -184,6 +185,7 @@ export default function RegisterForm() {
               disabled={isSubmitting}
               aria-invalid={!!errors.password}
               aria-describedby={errors.password ? "password-error" : undefined}
+              data-testid="register-password-input"
             />
             {errors.password && (
               <p id="password-error" className="text-sm text-destructive">
@@ -200,7 +202,12 @@ export default function RegisterForm() {
           )}
 
           {/* Submit button */}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+            data-testid="register-submit-button"
+          >
             {isSubmitting ? "Creating account..." : "Create account"}
           </Button>
 

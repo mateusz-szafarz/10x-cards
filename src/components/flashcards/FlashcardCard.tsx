@@ -28,7 +28,7 @@ function FlashcardCardComponent({ flashcard, onEdit, onDelete }: FlashcardCardPr
   const isAiGenerated = flashcard.source === "ai_generated";
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full" data-testid="flashcard-card">
       <CardHeader className="pb-3">
         <p className="text-sm font-medium">{truncate(flashcard.front, 150)}</p>
       </CardHeader>
