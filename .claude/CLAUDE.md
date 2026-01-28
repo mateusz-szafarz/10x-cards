@@ -13,6 +13,14 @@ Web application for AI-powered flashcard generation and spaced repetition learni
 - Zod (runtime validation)
 - Sonner (toast notifications)
 
+### Testing Stack
+
+- Vitest 4 (unit & integration tests)
+- @testing-library/react (React component testing)
+- MSW 2 (API mocking)
+- Playwright (E2E tests, Chromium only)
+- jsdom (DOM environment for Vitest)
+
 ## Project Structure
 
 When introducing changes to the project, always follow the directory structure below:
@@ -34,6 +42,13 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/lib/errors` - Custom error types
 - `./src/assets` - static internal assets
 - `./public` - public assets
+- `./tests` - Shared testing infrastructure
+- `./tests/setup.ts` - Vitest global setup with mocks
+- `./tests/mocks` - MSW server and handlers
+- `./tests/fixtures` - Test data factories (to be added)
+- `./tests/helpers` - Test helpers (to be added)
+- `./e2e` - Playwright E2E tests (to be added)
+- `./src/**/__tests__` - Co-located unit tests for modules
 
 When modifying the directory structure, always update this section.
 
@@ -128,5 +143,6 @@ Server-side (in `astro.config.mjs` env schema):
 - ✅ Authentication (login, register, logout, account deletion)
 - ✅ Manual flashcard CRUD with search and pagination
 - ✅ AI-powered flashcard generation with proposal review workflow
+- ✅ Testing infrastructure (Vitest + Playwright configured, smoke test passing)
+- ⬜ Comprehensive test coverage (schemas, services, API endpoints, hooks, components, E2E)
 - ⬜ Spaced repetition algorithm and review sessions
-- ⬜ Testing setup (no Vitest or Playwright configured yet)
