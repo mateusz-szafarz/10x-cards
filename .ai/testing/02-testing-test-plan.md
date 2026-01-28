@@ -1558,3 +1558,157 @@ test('user should not see flashcards from another user', async ({ browser }) => 
   await contextB.close();
 });
 ```
+
+---
+
+## 9. Stan implementacji
+
+> Sekcja aktualizowana w miarę postępów. Ostatnia aktualizacja: 2025-01-28
+
+### 9.1 Podsumowanie postępów
+
+| Faza | Status | Pokrycie |
+|------|--------|----------|
+| Faza 0: Infrastruktura | ✅ Zakończona | 100% |
+| Faza 1: Schemas + Utility | 🟡 W trakcie | ~20% (utils.test.ts) |
+| Faza 2: Services | ⬜ Nie rozpoczęta | 0% |
+| Faza 3: API Endpoints | ⬜ Nie rozpoczęta | 0% |
+| Faza 4: Hooki React | ⬜ Nie rozpoczęta | 0% |
+| Faza 5: Komponenty React | ⬜ Nie rozpoczęta | 0% |
+| Faza 6: E2E Playwright | 🟡 W trakcie | ~25% (auth flow) |
+
+### 9.2 Zrealizowane etapy
+
+#### ✅ Faza 0: Infrastruktura testowa
+
+**Data zakończenia:** 2025-01-28
+
+**Co zostało zrobione:**
+
+1. **Instalacja zależności testowych**
+   - Vitest 4 + @testing-library/react + jsdom — unit i integration testy
+   - MSW 2 — mockowanie API przez przechwytywanie fetch
+   - Playwright + Chromium — testy E2E
+   - @vitest/coverage-v8 — raportowanie pokrycia kodu
+
+2. **Konfiguracja Vitest (`vitest.config.ts`)**
+   - Integracja z Astro przez `getViteConfig()`
+   - Środowisko jsdom dla komponentów React
+   - Globalne importy (`describe`, `it`, `expect`)
+   - Konfiguracja coverage z progami (60% minimum)
+   - Aliasy zgodne z tsconfig (`@/`)
+
+3. **Konfiguracja Playwright (`playwright.config.ts`)**
+   - Tylko Chromium (zgodnie z planem)
+   - Auto-start dev servera na porcie 3000
+   - Trace i screenshots przy błędach
+   - Różne ustawienia dla CI/local
+
+4. **Setup file testowy (`tests/setup.ts`)**
+   - MSW server lifecycle (`beforeAll`/`afterAll`)
+   - Mock sonner dla toast notifications
+   - Mock `window.location` dla testów redirectów
+   - Auto-cleanup React DOM po każdym teście
+
+5. **Struktura katalogów**
+   ```
+   tests/
+   ├── setup.ts
+   ├── mocks/
+   │   ├── server.ts
+   │   └── handlers.ts
+   ├── fixtures/  (gotowe na factories)
+   └── helpers/   (gotowe na test helpers)
+
+   e2e/  (gotowy na testy Playwright)
+
+   src/lib/__tests__/
+   └── utils.test.ts (smoke test)
+   ```
+
+6. **Skrypty npm**
+   - `npm test` — uruchom testy
+   - `npm run test:watch` — watch mode
+   - `npm run test:coverage` — z raportem pokrycia
+   - `npm run test:e2e` — testy Playwright
+   - `npm run test:all` — wszystkie testy
+   - Bonus: `lint-staged` rozszerzony o `vitest related --run`
+
+---
+
+#### ✅ Faza 1 (częściowo): utils.test.ts
+
+**Data zakończenia:** 2025-01-28
+
+**Zrealizowane scenariusze:**
+
+| # | Scenariusz | Status |
+|---|-----------|--------|
+| U1 | `validateUUID` — akceptuje poprawne UUID v4 | ✅ |
+| U2 | `validateUUID` — odrzuca niepoprawne formaty | ✅ |
+| U3 | `validateUUID` — odrzuca pusty string | ✅ |
+| U4 | `buildPaginationMetadata` — poprawne obliczenie total_pages | ✅ |
+| U5 | `buildPaginationMetadata` — edge case: total=0 | ✅ |
+
+**Plik:** `src/lib/__tests__/utils.test.ts` (5 testów, wszystkie passing)
+
+**Pozostałe do zrealizowania w Fazie 1:**
+- [ ] `flashcard.schema.test.ts`
+- [ ] `generation.schema.test.ts`
+- [ ] `auth.schema.test.ts`
+
+---
+
+#### ✅ Faza 6 (częściowo): Auth flow E2E
+
+**Data zakończenia:** 2025-01-28
+
+**Zrealizowane scenariusze:**
+
+| # | Scenariusz | Status |
+|---|-----------|--------|
+| E1 | Rejestracja → auto-login → widzi pustą listę fiszek | ✅ |
+| E2 | Login z poprawnymi danymi → redirect do /flashcards | ✅ |
+| E3 | Login z błędnymi danymi → error message | ✅ |
+
+**Struktura E2E:**
+```
+e2e/
+├── pages/
+│   ├── register.page.ts    # Page Object dla /register
+│   ├── login.page.ts       # Page Object dla /login
+│   └── flashcards.page.ts  # Page Object dla /flashcards
+├── helpers/
+│   └── auth.helper.ts      # createTestUser, cleanupTestUser
+└── auth.spec.ts            # 3 testy (E1, E2, E3)
+```
+
+**Kluczowe wnioski z implementacji:**
+
+1. **`data-testid` > semantyczne selektory** — w React hydrated apps `getByLabel()` może failować; `data-testid` jest deterministyczny
+2. **`pressSequentially()` > `fill()`** — dla React controlled inputs; `fill()` nie triggeruje `onChange`
+3. **Wait for hydration** — `waitForLoadState('networkidle')` + explicit `waitFor()` przed interakcją
+4. **Test env behavior** — w środowisku testowym (email confirmation wyłączone) `signUp` automatycznie loguje użytkownika → redirect do /flashcards
+
+**Dodane `data-testid` do komponentów:**
+- `RegisterForm`: `register-email-input`, `register-password-input`, `register-submit-button`
+- `LoginForm`: `login-email-input`, `login-password-input`, `login-submit-button`
+- `FlashcardCard`: `flashcard-card`
+- `FlashcardList`: `new-flashcard-button`
+
+**Pozostałe do zrealizowania w Fazie 6:**
+- [ ] E4: Niezalogowany → /flashcards → redirect do /login
+- [ ] E5: Zalogowany → /login → redirect do /flashcards
+- [ ] E6-E8: Flashcard CRUD (create, edit, delete)
+- [ ] E9-E10: Search i paginacja
+- [ ] E11-E12: AI generation flow
+- [ ] E13: Logout
+
+---
+
+### 9.3 Następne kroki (priorytet)
+
+1. **Dokończyć Fazę 1** — testy schematów Zod (flashcard, generation, auth)
+2. **Dokończyć Fazę 6** — testy E2E dla CRUD flashcards i route protection
+3. **Rozpocząć Fazę 2** — testy serwisów z mockowanym Supabase
+4. **Rozpocząć Fazę 3** — testy integracyjne API endpoints
