@@ -65,7 +65,8 @@ src/hooks/
     - `'idle'`: nothing below the form
     - `'generating'`: skeleton loading cards (6 skeleton placeholders)
     - `'error'`: `<Alert>` with error message and "Try again" button
-    - `'generated'` / `'saving'`: `<ProposalList>` with proposals
+    - `'generated'` / `'saving'` with empty proposals: `<Alert variant="default">` with message "No flashcard proposals were generated from this text. Try with different or more detailed source material." and "Generate again" is available via the form above.
+    - `'generated'` / `'saving'` with proposals: `<ProposalList>` with proposals
 - **Handled interactions**: None directly — delegates all interaction handling to children via callbacks from the hook.
 - **Validation**: None directly — delegates to children and hook.
 - **Types**: `GenerateViewState`, `FlashcardProposalViewModel` (from `generation/types.ts`)
@@ -137,11 +138,11 @@ src/hooks/
     - `'accepted'`: border-green-500/green accent, subtle green background tint
     - `'rejected'`: opacity-50, muted styling
   - Front section:
-    - Display mode: text content + "Edit" button (`<Button variant="ghost">`)
-    - Edit mode: `<Textarea>` with current value, character counter (0/500), blur to close
+    - Display mode: text content + "Edit" button (`<Button variant="ghost">`). If front is empty, show a warning indicator (destructive border/icon) to signal invalid content.
+    - Edit mode: `<Textarea>` with current value, `maxLength={500}`, character counter (0/500), blur to close
   - Back section:
-    - Display mode: text content + "Edit" button
-    - Edit mode: `<Textarea>` with current value, character counter (0/2000), blur to close
+    - Display mode: text content + "Edit" button. If back is empty, show a warning indicator (destructive border/icon) to signal invalid content.
+    - Edit mode: `<Textarea>` with current value, `maxLength={2000}`, character counter (0/2000), blur to close
   - Action footer:
     - `'pending'` status: `<Button>` "Accept" (default variant) + `<Button>` "Reject" (outline/ghost variant)
     - `'accepted'` status: `<Button>` "Accepted ✓" (disabled/success style) + `<Button>` "Reject" (still available)
@@ -164,6 +165,7 @@ src/hooks/
   ```typescript
   interface ProposalCardProps {
     proposal: FlashcardProposalViewModel;
+    isDisabled: boolean;         // true when viewState === 'saving' — disables Accept/Reject/Edit buttons
     onAccept: () => void;
     onReject: () => void;
     onEditFront: (value: string) => void;
@@ -212,7 +214,9 @@ export interface FlashcardProposalViewModel {
  * - 'generating': API call in progress, skeleton loading
  * - 'generated': proposals received and displayed
  * - 'saving': accepted proposals being saved
- * - 'error': generation or save failed
+ * - 'error': generation failed (displayed as Alert in UI).
+ *   Note: Save errors do NOT set this state — they use toast notifications
+ *   and revert viewState to 'generated', keeping proposals visible.
  */
 export type GenerateViewState = 'idle' | 'generating' | 'generated' | 'saving' | 'error';
 ```
@@ -229,6 +233,8 @@ export type GenerateViewState = 'idle' | 'generating' | 'generated' | 'saving' |
 ### Custom hook: `useGenerateFlashcards` (`src/hooks/useGenerateFlashcards.ts`)
 
 This hook encapsulates all state management and API communication for the generation view, following the pattern established by `useFlashcards`. It manages the full lifecycle: source text → generation → proposal review → save.
+
+Imports `{ toast } from "sonner"` for user feedback notifications (success/error toasts), following the same pattern as `useFlashcards.ts`.
 
 #### State variables
 
@@ -427,6 +433,8 @@ Using `AbortSignal.any()` combines the component unmount abort signal with the t
 | Text > 10000 chars | max 10000 characters | Prevented by `maxLength` | Character counter shows limit reached |
 | Character counter | Display current/max | Continuously | Counter text changes to destructive color when < 1000 |
 
+> **Note**: Empty textarea on blur intentionally does not show a validation error, to avoid prematurely flagging an untouched or cleared field. The "Source text is required" error is only shown on submit.
+
 ### 9.2 Proposal field validation (ProposalCard — visual only)
 
 | Condition | Validation rule | When checked | UI effect |
@@ -464,7 +472,7 @@ Using `AbortSignal.any()` combines the component unmount abort signal with the t
 | Invalid source text (client) | N/A | Inline error below textarea | Fix text and retry |
 | Invalid source text (server) | 400 `VALIDATION_ERROR` | Alert with error message | Fix text and retry |
 | AI generation failure | 500 `INTERNAL_ERROR` | Alert: "Failed to generate flashcards. Please try again." | "Try again" button |
-| AI service unavailable | 500 with specific code | Alert: "AI service is temporarily unavailable. Please try again later." | "Try again" button |
+| AI service unavailable | 500 `INTERNAL_ERROR` | Alert: "An unexpected error occurred. Please try again." | "Try again" button |
 | Generation timeout (60s) | AbortError | Alert: "Request timed out. Please try again." | "Try again" button |
 | Network error during generation | TypeError/NetworkError | Alert: "Unable to connect to server. Please check your connection." | "Try again" button |
 | Session expired (generation) | 401 | Toast: "Session expired" | Redirect to `/login` |
@@ -484,8 +492,6 @@ const mapGenerationErrorToMessage = (code: string, status: number): string => {
 
   const messages: Record<string, string> = {
     VALIDATION_ERROR: "Invalid input. Please check your text and try again.",
-    AI_SERVICE_ERROR: "Failed to generate flashcards. Please try again.",
-    AI_SERVICE_UNAVAILABLE: "AI service is temporarily unavailable. Please try again later.",
     INTERNAL_ERROR: "An unexpected error occurred. Please try again.",
   };
 
@@ -507,6 +513,8 @@ const mapAcceptErrorToMessage = (code: string): string => {
 ### 10.3 Timeout and network error handling
 
 Following the existing project pattern (`useFlashcards.ts`):
+
+> **Note on `AbortSignal.any()` behavior**: When combining signals via `AbortSignal.any([controller.signal, AbortSignal.timeout(timeout)])`, each signal preserves its native error type. `controller.abort()` (component unmount) throws `AbortError`, while `AbortSignal.timeout()` throws `TimeoutError`. This allows the catch block below to distinguish between the two cases reliably.
 
 ```typescript
 // In the catch block:
