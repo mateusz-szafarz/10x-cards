@@ -4,7 +4,7 @@
  * - 'accepted': user accepted the proposal for saving
  * - 'rejected': user rejected the proposal
  */
-export type ProposalStatus = "pending" | "accepted" | "rejected";
+export type ProposalStatus = 'pending' | 'accepted' | 'rejected';
 
 /**
  * ViewModel extending FlashcardProposalDTO with client-side review status.
@@ -28,4 +28,4 @@ export interface FlashcardProposalViewModel {
  *   Note: Save errors do NOT set this state — they use toast notifications
  *   and revert viewState to 'generated', keeping proposals visible.
  */
-export type GenerateViewState = "idle" | "generating" | "generated" | "saving" | "error";
+export type GenerateViewState = 'idle' | 'generating' | 'generated' | 'saving' | 'error';

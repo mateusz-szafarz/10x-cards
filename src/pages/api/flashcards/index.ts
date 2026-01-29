@@ -1,7 +1,7 @@
-import type { APIRoute } from "astro";
-import { createFlashcardSchema, flashcardsQueryParamsSchema } from "../../../lib/schemas/flashcard.schema";
-import { FlashcardService } from "../../../lib/services/flashcard.service";
-import type { FlashcardDTO, FlashcardsListDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import { createFlashcardSchema, flashcardsQueryParamsSchema } from '../../../lib/schemas/flashcard.schema';
+import { FlashcardService } from '../../../lib/services/flashcard.service';
+import type { FlashcardDTO, FlashcardsListDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -28,12 +28,12 @@ export const GET: APIRoute = async ({ url, locals }) => {
   // Parse and validate query parameters
   // Convert null to undefined so Zod can apply defaults
   const params = {
-    page: url.searchParams.get("page") ?? undefined,
-    limit: url.searchParams.get("limit") ?? undefined,
-    source: url.searchParams.get("source") ?? undefined,
-    sort: url.searchParams.get("sort") ?? undefined,
-    order: url.searchParams.get("order") ?? undefined,
-    search: url.searchParams.get("search") ?? undefined,
+    page: url.searchParams.get('page') ?? undefined,
+    limit: url.searchParams.get('limit') ?? undefined,
+    source: url.searchParams.get('source') ?? undefined,
+    sort: url.searchParams.get('sort') ?? undefined,
+    order: url.searchParams.get('order') ?? undefined,
+    search: url.searchParams.get('search') ?? undefined,
   };
 
   const validationResult = flashcardsQueryParamsSchema.safeParse(params);
@@ -43,11 +43,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: firstError?.message || "Invalid pagination parameters",
+          code: 'VALIDATION_ERROR',
+          message: firstError?.message || 'Invalid pagination parameters',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -59,18 +59,18 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
     return new Response(JSON.stringify(result satisfies FlashcardsListDTO), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("List flashcards error:", error);
+    console.error('List flashcards error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to fetch flashcards",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to fetch flashcards',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };
@@ -99,11 +99,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -115,11 +115,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: firstError?.message || "Validation failed",
+          code: 'VALIDATION_ERROR',
+          message: firstError?.message || 'Validation failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -131,18 +131,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify(result satisfies FlashcardDTO), {
       status: 201,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Create flashcard error:", error);
+    console.error('Create flashcard error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to create flashcard",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create flashcard',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };

@@ -7,8 +7,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../ui/alert-dialog";
-import type { FlashcardDTO } from "../../types";
+} from '../ui/alert-dialog';
+import type { FlashcardDTO } from '../../types';
 
 interface FlashcardDeleteDialogProps {
   flashcard: FlashcardDTO | null;
@@ -33,7 +33,7 @@ export function FlashcardDeleteDialog({
 
   const truncate = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+    return text.substring(0, maxLength) + '...';
   };
 
   return (
@@ -43,7 +43,7 @@ export function FlashcardDeleteDialog({
           <AlertDialogTitle>Delete Flashcard?</AlertDialogTitle>
           <AlertDialogDescription>
             This operation is irreversible. The flashcard will be permanently deleted.
-            <div className="mt-2 p-2 bg-muted rounded text-sm">
+            <div className="bg-muted mt-2 rounded p-2 text-sm">
               <strong>Front:</strong> {truncate(flashcard.front, 100)}
             </div>
           </AlertDialogDescription>
@@ -55,7 +55,7 @@ export function FlashcardDeleteDialog({
             disabled={isDeleting}
             className="bg-destructive hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

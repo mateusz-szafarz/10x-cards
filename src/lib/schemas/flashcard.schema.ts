@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Schema for creating a manual flashcard.
@@ -6,13 +6,13 @@ import { z } from "zod";
  */
 export const createFlashcardSchema = z.object({
   front: z
-    .string({ required_error: "Front is required" })
-    .min(1, "Front must be between 1 and 500 characters")
-    .max(500, "Front must be between 1 and 500 characters"),
+    .string({ required_error: 'Front is required' })
+    .min(1, 'Front must be between 1 and 500 characters')
+    .max(500, 'Front must be between 1 and 500 characters'),
   back: z
-    .string({ required_error: "Back is required" })
-    .min(1, "Back must be between 1 and 2000 characters")
-    .max(2000, "Back must be between 1 and 2000 characters"),
+    .string({ required_error: 'Back is required' })
+    .min(1, 'Back must be between 1 and 2000 characters')
+    .max(2000, 'Back must be between 1 and 2000 characters'),
 });
 
 /**
@@ -30,14 +30,14 @@ export const updateFlashcardSchema = createFlashcardSchema;
 export const flashcardsQueryParamsSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  source: z.enum(["ai_generated", "manual"]).optional(),
-  sort: z.enum(["created_at", "updated_at"]).default("created_at"),
-  order: z.enum(["asc", "desc"]).default("desc"),
+  source: z.enum(['ai_generated', 'manual']).optional(),
+  sort: z.enum(['created_at', 'updated_at']).default('created_at'),
+  order: z.enum(['asc', 'desc']).default('desc'),
   search: z
     .string()
     .trim()
-    .max(200, "Search query must not exceed 200 characters")
-    .transform((val) => (val === "" ? undefined : val))
+    .max(200, 'Search query must not exceed 200 characters')
+    .transform((val) => (val === '' ? undefined : val))
     .optional(),
 });
 

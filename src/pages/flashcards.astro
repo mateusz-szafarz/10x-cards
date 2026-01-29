@@ -1,8 +1,8 @@
 ---
-import AppLayout from "../layouts/AppLayout.astro";
-import FlashcardList from "../components/flashcards/FlashcardList";
-import { FlashcardService } from "../lib/services/flashcard.service";
-import type { FlashcardDTO, PaginationDTO } from "../types";
+import AppLayout from '../layouts/AppLayout.astro';
+import FlashcardList from '../components/flashcards/FlashcardList';
+import { FlashcardService } from '../lib/services/flashcard.service';
+import type { FlashcardDTO, PaginationDTO } from '../types';
 
 // User is guaranteed to exist by middleware for protected pages
 const user = Astro.locals.user!;
@@ -15,15 +15,12 @@ let initialError: string | undefined;
 // Fetch initial flashcards server-side
 try {
   const service = new FlashcardService(Astro.locals.supabase);
-  const result = await service.listFlashcards(
-    { page: 1, limit: 20, sort: "created_at", order: "desc" },
-    user.id
-  );
+  const result = await service.listFlashcards({ page: 1, limit: 20, sort: 'created_at', order: 'desc' }, user.id);
   initialFlashcards = result.flashcards;
   initialPagination = result.pagination;
 } catch (e) {
-  console.error("Failed to fetch flashcards during SSR:", e);
-  initialError = "Failed to load flashcards. Please try again.";
+  console.error('Failed to fetch flashcards during SSR:', e);
+  initialError = 'Failed to load flashcards. Please try again.';
 }
 ---
 

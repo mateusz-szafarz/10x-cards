@@ -1,6 +1,6 @@
-import type { APIRoute } from "astro";
-import { registerSchema } from "../../../lib/schemas/auth.schema";
-import type { RegisterResponseDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import { registerSchema } from '../../../lib/schemas/auth.schema';
+import type { RegisterResponseDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -13,11 +13,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -28,11 +28,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: firstError?.message || "Validation failed",
+          code: 'VALIDATION_ERROR',
+          message: firstError?.message || 'Validation failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -46,26 +46,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   // 4. Handle errors
   if (error) {
-    if (error.message.toLowerCase().includes("already registered")) {
+    if (error.message.toLowerCase().includes('already registered')) {
       return new Response(
         JSON.stringify({
           error: {
-            code: "USER_EXISTS",
-            message: "User with this email already exists",
+            code: 'USER_EXISTS',
+            message: 'User with this email already exists',
           },
         } satisfies ErrorResponseDTO),
-        { status: 409, headers: { "Content-Type": "application/json" } }
+        { status: 409, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Registration failed",
+          code: 'INTERNAL_ERROR',
+          message: 'Registration failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -73,11 +73,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Registration failed",
+          code: 'INTERNAL_ERROR',
+          message: 'Registration failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -91,6 +91,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   return new Response(JSON.stringify(response), {
     status: 201,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 };

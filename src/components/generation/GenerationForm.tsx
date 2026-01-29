@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
-import { cn } from "../../lib/utils";
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Button } from '../ui/button';
+import { cn } from '../../lib/utils';
 
 interface GenerationFormProps {
   sourceText: string;
@@ -42,7 +42,7 @@ export function GenerationForm({
   const handleBlur = () => {
     // Only validate on blur if text is not empty
     if (sourceText.length > 0 && sourceText.length < 1000) {
-      setValidationError("Source text must be between 1000 and 10000 characters");
+      setValidationError('Source text must be between 1000 and 10000 characters');
     }
   };
 
@@ -58,16 +58,16 @@ export function GenerationForm({
           maxLength={10000}
           rows={8}
           placeholder="Paste your study material, article, lecture notes, or any text you want to turn into flashcards..."
-          className={cn(validationError && "border-destructive")}
+          className={cn(validationError && 'border-destructive')}
           disabled={isDisabled}
         />
 
         {/* Character counter */}
         <div className="flex items-center justify-between">
-          <div className={cn("text-xs", isUnderMinimum ? "text-destructive" : "text-muted-foreground")}>
+          <div className={cn('text-xs', isUnderMinimum ? 'text-destructive' : 'text-muted-foreground')}>
             {charCount}/10000 characters (min. 1000)
           </div>
-          {validationError && <span className="text-xs text-destructive">{validationError}</span>}
+          {validationError && <span className="text-destructive text-xs">{validationError}</span>}
         </div>
       </div>
 
@@ -79,9 +79,9 @@ export function GenerationForm({
             Generating...
           </>
         ) : hasProposals ? (
-          "Generate again"
+          'Generate again'
         ) : (
-          "Generate flashcards"
+          'Generate flashcards'
         )}
       </Button>
     </div>

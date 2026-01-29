@@ -1,10 +1,10 @@
-import { AlertCircle, Info } from "lucide-react";
-import { useGenerateFlashcards } from "../../hooks/useGenerateFlashcards";
-import { GenerationForm } from "./GenerationForm";
-import { ProposalList } from "./ProposalList";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
+import { AlertCircle, Info } from 'lucide-react';
+import { useGenerateFlashcards } from '../../hooks/useGenerateFlashcards';
+import { GenerationForm } from './GenerationForm';
+import { ProposalList } from './ProposalList';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Button } from '../ui/button';
+import { Skeleton } from '../ui/skeleton';
 
 /**
  * Top-level React container component for the generation view.
@@ -28,12 +28,12 @@ export function GenerateView() {
   } = useGenerateFlashcards();
 
   const hasProposals = proposals.length > 0;
-  const isGenerating = viewState === "generating";
-  const isSaving = viewState === "saving";
-  const isError = viewState === "error";
+  const isGenerating = viewState === 'generating';
+  const isSaving = viewState === 'saving';
+  const isError = viewState === 'error';
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="container mx-auto space-y-8 px-4 py-8">
       {/* Page header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Generate flashcards</h1>
@@ -90,7 +90,7 @@ export function GenerateView() {
         )}
 
         {/* Generated state with no proposals */}
-        {(viewState === "generated" || isSaving) && !hasProposals && (
+        {(viewState === 'generated' || isSaving) && !hasProposals && (
           <Alert>
             <Info />
             <AlertTitle>No proposals generated</AlertTitle>
@@ -104,7 +104,7 @@ export function GenerateView() {
         )}
 
         {/* Generated state with proposals */}
-        {(viewState === "generated" || isSaving) && hasProposals && (
+        {(viewState === 'generated' || isSaving) && hasProposals && (
           <ProposalList
             proposals={proposals}
             acceptedCount={acceptedCount}

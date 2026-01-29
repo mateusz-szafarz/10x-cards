@@ -1,12 +1,12 @@
-import { useEffect, useState, useId } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Loader2 } from "lucide-react";
-import type { FlashcardDTO } from "../../types";
-import type { FlashcardFormData, FlashcardFormErrors } from "./types";
-import { createFlashcardSchema } from "../../lib/schemas/flashcard.schema";
+import { useEffect, useState, useId } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Loader2 } from 'lucide-react';
+import type { FlashcardDTO } from '../../types';
+import type { FlashcardFormData, FlashcardFormErrors } from './types';
+import { createFlashcardSchema } from '../../lib/schemas/flashcard.schema';
 
 interface FlashcardEditDialogProps {
   flashcard: FlashcardDTO | null; // null = create mode, non-null = edit mode
@@ -20,7 +20,7 @@ interface FlashcardEditDialogProps {
  * Performs client-side validation using Zod schema before submission.
  */
 export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: FlashcardEditDialogProps) {
-  const [formData, setFormData] = useState<FlashcardFormData>({ front: "", back: "" });
+  const [formData, setFormData] = useState<FlashcardFormData>({ front: '', back: '' });
   const [errors, setErrors] = useState<FlashcardFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +28,7 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
   const backId = useId();
 
   const isEditMode = flashcard !== null;
-  const title = isEditMode ? "Edit Flashcard" : "New Flashcard";
+  const title = isEditMode ? 'Edit Flashcard' : 'New Flashcard';
 
   // Initialize/reset form when dialog opens or flashcard changes
   useEffect(() => {
@@ -38,7 +38,7 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
         setFormData({ front: flashcard.front, back: flashcard.back });
       } else {
         // Create mode - empty form
-        setFormData({ front: "", back: "" });
+        setFormData({ front: '', back: '' });
       }
       setErrors({});
       setIsSubmitting(false);
@@ -53,7 +53,7 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
       createFlashcardSchema.shape[field].parse(value);
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     } catch (err: any) {
-      const message = err.errors?.[0]?.message || "Invalid value";
+      const message = err.errors?.[0]?.message || 'Invalid value';
       setErrors((prev) => ({ ...prev, [field]: message }));
     }
   };
@@ -121,16 +121,16 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
               <Textarea
                 id={frontId}
                 value={formData.front}
-                onChange={(e) => handleFieldChange("front", e.target.value)}
-                onBlur={() => handleFieldBlur("front")}
+                onChange={(e) => handleFieldChange('front', e.target.value)}
+                onBlur={() => handleFieldBlur('front')}
                 placeholder="Question or prompt"
                 maxLength={500}
                 rows={3}
                 disabled={isSubmitting}
-                className={errors.front ? "border-destructive" : ""}
+                className={errors.front ? 'border-destructive' : ''}
               />
               <div className="flex justify-between text-xs">
-                <span className="text-destructive">{errors.front || ""}</span>
+                <span className="text-destructive">{errors.front || ''}</span>
                 <span className="text-muted-foreground">{formData.front.length}/500 characters</span>
               </div>
             </div>
@@ -141,16 +141,16 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
               <Textarea
                 id={backId}
                 value={formData.back}
-                onChange={(e) => handleFieldChange("back", e.target.value)}
-                onBlur={() => handleFieldBlur("back")}
+                onChange={(e) => handleFieldChange('back', e.target.value)}
+                onBlur={() => handleFieldBlur('back')}
                 placeholder="Answer or explanation"
                 maxLength={2000}
                 rows={5}
                 disabled={isSubmitting}
-                className={errors.back ? "border-destructive" : ""}
+                className={errors.back ? 'border-destructive' : ''}
               />
               <div className="flex justify-between text-xs">
-                <span className="text-destructive">{errors.back || ""}</span>
+                <span className="text-destructive">{errors.back || ''}</span>
                 <span className="text-muted-foreground">{formData.back.length}/2000 characters</span>
               </div>
             </div>
@@ -162,7 +162,7 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </form>

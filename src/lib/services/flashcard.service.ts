@@ -1,13 +1,13 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../db/database.types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../db/database.types';
 import type {
   FlashcardDTO,
   CreateFlashcardCommand,
   UpdateFlashcardCommand,
   FlashcardsListDTO,
   FlashcardsQueryParams,
-} from "../../types";
-import { buildPaginationMetadata } from "../utils";
+} from '../../types';
+import { buildPaginationMetadata } from '../utils';
 
 /**
  * Escapes PostgreSQL ILIKE wildcard characters (% and _) in a search string.
@@ -17,7 +17,7 @@ import { buildPaginationMetadata } from "../utils";
  * @returns Escaped string safe for use in ILIKE patterns
  */
 function escapeIlikePattern(str: string): string {
-  return str.replace(/[%_]/g, "\\$&");
+  return str.replace(/[%_]/g, '\\$&');
 }
 
 /**
@@ -39,15 +39,15 @@ export class FlashcardService {
    */
   async createFlashcard(command: CreateFlashcardCommand, userId: string): Promise<FlashcardDTO> {
     const { data, error } = await this.supabase
-      .from("flashcards")
+      .from('flashcards')
       .insert({
         front: command.front,
         back: command.back,
         user_id: userId,
-        source: "manual",
+        source: 'manual',
         generation_id: null,
       })
-      .select("id, front, back, source, generation_id, created_at, updated_at")
+      .select('id, front, back, source, generation_id, created_at, updated_at')
       .single();
 
     if (error) {
@@ -68,18 +68,18 @@ export class FlashcardService {
    */
   async updateFlashcard(id: string, command: UpdateFlashcardCommand, userId: string): Promise<FlashcardDTO | null> {
     const { data, error } = await this.supabase
-      .from("flashcards")
+      .from('flashcards')
       .update({
         front: command.front,
         back: command.back,
       })
-      .eq("id", id)
-      .eq("user_id", userId) // Explicit filter + RLS
-      .select("id, front, back, source, generation_id, created_at, updated_at")
+      .eq('id', id)
+      .eq('user_id', userId) // Explicit filter + RLS
+      .select('id, front, back, source, generation_id, created_at, updated_at')
       .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
+      if (error.code === 'PGRST116') {
         // No rows returned (not found or no access)
         return null;
       }
@@ -99,10 +99,10 @@ export class FlashcardService {
    */
   async deleteFlashcard(id: string, userId: string): Promise<boolean> {
     const { error, count } = await this.supabase
-      .from("flashcards")
-      .delete({ count: "exact" })
-      .eq("id", id)
-      .eq("user_id", userId); // Explicit filter + RLS
+      .from('flashcards')
+      .delete({ count: 'exact' })
+      .eq('id', id)
+      .eq('user_id', userId); // Explicit filter + RLS
 
     if (error) {
       throw new Error(`Failed to delete flashcard: ${error.message}`);
@@ -121,14 +121,14 @@ export class FlashcardService {
    */
   async getFlashcardById(id: string, userId: string): Promise<FlashcardDTO | null> {
     const { data, error } = await this.supabase
-      .from("flashcards")
-      .select("id, front, back, source, generation_id, created_at, updated_at")
-      .eq("id", id)
-      .eq("user_id", userId) // Explicit filter + RLS
+      .from('flashcards')
+      .select('id, front, back, source, generation_id, created_at, updated_at')
+      .eq('id', id)
+      .eq('user_id', userId) // Explicit filter + RLS
       .single();
 
     if (error) {
-      if (error.code === "PGRST116") {
+      if (error.code === 'PGRST116') {
         // No rows returned
         return null;
       }
@@ -147,7 +147,7 @@ export class FlashcardService {
    * @throws Error if database operation fails
    */
   async listFlashcards(params: FlashcardsQueryParams, userId: string): Promise<FlashcardsListDTO> {
-    const { page = 1, limit = 20, source, sort = "created_at", order = "desc", search } = params;
+    const { page = 1, limit = 20, source, sort = 'created_at', order = 'desc', search } = params;
 
     // Calculate offset for pagination
     const from = (page - 1) * limit;
@@ -155,15 +155,15 @@ export class FlashcardService {
 
     // Build query with dynamic filtering and sorting
     let query = this.supabase
-      .from("flashcards")
-      .select("id, front, back, source, generation_id, created_at, updated_at", {
-        count: "exact",
+      .from('flashcards')
+      .select('id, front, back, source, generation_id, created_at, updated_at', {
+        count: 'exact',
       })
-      .eq("user_id", userId); // Explicit filter + RLS
+      .eq('user_id', userId); // Explicit filter + RLS
 
     // Optional source filter
     if (source) {
-      query = query.eq("source", source);
+      query = query.eq('source', source);
     }
 
     // Optional text search filter
@@ -173,7 +173,7 @@ export class FlashcardService {
     }
 
     // Sorting
-    query = query.order(sort, { ascending: order === "asc" });
+    query = query.order(sort, { ascending: order === 'asc' });
 
     // Pagination
     query = query.range(from, to);

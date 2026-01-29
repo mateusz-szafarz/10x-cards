@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Menu, User, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Menu, User, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,14 +8,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface NavbarProps {
   user: {
@@ -29,41 +23,39 @@ export default function Navbar({ user, currentPath }: NavbarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
       });
     } finally {
       // Always redirect, even if API fails
-      window.location.href = "/login";
+      window.location.href = '/login';
     }
   };
 
   const navLinks = [
-    { href: "/generate", label: "Generate" },
-    { href: "/flashcards", label: "My Flashcards" },
+    { href: '/generate', label: 'Generate' },
+    { href: '/flashcards', label: 'My Flashcards' },
   ];
 
   const isActive = (href: string) => currentPath === href;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background h-16">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-7xl">
+    <header className="bg-background sticky top-0 z-50 h-16 w-full border-b">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
-        <a href="/flashcards" className="font-bold text-xl hover:opacity-80 transition-opacity">
+        <a href="/flashcards" className="text-xl font-bold transition-opacity hover:opacity-80">
           10x Cards
         </a>
 
         {/* Desktop Navigation */}
-        <nav className="hidden sm:flex items-center gap-6">
+        <nav className="hidden items-center gap-6 sm:flex">
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive(link.href)
-                  ? "text-foreground border-b-2 border-primary"
-                  : "text-muted-foreground"
+              className={`hover:text-primary text-sm font-medium transition-colors ${
+                isActive(link.href) ? 'text-foreground border-primary border-b-2' : 'text-muted-foreground'
               }`}
             >
               {link.label}
@@ -84,8 +76,8 @@ export default function Navbar({ user, currentPath }: NavbarProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Account</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  <p className="text-sm leading-none font-medium">Account</p>
+                  <p className="text-muted-foreground text-xs leading-none">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -108,11 +100,11 @@ export default function Navbar({ user, currentPath }: NavbarProps) {
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 mt-8">
+              <div className="mt-8 flex flex-col gap-4">
                 {/* User info */}
-                <div className="flex items-center gap-2 pb-4 border-b">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+                <div className="flex items-center gap-2 border-b pb-4">
+                  <User className="text-muted-foreground h-5 w-5" />
+                  <span className="text-muted-foreground truncate text-sm">{user.email}</span>
                 </div>
 
                 {/* Navigation links */}
@@ -122,10 +114,8 @@ export default function Navbar({ user, currentPath }: NavbarProps) {
                       key={link.href}
                       href={link.href}
                       onClick={() => setIsSheetOpen(false)}
-                      className={`text-sm font-medium px-4 py-2 rounded-md transition-colors ${
-                        isActive(link.href)
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-accent"
+                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                        isActive(link.href) ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
                       }`}
                     >
                       {link.label}
@@ -134,11 +124,7 @@ export default function Navbar({ user, currentPath }: NavbarProps) {
                 </nav>
 
                 {/* Logout button */}
-                <Button
-                  variant="outline"
-                  onClick={handleLogout}
-                  className="mt-4 justify-start"
-                >
+                <Button variant="outline" onClick={handleLogout} className="mt-4 justify-start">
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </Button>

@@ -1,14 +1,14 @@
-import { defineMiddleware } from "astro:middleware";
-import { createSupabaseServerInstance } from "../db/supabase.client";
+import { defineMiddleware } from 'astro:middleware';
+import { createSupabaseServerInstance } from '../db/supabase.client';
 
 // Public paths - do not require authentication
-const PUBLIC_PATHS = ["/api/auth/register", "/api/auth/login", "/api/auth/logout"];
+const PUBLIC_PATHS = ['/api/auth/register', '/api/auth/login', '/api/auth/logout'];
 
 // Protected page paths - require authentication
-const PROTECTED_PAGE_PATHS = ["/flashcards", "/generate"];
+const PROTECTED_PAGE_PATHS = ['/flashcards', '/generate'];
 
 // Auth page paths - redirect to /flashcards if already authenticated
-const AUTH_PAGE_PATHS = ["/login", "/register"];
+const AUTH_PAGE_PATHS = ['/login', '/register'];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request }, next) => {
   // Create per-request Supabase instance
@@ -44,29 +44,29 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, url, request
   }
 
   // Protected API paths - return 401 if not authenticated
-  if (!locals.user && url.pathname.startsWith("/api/")) {
+  if (!locals.user && url.pathname.startsWith('/api/')) {
     return new Response(
       JSON.stringify({
         error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated",
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
         },
       }),
       {
         status: 401,
-        headers: { "Content-Type": "application/json" },
-      }
+        headers: { 'Content-Type': 'application/json' },
+      },
     );
   }
 
   // Protected pages - redirect to login if not authenticated
   if (!locals.user && PROTECTED_PAGE_PATHS.some((p) => url.pathname.startsWith(p))) {
-    return Response.redirect(new URL("/login", url.origin));
+    return Response.redirect(new URL('/login', url.origin));
   }
 
   // Auth pages - redirect to flashcards if already authenticated
   if (locals.user && AUTH_PAGE_PATHS.includes(url.pathname)) {
-    return Response.redirect(new URL("/flashcards", url.origin));
+    return Response.redirect(new URL('/flashcards', url.origin));
   }
 
   return next();

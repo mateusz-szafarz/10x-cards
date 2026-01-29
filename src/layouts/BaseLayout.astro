@@ -1,11 +1,11 @@
 ---
-import "../styles/global.css";
+import '../styles/global.css';
 
 interface Props {
   title?: string;
 }
 
-const { title = "10x Cards" } = Astro.props;
+const { title = '10x Cards' } = Astro.props;
 ---
 
 <!doctype html>
@@ -18,7 +18,7 @@ const { title = "10x Cards" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <main class="min-h-screen flex items-center justify-center bg-background p-4">
+    <main class="bg-background flex min-h-screen items-center justify-center p-4">
       <slot />
     </main>
   </body>

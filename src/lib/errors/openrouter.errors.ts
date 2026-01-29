@@ -5,10 +5,10 @@
 export class OpenRouterError extends Error {
   constructor(
     message: string,
-    public readonly statusCode?: number
+    public readonly statusCode?: number,
   ) {
     super(message);
-    this.name = "OpenRouterError";
+    this.name = 'OpenRouterError';
   }
 }
 
@@ -17,9 +17,9 @@ export class OpenRouterError extends Error {
  * Thrown when the API key is invalid or missing.
  */
 export class AuthenticationError extends OpenRouterError {
-  constructor(message = "Invalid or missing API key") {
+  constructor(message = 'Invalid or missing API key') {
     super(message, 401);
-    this.name = "AuthenticationError";
+    this.name = 'AuthenticationError';
   }
 }
 
@@ -28,9 +28,9 @@ export class AuthenticationError extends OpenRouterError {
  * Thrown when the API key has insufficient permissions.
  */
 export class AuthorizationError extends OpenRouterError {
-  constructor(message = "Insufficient permissions") {
+  constructor(message = 'Insufficient permissions') {
     super(message, 403);
-    this.name = "AuthorizationError";
+    this.name = 'AuthorizationError';
   }
 }
 
@@ -41,11 +41,11 @@ export class AuthorizationError extends OpenRouterError {
  */
 export class RateLimitError extends OpenRouterError {
   constructor(
-    message = "Rate limit exceeded",
-    public readonly retryAfter?: number
+    message = 'Rate limit exceeded',
+    public readonly retryAfter?: number,
   ) {
     super(message, 429);
-    this.name = "RateLimitError";
+    this.name = 'RateLimitError';
   }
 }
 
@@ -56,7 +56,7 @@ export class RateLimitError extends OpenRouterError {
 export class InvalidRequestError extends OpenRouterError {
   constructor(message: string) {
     super(message, 400);
-    this.name = "InvalidRequestError";
+    this.name = 'InvalidRequestError';
   }
 }
 
@@ -67,7 +67,7 @@ export class InvalidRequestError extends OpenRouterError {
 export class ServerError extends OpenRouterError {
   constructor(message: string, statusCode: number) {
     super(message, statusCode);
-    this.name = "ServerError";
+    this.name = 'ServerError';
   }
 }
 
@@ -76,9 +76,9 @@ export class ServerError extends OpenRouterError {
  * Thrown when the request exceeds the configured timeout.
  */
 export class TimeoutError extends OpenRouterError {
-  constructor(message = "Request timeout") {
+  constructor(message = 'Request timeout') {
     super(message);
-    this.name = "TimeoutError";
+    this.name = 'TimeoutError';
   }
 }
 
@@ -87,9 +87,9 @@ export class TimeoutError extends OpenRouterError {
  * Thrown when a network-level error occurs (connection refused, DNS failure, etc.).
  */
 export class NetworkError extends OpenRouterError {
-  constructor(message = "Network error occurred") {
+  constructor(message = 'Network error occurred') {
     super(message);
-    this.name = "NetworkError";
+    this.name = 'NetworkError';
   }
 }
 
@@ -100,6 +100,6 @@ export class NetworkError extends OpenRouterError {
 export class InvalidResponseError extends OpenRouterError {
   constructor(message: string) {
     super(message);
-    this.name = "InvalidResponseError";
+    this.name = 'InvalidResponseError';
   }
 }

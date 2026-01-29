@@ -1,6 +1,6 @@
-import type { OpenRouterConfig, OpenRouterRequest, OpenRouterResponse, FlashcardProposalDTO } from "@/types.ts";
-import type { AIService } from "./ai.service";
-import { openRouterResponseSchema, flashcardsResponseSchema } from "../schemas/openrouter.schema";
+import type { OpenRouterConfig, OpenRouterRequest, OpenRouterResponse, FlashcardProposalDTO } from '@/types.ts';
+import type { AIService } from './ai.service';
+import { openRouterResponseSchema, flashcardsResponseSchema } from '../schemas/openrouter.schema';
 import {
   AuthenticationError,
   AuthorizationError,
@@ -10,7 +10,7 @@ import {
   TimeoutError,
   NetworkError,
   InvalidResponseError,
-} from "../errors/openrouter.errors";
+} from '../errors/openrouter.errors';
 
 /**
  * Maximum wait time for rate limit retries (10 seconds).
@@ -39,18 +39,18 @@ export class OpenRouterService implements AIService {
 
   constructor(config: OpenRouterConfig) {
     // Validate required configuration
-    if (!config.apiKey || config.apiKey.trim() === "") {
-      throw new Error("OpenRouter API key is required");
+    if (!config.apiKey || config.apiKey.trim() === '') {
+      throw new Error('OpenRouter API key is required');
     }
 
     // Initialize configuration with defaults
     this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl || "https://openrouter.ai/api/v1";
-    this._modelName = config.modelName || "google/gemma-3-27b-it:free";
+    this.baseUrl = config.baseUrl || 'https://openrouter.ai/api/v1';
+    this._modelName = config.modelName || 'google/gemma-3-27b-it:free';
     this.timeout = config.timeout || 30000;
     this.maxRetries = config.maxRetries || 2;
     this.httpReferer = config.httpReferer;
-    this.appTitle = config.appTitle || "10x-cards";
+    this.appTitle = config.appTitle || '10x-cards';
   }
 
   /**
@@ -85,7 +85,7 @@ export class OpenRouterService implements AIService {
       model: this._modelName,
       messages: [
         {
-          role: "system",
+          role: 'system',
           content: `You are an expert educational content creator specializing in creating high-quality flashcards for spaced repetition learning. Your goal is to extract key concepts from the provided text and transform them into clear, concise question-answer pairs that facilitate effective learning.
 
 Guidelines:
@@ -98,7 +98,7 @@ Guidelines:
 - Generate between 4 and 8 flashcards based on content richness`,
         },
         {
-          role: "user",
+          role: 'user',
           content: `Based on the following text, generate flashcards following the guidelines provided.
 
 Text:
@@ -106,36 +106,36 @@ ${sourceText}`,
         },
       ],
       response_format: {
-        type: "json_schema",
+        type: 'json_schema',
         json_schema: {
-          name: "flashcard_proposals",
+          name: 'flashcard_proposals',
           strict: true,
           schema: {
-            type: "object",
+            type: 'object',
             properties: {
               flashcards: {
-                type: "array",
-                description: "Array of generated flashcard proposals",
+                type: 'array',
+                description: 'Array of generated flashcard proposals',
                 items: {
-                  type: "object",
+                  type: 'object',
                   properties: {
                     front: {
-                      type: "string",
-                      description: "The question or prompt for the flashcard",
+                      type: 'string',
+                      description: 'The question or prompt for the flashcard',
                     },
                     back: {
-                      type: "string",
-                      description: "The answer or explanation for the flashcard",
+                      type: 'string',
+                      description: 'The answer or explanation for the flashcard',
                     },
                   },
-                  required: ["front", "back"],
+                  required: ['front', 'back'],
                   additionalProperties: false,
                 },
                 minItems: 4,
                 maxItems: 8,
               },
             },
-            required: ["flashcards"],
+            required: ['flashcards'],
             additionalProperties: false,
           },
         },
@@ -155,12 +155,12 @@ ${sourceText}`,
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": this.httpReferer || "",
-          "X-Title": this.appTitle || "10x-cards",
+          'Content-Type': 'application/json',
+          'HTTP-Referer': this.httpReferer || '',
+          'X-Title': this.appTitle || '10x-cards',
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -179,7 +179,7 @@ ${sourceText}`,
 
       if (shouldRetry) {
         // Parse Retry-After header if present
-        const retryAfterHeader = response.headers.get("Retry-After");
+        const retryAfterHeader = response.headers.get('Retry-After');
         let waitTime = Math.pow(2, retryCount) * 1000; // Default exponential backoff
 
         if (retryAfterHeader) {
@@ -193,7 +193,7 @@ ${sourceText}`,
         if (waitTime > MAX_RETRY_WAIT) {
           throw new RateLimitError(
             `Rate limit exceeded. Retry after ${Math.ceil(waitTime / 1000)}s exceeds maximum wait time.`,
-            Math.ceil(waitTime / 1000)
+            Math.ceil(waitTime / 1000),
           );
         }
 
@@ -205,13 +205,13 @@ ${sourceText}`,
       // Map HTTP status codes to specific errors
       switch (response.status) {
         case 401:
-          throw new AuthenticationError("Invalid or missing API key");
+          throw new AuthenticationError('Invalid or missing API key');
         case 403:
-          throw new AuthorizationError("Insufficient permissions");
+          throw new AuthorizationError('Insufficient permissions');
         case 429: {
-          const retryAfterHeader = response.headers.get("Retry-After");
+          const retryAfterHeader = response.headers.get('Retry-After');
           const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
-          throw new RateLimitError("Rate limit exceeded", retryAfter);
+          throw new RateLimitError('Rate limit exceeded', retryAfter);
         }
         case 400:
         case 422:
@@ -227,13 +227,13 @@ ${sourceText}`,
 
       if (error instanceof Error) {
         // Distinguish timeout from other network errors
-        if (error.name === "AbortError") {
-          throw new TimeoutError("Request timeout exceeded");
+        if (error.name === 'AbortError') {
+          throw new TimeoutError('Request timeout exceeded');
         }
 
         // Re-throw our custom errors
         if (
-          error.name.includes("Error") &&
+          error.name.includes('Error') &&
           (error instanceof AuthenticationError ||
             error instanceof AuthorizationError ||
             error instanceof RateLimitError ||
@@ -248,7 +248,7 @@ ${sourceText}`,
         throw new NetworkError(`Network error: ${error.message}`);
       }
 
-      throw new NetworkError("Unknown network error");
+      throw new NetworkError('Unknown network error');
     }
   }
 
@@ -269,7 +269,7 @@ ${sourceText}`,
         parsedContent = JSON.parse(content);
       } catch (error) {
         throw new InvalidResponseError(
-          `Failed to parse response content as JSON: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Failed to parse response content as JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
       }
 
@@ -284,7 +284,7 @@ ${sourceText}`,
 
       // Handle Zod validation errors
       const errorMessage =
-        error instanceof Error ? `Invalid response format: ${error.message}` : "Invalid response format";
+        error instanceof Error ? `Invalid response format: ${error.message}` : 'Invalid response format';
 
       throw new InvalidResponseError(errorMessage);
     }

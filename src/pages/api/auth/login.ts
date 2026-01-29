@@ -1,6 +1,6 @@
-import type { APIRoute } from "astro";
-import { loginSchema } from "../../../lib/schemas/auth.schema";
-import type { LoginResponseDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import { loginSchema } from '../../../lib/schemas/auth.schema';
+import type { LoginResponseDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -13,11 +13,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -27,11 +27,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Email and password are required",
+          code: 'VALIDATION_ERROR',
+          message: 'Email and password are required',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -48,11 +48,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "INVALID_CREDENTIALS",
-          message: "Invalid email or password",
+          code: 'INVALID_CREDENTIALS',
+          message: 'Invalid email or password',
         },
       } satisfies ErrorResponseDTO),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -66,6 +66,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   return new Response(JSON.stringify(response), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 };

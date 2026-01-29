@@ -1,7 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/db/database.types.ts";
-import type { FlashcardProposalDTO, GenerationResponseDTO, AcceptGenerationResponseDTO } from "../../types";
-import type { AIService } from "./ai.service";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/db/database.types.ts';
+import type { FlashcardProposalDTO, GenerationResponseDTO, AcceptGenerationResponseDTO } from '../../types';
+import type { AIService } from './ai.service';
 
 /**
  * Service responsible for managing flashcard generation sessions.
@@ -30,14 +30,14 @@ export class GenerationService {
 
     // Save generation session to database
     const { data, error } = await this.supabase
-      .from("generation_sessions")
+      .from('generation_sessions')
       .insert({
         source_text: sourceText,
         user_id: userId,
         generated_count: proposals.length,
         model_used: aiService.modelName,
       })
-      .select("id")
+      .select('id')
       .single();
 
     if (error) {
@@ -64,10 +64,10 @@ export class GenerationService {
   async acceptFlashcards(
     generationId: string,
     flashcards: FlashcardProposalDTO[],
-    userId: string
+    userId: string,
   ): Promise<AcceptGenerationResponseDTO> {
     // Call RPC function for transactional accept
-    const { data, error } = await this.supabase.rpc("accept_generation", {
+    const { data, error } = await this.supabase.rpc('accept_generation', {
       p_generation_id: generationId,
       p_user_id: userId,
       p_flashcards: flashcards,
@@ -78,7 +78,7 @@ export class GenerationService {
     }
 
     // Handle error response from RPC
-    if (data && "error" in data) {
+    if (data && 'error' in data) {
       const err = data.error as { code: string; message: string };
       const error = new Error(err.message) as Error & { code: string };
       error.code = err.code;

@@ -1,8 +1,8 @@
-import type { APIRoute } from "astro";
-import { acceptGenerationSchema } from "../../../../lib/schemas/generation.schema";
-import { GenerationService } from "../../../../lib/services/generation.service";
-import { validateUUID } from "../../../../lib/utils";
-import type { AcceptGenerationResponseDTO, ErrorResponseDTO } from "../../../../types";
+import type { APIRoute } from 'astro';
+import { acceptGenerationSchema } from '../../../../lib/schemas/generation.schema';
+import { GenerationService } from '../../../../lib/services/generation.service';
+import { validateUUID } from '../../../../lib/utils';
+import type { AcceptGenerationResponseDTO, ErrorResponseDTO } from '../../../../types';
 
 export const prerender = false;
 
@@ -39,11 +39,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid generation ID format",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid generation ID format',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -55,11 +55,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -71,11 +71,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: firstError?.message || "Validation failed",
+          code: 'VALIDATION_ERROR',
+          message: firstError?.message || 'Validation failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -88,53 +88,53 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const result = await generationService.acceptFlashcards(
       generationId,
       validationResult.data.flashcards,
-      locals.user!.id
+      locals.user!.id,
     );
 
     return new Response(JSON.stringify(result satisfies AcceptGenerationResponseDTO), {
       status: 201,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
     // Handle specific business logic errors
-    if (error instanceof Error && "code" in error) {
+    if (error instanceof Error && 'code' in error) {
       const errorCode = (error as Error & { code: string }).code;
 
-      if (errorCode === "NOT_FOUND") {
+      if (errorCode === 'NOT_FOUND') {
         return new Response(
           JSON.stringify({
             error: {
-              code: "NOT_FOUND",
-              message: "Generation session not found",
+              code: 'NOT_FOUND',
+              message: 'Generation session not found',
             },
           } satisfies ErrorResponseDTO),
-          { status: 404, headers: { "Content-Type": "application/json" } }
+          { status: 404, headers: { 'Content-Type': 'application/json' } },
         );
       }
 
-      if (errorCode === "ALREADY_FINALIZED") {
+      if (errorCode === 'ALREADY_FINALIZED') {
         return new Response(
           JSON.stringify({
             error: {
-              code: "ALREADY_FINALIZED",
-              message: "Generation session has already been finalized",
+              code: 'ALREADY_FINALIZED',
+              message: 'Generation session has already been finalized',
             },
           } satisfies ErrorResponseDTO),
-          { status: 409, headers: { "Content-Type": "application/json" } }
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
         );
       }
     }
 
     // Generic error
-    console.error("Accept generation error:", error);
+    console.error('Accept generation error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to save flashcards",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to save flashcards',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };

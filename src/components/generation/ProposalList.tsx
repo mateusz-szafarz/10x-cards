@@ -1,7 +1,7 @@
-import { Loader2 } from "lucide-react";
-import { Button } from "../ui/button";
-import { ProposalCard } from "./ProposalCard";
-import type { FlashcardProposalViewModel } from "./types";
+import { Loader2 } from 'lucide-react';
+import { Button } from '../ui/button';
+import { ProposalCard } from './ProposalCard';
+import type { FlashcardProposalViewModel } from './types';
 
 interface ProposalListProps {
   proposals: FlashcardProposalViewModel[];
@@ -35,8 +35,8 @@ export function ProposalList({
       {/* Header with counts */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Flashcard proposals ({totalCount})</h2>
-        <div aria-live="polite" className="text-sm text-muted-foreground">
-          Accepted: <span className="font-medium text-foreground">{acceptedCount}</span>
+        <div aria-live="polite" className="text-muted-foreground text-sm">
+          Accepted: <span className="text-foreground font-medium">{acceptedCount}</span>
         </div>
       </div>
 

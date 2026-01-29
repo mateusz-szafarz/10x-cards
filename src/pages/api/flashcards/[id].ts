@@ -1,8 +1,8 @@
-import type { APIRoute } from "astro";
-import { updateFlashcardSchema } from "../../../lib/schemas/flashcard.schema";
-import { FlashcardService } from "../../../lib/services/flashcard.service";
-import { validateUUID } from "../../../lib/utils";
-import type { FlashcardDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import { updateFlashcardSchema } from '../../../lib/schemas/flashcard.schema';
+import { FlashcardService } from '../../../lib/services/flashcard.service';
+import { validateUUID } from '../../../lib/utils';
+import type { FlashcardDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -29,11 +29,11 @@ export const GET: APIRoute = async ({ params, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid flashcard ID format",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid flashcard ID format',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -47,28 +47,28 @@ export const GET: APIRoute = async ({ params, locals }) => {
       return new Response(
         JSON.stringify({
           error: {
-            code: "NOT_FOUND",
-            message: "Flashcard not found",
+            code: 'NOT_FOUND',
+            message: 'Flashcard not found',
           },
         } satisfies ErrorResponseDTO),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(JSON.stringify(flashcard satisfies FlashcardDTO), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Get flashcard error:", error);
+    console.error('Get flashcard error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to fetch flashcard",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to fetch flashcard',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };
@@ -100,11 +100,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid flashcard ID format",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid flashcard ID format',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -116,11 +116,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -132,11 +132,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: firstError?.message || "Validation failed",
+          code: 'VALIDATION_ERROR',
+          message: firstError?.message || 'Validation failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -150,28 +150,28 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       return new Response(
         JSON.stringify({
           error: {
-            code: "NOT_FOUND",
-            message: "Flashcard not found",
+            code: 'NOT_FOUND',
+            message: 'Flashcard not found',
           },
         } satisfies ErrorResponseDTO),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(JSON.stringify(flashcard satisfies FlashcardDTO), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("Update flashcard error:", error);
+    console.error('Update flashcard error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to update flashcard",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to update flashcard',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };
@@ -199,11 +199,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid flashcard ID format",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid flashcard ID format',
         },
       } satisfies ErrorResponseDTO),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -217,25 +217,25 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       return new Response(
         JSON.stringify({
           error: {
-            code: "NOT_FOUND",
-            message: "Flashcard not found",
+            code: 'NOT_FOUND',
+            message: 'Flashcard not found',
           },
         } satisfies ErrorResponseDTO),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        { status: 404, headers: { 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error("Delete flashcard error:", error);
+    console.error('Delete flashcard error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to delete flashcard",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to delete flashcard',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };

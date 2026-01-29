@@ -1,15 +1,11 @@
-import { useState } from "react";
-import { loginSchema } from "@/lib/schemas/auth.schema";
-import type {
-  LoginCommand,
-  LoginResponseDTO,
-  ErrorResponseDTO,
-} from "@/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useState } from 'react';
+import { loginSchema } from '@/lib/schemas/auth.schema';
+import type { LoginCommand, LoginResponseDTO, ErrorResponseDTO } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // ViewModel types
 interface LoginFormState {
@@ -25,8 +21,8 @@ interface LoginFormErrors {
 
 export default function LoginForm() {
   const [formData, setFormData] = useState<LoginFormState>({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
 
   const [errors, setErrors] = useState<LoginFormErrors>({});
@@ -49,7 +45,7 @@ export default function LoginForm() {
   };
 
   const handleEmailBlur = () => {
-    const error = validateField("email", formData.email);
+    const error = validateField('email', formData.email);
     if (error) {
       setErrors({ ...errors, email: error });
     }
@@ -64,7 +60,7 @@ export default function LoginForm() {
   };
 
   const handlePasswordBlur = () => {
-    const error = validateField("password", formData.password);
+    const error = validateField('password', formData.password);
     if (error) {
       setErrors({ ...errors, password: error });
     }
@@ -72,14 +68,14 @@ export default function LoginForm() {
 
   const mapApiErrorToMessage = (code: string): string => {
     const errorMessages: Record<string, string> = {
-      VALIDATION_ERROR: "Please check your input",
-      INVALID_CREDENTIALS: "Invalid email or password",
-      EMAIL_NOT_CONFIRMED: "Please confirm your email before logging in",
-      INTERNAL_ERROR: "Something went wrong. Please try again later.",
-      UNAUTHORIZED: "Your session has expired. Please log in again.",
+      VALIDATION_ERROR: 'Please check your input',
+      INVALID_CREDENTIALS: 'Invalid email or password',
+      EMAIL_NOT_CONFIRMED: 'Please confirm your email before logging in',
+      INTERNAL_ERROR: 'Something went wrong. Please try again later.',
+      UNAUTHORIZED: 'Your session has expired. Please log in again.',
     };
 
-    return errorMessages[code] ?? "An unexpected error occurred.";
+    return errorMessages[code] ?? 'An unexpected error occurred.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +88,7 @@ export default function LoginForm() {
       const fieldErrors: LoginFormErrors = {};
       validation.error.errors.forEach((err) => {
         const field = err.path[0] as keyof LoginFormErrors;
-        if (field === "email" || field === "password") {
+        if (field === 'email' || field === 'password') {
           fieldErrors[field] = err.message;
         }
       });
@@ -105,11 +101,11 @@ export default function LoginForm() {
 
     try {
       // 2. API call
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData as LoginCommand),
-        credentials: "include", // Required for cookies
+        credentials: 'include', // Required for cookies
       });
 
       const data = await response.json();
@@ -122,11 +118,11 @@ export default function LoginForm() {
       }
 
       // 4. Success - redirect (full page reload to pick up cookies)
-      window.location.href = "/flashcards";
+      window.location.href = '/flashcards';
     } catch (error) {
       // 5. Network error
       setErrors({
-        form: "Unable to connect to server. Please check your connection.",
+        form: 'Unable to connect to server. Please check your connection.',
       });
     } finally {
       setIsSubmitting(false);
@@ -136,13 +132,11 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <div className="flex items-center justify-center mb-2">
+        <div className="mb-2 flex items-center justify-center">
           <h1 className="text-2xl font-bold">10x Cards</h1>
         </div>
-        <CardTitle className="text-2xl text-center">Log in</CardTitle>
-        <CardDescription className="text-center">
-          Enter your email below to log in to your account
-        </CardDescription>
+        <CardTitle className="text-center text-2xl">Log in</CardTitle>
+        <CardDescription className="text-center">Enter your email below to log in to your account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -158,11 +152,11 @@ export default function LoginForm() {
               onBlur={handleEmailBlur}
               disabled={isSubmitting}
               aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? "email-error" : undefined}
+              aria-describedby={errors.email ? 'email-error' : undefined}
               data-testid="login-email-input"
             />
             {errors.email && (
-              <p id="email-error" className="text-sm text-destructive">
+              <p id="email-error" className="text-destructive text-sm">
                 {errors.email}
               </p>
             )}
@@ -180,11 +174,11 @@ export default function LoginForm() {
               onBlur={handlePasswordBlur}
               disabled={isSubmitting}
               aria-invalid={!!errors.password}
-              aria-describedby={errors.password ? "password-error" : undefined}
+              aria-describedby={errors.password ? 'password-error' : undefined}
               data-testid="login-password-input"
             />
             {errors.password && (
-              <p id="password-error" className="text-sm text-destructive">
+              <p id="password-error" className="text-destructive text-sm">
                 {errors.password}
               </p>
             )}
@@ -198,19 +192,14 @@ export default function LoginForm() {
           )}
 
           {/* Submit button */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-            data-testid="login-submit-button"
-          >
-            {isSubmitting ? "Logging in..." : "Log in"}
+          <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="login-submit-button">
+            {isSubmitting ? 'Logging in...' : 'Log in'}
           </Button>
 
           {/* Link to register */}
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <a href="/register" className="underline underline-offset-4 hover:text-primary">
+          <p className="text-muted-foreground text-center text-sm">
+            Don't have an account?{' '}
+            <a href="/register" className="hover:text-primary underline underline-offset-4">
               Create an account
             </a>
           </p>

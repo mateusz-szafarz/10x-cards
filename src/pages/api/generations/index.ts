@@ -1,7 +1,7 @@
-import type { APIRoute } from "astro";
-import { createGenerationSchema } from "../../../lib/schemas/generation.schema";
-import { createAIService } from "../../../lib/services/ai.service";
-import { GenerationService } from "../../../lib/services/generation.service";
+import type { APIRoute } from 'astro';
+import { createGenerationSchema } from '../../../lib/schemas/generation.schema';
+import { createAIService } from '../../../lib/services/ai.service';
+import { GenerationService } from '../../../lib/services/generation.service';
 
 export const prerender = false;
 
@@ -30,11 +30,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid JSON in request body",
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid JSON in request body',
         },
       }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -43,17 +43,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!validationResult.success) {
     const firstError = validationResult.error.errors[0];
-    const isSourceTextMissing = firstError?.path.includes("source_text") && firstError?.code === "invalid_type";
-    const message = isSourceTextMissing ? "Source text is required" : firstError?.message || "Validation failed";
+    const isSourceTextMissing = firstError?.path.includes('source_text') && firstError?.code === 'invalid_type';
+    const message = isSourceTextMissing ? 'Source text is required' : firstError?.message || 'Validation failed';
 
     return new Response(
       JSON.stringify({
         error: {
-          code: "VALIDATION_ERROR",
+          code: 'VALIDATION_ERROR',
           message,
         },
       }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -67,24 +67,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const result = await generationService.generateFlashcards(
       validationResult.data.source_text,
       locals.user!.id,
-      aiService
+      aiService,
     );
 
     return new Response(JSON.stringify(result), {
       status: 201,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error("Generation error:", error);
+    console.error('Generation error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Failed to generate flashcards",
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to generate flashcards',
         },
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 };

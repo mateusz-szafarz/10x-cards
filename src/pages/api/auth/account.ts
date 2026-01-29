@@ -1,6 +1,6 @@
-import type { APIRoute } from "astro";
-import { createSupabaseAdminInstance } from "../../../db/supabase.client";
-import type { DeleteAccountResponseDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import { createSupabaseAdminInstance } from '../../../db/supabase.client';
+import type { DeleteAccountResponseDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -10,11 +10,11 @@ export const DELETE: APIRoute = async ({ locals, cookies, request }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated",
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
         },
       } satisfies ErrorResponseDTO),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -30,15 +30,15 @@ export const DELETE: APIRoute = async ({ locals, cookies, request }) => {
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
   if (error) {
-    console.error("Account deletion error:", error);
+    console.error('Account deletion error:', error);
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Account deletion failed",
+          code: 'INTERNAL_ERROR',
+          message: 'Account deletion failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -47,11 +47,11 @@ export const DELETE: APIRoute = async ({ locals, cookies, request }) => {
 
   // 5. Success
   const response: DeleteAccountResponseDTO = {
-    message: "Account deleted successfully",
+    message: 'Account deleted successfully',
   };
 
   return new Response(JSON.stringify(response), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 };

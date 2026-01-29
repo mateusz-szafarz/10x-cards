@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Zod schema for validating CreateGenerationCommand.
@@ -10,10 +10,10 @@ import { z } from "zod";
 export const createGenerationSchema = z.object({
   source_text: z
     .string({
-      required_error: "Source text is required",
+      required_error: 'Source text is required',
     })
-    .min(1000, "Source text must be between 1000 and 10000 characters")
-    .max(10000, "Source text must be between 1000 and 10000 characters"),
+    .min(1000, 'Source text must be between 1000 and 10000 characters')
+    .max(10000, 'Source text must be between 1000 and 10000 characters'),
 });
 
 export type CreateGenerationInput = z.infer<typeof createGenerationSchema>;
@@ -27,16 +27,16 @@ export const acceptGenerationSchema = z.object({
     .array(
       z.object({
         front: z
-          .string({ required_error: "Front is required" })
-          .min(1, "Front must be between 1 and 500 characters")
-          .max(500, "Front must be between 1 and 500 characters"),
+          .string({ required_error: 'Front is required' })
+          .min(1, 'Front must be between 1 and 500 characters')
+          .max(500, 'Front must be between 1 and 500 characters'),
         back: z
-          .string({ required_error: "Back is required" })
-          .min(1, "Back must be between 1 and 2000 characters")
-          .max(2000, "Back must be between 1 and 2000 characters"),
-      })
+          .string({ required_error: 'Back is required' })
+          .min(1, 'Back must be between 1 and 2000 characters')
+          .max(2000, 'Back must be between 1 and 2000 characters'),
+      }),
     )
-    .nonempty("Flashcards array cannot be empty"),
+    .nonempty('Flashcards array cannot be empty'),
 });
 
 export type AcceptGenerationInput = z.infer<typeof acceptGenerationSchema>;

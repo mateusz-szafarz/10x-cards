@@ -1,9 +1,9 @@
-import { memo, useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import type { FlashcardProposalViewModel } from "./types";
-import { cn } from "../../lib/utils";
+import { memo, useState } from 'react';
+import { Card, CardContent, CardFooter, CardHeader } from '../ui/card';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import type { FlashcardProposalViewModel } from './types';
+import { cn } from '../../lib/utils';
 
 interface ProposalCardProps {
   proposal: FlashcardProposalViewModel;
@@ -39,9 +39,9 @@ function ProposalCardComponent({
   return (
     <Card
       className={cn(
-        "flex flex-col h-full transition-all",
-        proposal.status === "accepted" && "border-green-500 bg-green-50/50 dark:bg-green-950/20",
-        proposal.status === "rejected" && "opacity-50"
+        'flex h-full flex-col transition-all',
+        proposal.status === 'accepted' && 'border-green-500 bg-green-50/50 dark:bg-green-950/20',
+        proposal.status === 'rejected' && 'opacity-50',
       )}
     >
       <CardHeader className="pb-3">
@@ -53,16 +53,16 @@ function ProposalCardComponent({
               onBlur={() => setIsEditingFront(false)}
               maxLength={500}
               rows={3}
-              className={cn(isFrontInvalid && "border-destructive")}
+              className={cn(isFrontInvalid && 'border-destructive')}
             />
-            <div className={cn("text-xs text-right", isFrontInvalid ? "text-destructive" : "text-muted-foreground")}>
+            <div className={cn('text-right text-xs', isFrontInvalid ? 'text-destructive' : 'text-muted-foreground')}>
               {frontLength}/500 characters
             </div>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className={cn("text-sm font-medium", isFrontInvalid && "text-destructive")}>
-              {proposal.front || "(Empty front — edit to add content)"}
+            <p className={cn('text-sm font-medium', isFrontInvalid && 'text-destructive')}>
+              {proposal.front || '(Empty front — edit to add content)'}
             </p>
             <Button
               variant="ghost"
@@ -86,16 +86,16 @@ function ProposalCardComponent({
               onBlur={() => setIsEditingBack(false)}
               maxLength={2000}
               rows={5}
-              className={cn(isBackInvalid && "border-destructive")}
+              className={cn(isBackInvalid && 'border-destructive')}
             />
-            <div className={cn("text-xs text-right", isBackInvalid ? "text-destructive" : "text-muted-foreground")}>
+            <div className={cn('text-right text-xs', isBackInvalid ? 'text-destructive' : 'text-muted-foreground')}>
               {backLength}/2000 characters
             </div>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className={cn("text-sm text-muted-foreground border-t pt-3", isBackInvalid && "text-destructive")}>
-              {proposal.back || "(Empty back — edit to add content)"}
+            <p className={cn('text-muted-foreground border-t pt-3 text-sm', isBackInvalid && 'text-destructive')}>
+              {proposal.back || '(Empty back — edit to add content)'}
             </p>
             <Button
               variant="ghost"
@@ -110,8 +110,8 @@ function ProposalCardComponent({
         )}
       </CardContent>
 
-      <CardFooter className="flex items-center justify-end gap-2 pt-3 border-t">
-        {proposal.status === "accepted" ? (
+      <CardFooter className="flex items-center justify-end gap-2 border-t pt-3">
+        {proposal.status === 'accepted' ? (
           <>
             <Button variant="outline" size="sm" disabled className="bg-green-100 dark:bg-green-900">
               Accepted ✓
@@ -120,7 +120,7 @@ function ProposalCardComponent({
               Reject
             </Button>
           </>
-        ) : proposal.status === "rejected" ? (
+        ) : proposal.status === 'rejected' ? (
           <>
             <Button variant="default" size="sm" onClick={onAccept} disabled={isDisabled}>
               Accept

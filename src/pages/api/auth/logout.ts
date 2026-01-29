@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
-import type { LogoutResponseDTO, ErrorResponseDTO } from "../../../types";
+import type { APIRoute } from 'astro';
+import type { LogoutResponseDTO, ErrorResponseDTO } from '../../../types';
 
 export const prerender = false;
 
@@ -9,11 +9,11 @@ export const POST: APIRoute = async ({ locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated",
+          code: 'UNAUTHORIZED',
+          message: 'Not authenticated',
         },
       } satisfies ErrorResponseDTO),
-      { status: 401, headers: { "Content-Type": "application/json" } }
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
@@ -24,21 +24,21 @@ export const POST: APIRoute = async ({ locals }) => {
     return new Response(
       JSON.stringify({
         error: {
-          code: "INTERNAL_ERROR",
-          message: "Logout failed",
+          code: 'INTERNAL_ERROR',
+          message: 'Logout failed',
         },
       } satisfies ErrorResponseDTO),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
   // 3. Success
   const response: LogoutResponseDTO = {
-    message: "Logged out successfully",
+    message: 'Logged out successfully',
   };
 
   return new Response(JSON.stringify(response), {
     status: 200,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 };

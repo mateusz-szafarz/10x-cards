@@ -1,8 +1,8 @@
-import { memo } from "react";
-import { Bot, Pen, Trash2 } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { Button } from "../ui/button";
-import type { FlashcardDTO } from "../../types";
+import { memo } from 'react';
+import { Bot, Pen, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader } from '../ui/card';
+import { Button } from '../ui/button';
+import type { FlashcardDTO } from '../../types';
 
 interface FlashcardCardProps {
   flashcard: FlashcardDTO;
@@ -17,25 +17,25 @@ interface FlashcardCardProps {
 function FlashcardCardComponent({ flashcard, onEdit, onDelete }: FlashcardCardProps) {
   const truncate = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+    return text.substring(0, maxLength) + '...';
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB"); // Format: DD.MM.YYYY
+    return date.toLocaleDateString('en-GB'); // Format: DD.MM.YYYY
   };
 
-  const isAiGenerated = flashcard.source === "ai_generated";
+  const isAiGenerated = flashcard.source === 'ai_generated';
 
   return (
-    <Card className="flex flex-col h-full" data-testid="flashcard-card">
+    <Card className="flex h-full flex-col" data-testid="flashcard-card">
       <CardHeader className="pb-3">
         <p className="text-sm font-medium">{truncate(flashcard.front, 150)}</p>
       </CardHeader>
       <CardContent className="flex-1 pb-3">
-        <p className="text-sm text-muted-foreground border-t pt-3">{truncate(flashcard.back, 150)}</p>
+        <p className="text-muted-foreground border-t pt-3 text-sm">{truncate(flashcard.back, 150)}</p>
       </CardContent>
-      <CardFooter className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t">
+      <CardFooter className="text-muted-foreground flex items-center justify-between border-t pt-3 text-xs">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             {isAiGenerated ? (

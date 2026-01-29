@@ -1,12 +1,12 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Schema for a single flashcard proposal from AI generation.
  * Validates that both front and back are non-empty strings.
  */
 export const flashcardProposalSchema = z.object({
-  front: z.string().min(1, "Front cannot be empty"),
-  back: z.string().min(1, "Back cannot be empty"),
+  front: z.string().min(1, 'Front cannot be empty'),
+  back: z.string().min(1, 'Back cannot be empty'),
 });
 
 /**
@@ -20,9 +20,9 @@ export const openRouterResponseSchema = z.object({
         message: z.object({
           content: z.string(),
         }),
-      })
+      }),
     )
-    .min(1, "Response must contain at least one choice"),
+    .min(1, 'Response must contain at least one choice'),
 });
 
 /**

@@ -1,14 +1,14 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 import type {
   GenerationResponseDTO,
   AcceptGenerationCommand,
   AcceptGenerationResponseDTO,
   ErrorResponseDTO,
   CreateGenerationCommand,
-} from "../types";
-import type { FlashcardProposalViewModel, GenerateViewState } from "../components/generation/types";
-import { createGenerationSchema, acceptGenerationSchema } from "../lib/schemas/generation.schema";
+} from '../types';
+import type { FlashcardProposalViewModel, GenerateViewState } from '../components/generation/types';
+import { createGenerationSchema, acceptGenerationSchema } from '../lib/schemas/generation.schema';
 
 interface UseGenerateFlashcardsReturn {
   // State
@@ -35,17 +35,17 @@ interface UseGenerateFlashcardsReturn {
  */
 export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
   // State
-  const [sourceText, setSourceTextState] = useState("");
+  const [sourceText, setSourceTextState] = useState('');
   const [proposals, setProposals] = useState<FlashcardProposalViewModel[]>([]);
   const [generationId, setGenerationId] = useState<string | null>(null);
-  const [viewState, setViewState] = useState<GenerateViewState>("idle");
+  const [viewState, setViewState] = useState<GenerateViewState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Refs
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Derived state
-  const acceptedCount = useMemo(() => proposals.filter((p) => p.status === "accepted").length, [proposals]);
+  const acceptedCount = useMemo(() => proposals.filter((p) => p.status === 'accepted').length, [proposals]);
 
   /**
    * Update source text.
@@ -58,14 +58,14 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
    * Map API error code to user-friendly message for generation errors.
    */
   const mapGenerationErrorToMessage = useCallback((code: string, status: number): string => {
-    if (status === 401) return ""; // handled separately via redirect
+    if (status === 401) return ''; // handled separately via redirect
 
     const messages: Record<string, string> = {
-      VALIDATION_ERROR: "Invalid input. Please check your text and try again.",
-      INTERNAL_ERROR: "An unexpected error occurred. Please try again.",
+      VALIDATION_ERROR: 'Invalid input. Please check your text and try again.',
+      INTERNAL_ERROR: 'An unexpected error occurred. Please try again.',
     };
 
-    return messages[code] || "An unexpected error occurred. Please try again.";
+    return messages[code] || 'An unexpected error occurred. Please try again.';
   }, []);
 
   /**
@@ -73,13 +73,13 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
    */
   const mapAcceptErrorToMessage = useCallback((code: string): string => {
     const messages: Record<string, string> = {
-      VALIDATION_ERROR: "Some flashcards have invalid content. Please review and try again.",
-      NOT_FOUND: "Generation session not found. Please generate new flashcards.",
-      ALREADY_FINALIZED: "These flashcards have already been saved.",
-      INTERNAL_ERROR: "Failed to save flashcards. Please try again.",
+      VALIDATION_ERROR: 'Some flashcards have invalid content. Please review and try again.',
+      NOT_FOUND: 'Generation session not found. Please generate new flashcards.',
+      ALREADY_FINALIZED: 'These flashcards have already been saved.',
+      INTERNAL_ERROR: 'Failed to save flashcards. Please try again.',
     };
 
-    return messages[code] || "An unexpected error occurred. Please try again.";
+    return messages[code] || 'An unexpected error occurred. Please try again.';
   }, []);
 
   /**
@@ -91,7 +91,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
     if (!validation.success) {
       const firstError = validation.error.errors[0];
       setErrorMessage(firstError.message);
-      setViewState("error");
+      setViewState('error');
       return;
     }
 
@@ -105,7 +105,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
     abortControllerRef.current = controller;
 
     // Clear previous state
-    setViewState("generating");
+    setViewState('generating');
     setErrorMessage(null);
     setProposals([]);
     setGenerationId(null);
@@ -115,18 +115,18 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
         source_text: sourceText,
       };
 
-      const response = await fetch("/api/generations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        credentials: "include",
+        credentials: 'include',
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60_000)]),
       });
 
       // Handle 401 - session expired
       if (response.status === 401) {
-        toast.error("Session expired. Please log in again.");
-        window.location.href = "/login";
+        toast.error('Session expired. Please log in again.');
+        window.location.href = '/login';
         return;
       }
 
@@ -134,7 +134,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
         const errorData: ErrorResponseDTO = await response.json();
         const message = mapGenerationErrorToMessage(errorData.error.code, response.status);
         setErrorMessage(message);
-        setViewState("error");
+        setViewState('error');
         return;
       }
 
@@ -144,35 +144,35 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
       const viewModels: FlashcardProposalViewModel[] = data.flashcards_proposals.map((proposal) => ({
         front: proposal.front,
         back: proposal.back,
-        status: "pending",
+        status: 'pending',
       }));
 
       setProposals(viewModels);
       setGenerationId(data.generation_id);
-      setViewState("generated");
+      setViewState('generated');
     } catch (err) {
       // Component unmount — silently ignore
-      if (err instanceof Error && err.name === "AbortError") {
+      if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
 
       // Timeout error
-      if (err instanceof DOMException && err.name === "TimeoutError") {
-        setErrorMessage("Request timed out. Please try again.");
-        setViewState("error");
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        setErrorMessage('Request timed out. Please try again.');
+        setViewState('error');
         return;
       }
 
       // Network error
       if (err instanceof TypeError) {
-        setErrorMessage("Unable to connect to server. Please check your connection.");
-        setViewState("error");
+        setErrorMessage('Unable to connect to server. Please check your connection.');
+        setViewState('error');
         return;
       }
 
-      console.error("Failed to generate flashcards:", err);
-      setErrorMessage("An unexpected error occurred. Please try again.");
-      setViewState("error");
+      console.error('Failed to generate flashcards:', err);
+      setErrorMessage('An unexpected error occurred. Please try again.');
+      setViewState('error');
     }
   }, [sourceText, mapGenerationErrorToMessage]);
 
@@ -182,7 +182,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
   const acceptProposal = useCallback((index: number) => {
     setProposals((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], status: "accepted" };
+      updated[index] = { ...updated[index], status: 'accepted' };
       return updated;
     });
   }, []);
@@ -193,7 +193,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
   const rejectProposal = useCallback((index: number) => {
     setProposals((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], status: "rejected" };
+      updated[index] = { ...updated[index], status: 'rejected' };
       return updated;
     });
   }, []);
@@ -225,13 +225,13 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
    */
   const saveAccepted = useCallback(async () => {
     if (!generationId) {
-      toast.error("Generation session not found. Please generate new flashcards.");
+      toast.error('Generation session not found. Please generate new flashcards.');
       return;
     }
 
     // Filter accepted proposals
     const acceptedProposals = proposals
-      .filter((p) => p.status === "accepted")
+      .filter((p) => p.status === 'accepted')
       .map((p) => ({ front: p.front, back: p.back }));
 
     // Validate accepted proposals
@@ -242,7 +242,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
       return;
     }
 
-    setViewState("saving");
+    setViewState('saving');
 
     try {
       const body: AcceptGenerationCommand = {
@@ -250,17 +250,17 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
       };
 
       const response = await fetch(`/api/generations/${generationId}/accept`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        credentials: "include",
+        credentials: 'include',
         signal: AbortSignal.timeout(10_000),
       });
 
       // Handle 401 - session expired
       if (response.status === 401) {
-        toast.error("Session expired. Please log in again.");
-        window.location.href = "/login";
+        toast.error('Session expired. Please log in again.');
+        window.location.href = '/login';
         return;
       }
 
@@ -268,33 +268,33 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
         const errorData: ErrorResponseDTO = await response.json();
         const message = mapAcceptErrorToMessage(errorData.error.code);
         toast.error(message);
-        setViewState("generated"); // Revert to generated state
+        setViewState('generated'); // Revert to generated state
         return;
       }
 
       const data: AcceptGenerationResponseDTO = await response.json();
 
       // Success - show toast and redirect
-      toast.success(`Saved ${data.accepted_count} flashcard${data.accepted_count === 1 ? "" : "s"}`);
-      window.location.href = "/flashcards";
+      toast.success(`Saved ${data.accepted_count} flashcard${data.accepted_count === 1 ? '' : 's'}`);
+      window.location.href = '/flashcards';
     } catch (err) {
       // Timeout error
-      if (err instanceof DOMException && err.name === "TimeoutError") {
-        toast.error("Request timed out. Please try again.");
-        setViewState("generated");
+      if (err instanceof DOMException && err.name === 'TimeoutError') {
+        toast.error('Request timed out. Please try again.');
+        setViewState('generated');
         return;
       }
 
       // Network error
       if (err instanceof TypeError) {
-        toast.error("Unable to connect to server. Please check your connection.");
-        setViewState("generated");
+        toast.error('Unable to connect to server. Please check your connection.');
+        setViewState('generated');
         return;
       }
 
-      console.error("Failed to save flashcards:", err);
-      toast.error("Failed to save flashcards. Please try again.");
-      setViewState("generated");
+      console.error('Failed to save flashcards:', err);
+      toast.error('Failed to save flashcards. Please try again.');
+      setViewState('generated');
     }
   }, [generationId, proposals, mapAcceptErrorToMessage]);
 

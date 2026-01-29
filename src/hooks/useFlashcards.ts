@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   FlashcardDTO,
   PaginationDTO,
@@ -6,9 +6,9 @@ import type {
   CreateFlashcardCommand,
   UpdateFlashcardCommand,
   ErrorResponseDTO,
-} from "../types";
-import type { FlashcardFormData } from "../components/flashcards/types";
-import { toast } from "sonner";
+} from '../types';
+import type { FlashcardFormData } from '../components/flashcards/types';
+import { toast } from 'sonner';
 
 interface UseFlashcardsParams {
   initialFlashcards: FlashcardDTO[];
@@ -52,7 +52,7 @@ export function useFlashcards({
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError || null);
-  const [searchQuery, setSearchQueryState] = useState("");
+  const [searchQuery, setSearchQueryState] = useState('');
   const [currentPage, setCurrentPageState] = useState(1);
 
   // Refs for debounce and abort controller
@@ -81,25 +81,25 @@ export function useFlashcards({
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "20",
-        sort: "created_at",
-        order: "desc",
+        limit: '20',
+        sort: 'created_at',
+        order: 'desc',
       });
 
       if (search) {
-        params.append("search", search);
+        params.append('search', search);
       }
 
       const response = await fetch(`/api/flashcards?${params.toString()}`, {
-        method: "GET",
-        credentials: "include",
+        method: 'GET',
+        credentials: 'include',
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]),
       });
 
       // Handle 401 - session expired
       if (response.status === 401) {
-        toast.error("Session expired. Please log in again.");
-        window.location.href = "/login";
+        toast.error('Session expired. Please log in again.');
+        window.location.href = '/login';
         return;
       }
 
@@ -119,12 +119,12 @@ export function useFlashcards({
       }
     } catch (err) {
       // Ignore aborted requests
-      if (err instanceof Error && err.name === "AbortError") {
+      if (err instanceof Error && err.name === 'AbortError') {
         return;
       }
 
-      console.error("Failed to fetch flashcards:", err);
-      const message = err instanceof Error ? err.message : "Failed to load flashcards. Please try again.";
+      console.error('Failed to fetch flashcards:', err);
+      const message = err instanceof Error ? err.message : 'Failed to load flashcards. Please try again.';
       setError(message);
     } finally {
       setIsLoading(false);
@@ -150,7 +150,7 @@ export function useFlashcards({
         fetchFlashcards(1, query);
       }, 300);
     },
-    [fetchFlashcards]
+    [fetchFlashcards],
   );
 
   /**
@@ -161,7 +161,7 @@ export function useFlashcards({
       setCurrentPageState(page);
       fetchFlashcards(page, searchQuery);
     },
-    [fetchFlashcards, searchQuery]
+    [fetchFlashcards, searchQuery],
   );
 
   /**
@@ -176,17 +176,17 @@ export function useFlashcards({
           back: data.back,
         };
 
-        const response = await fetch("/api/flashcards", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/flashcards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
-          credentials: "include",
+          credentials: 'include',
           signal: AbortSignal.timeout(10_000),
         });
 
         if (response.status === 401) {
-          toast.error("Session expired. Please log in again.");
-          window.location.href = "/login";
+          toast.error('Session expired. Please log in again.');
+          window.location.href = '/login';
           return;
         }
 
@@ -196,18 +196,18 @@ export function useFlashcards({
         }
 
         // Success - reset to page 1, clear search, refetch
-        toast.success("Flashcard created");
-        setSearchQueryState("");
+        toast.success('Flashcard created');
+        setSearchQueryState('');
         setCurrentPageState(1);
-        await fetchFlashcards(1, "");
+        await fetchFlashcards(1, '');
       } catch (err) {
-        console.error("Failed to create flashcard:", err);
-        const message = err instanceof Error ? err.message : "Failed to create flashcard. Please try again.";
+        console.error('Failed to create flashcard:', err);
+        const message = err instanceof Error ? err.message : 'Failed to create flashcard. Please try again.';
         toast.error(message);
         throw err; // Re-throw so dialog can handle it
       }
     },
-    [fetchFlashcards]
+    [fetchFlashcards],
   );
 
   /**
@@ -223,16 +223,16 @@ export function useFlashcards({
         };
 
         const response = await fetch(`/api/flashcards/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
-          credentials: "include",
+          credentials: 'include',
           signal: AbortSignal.timeout(10_000),
         });
 
         if (response.status === 401) {
-          toast.error("Session expired. Please log in again.");
-          window.location.href = "/login";
+          toast.error('Session expired. Please log in again.');
+          window.location.href = '/login';
           return;
         }
 
@@ -242,16 +242,16 @@ export function useFlashcards({
         }
 
         // Success - refetch current view
-        toast.success("Flashcard updated");
+        toast.success('Flashcard updated');
         await fetchFlashcards(currentPage, searchQuery);
       } catch (err) {
-        console.error("Failed to update flashcard:", err);
-        const message = err instanceof Error ? err.message : "Failed to update flashcard. Please try again.";
+        console.error('Failed to update flashcard:', err);
+        const message = err instanceof Error ? err.message : 'Failed to update flashcard. Please try again.';
         toast.error(message);
         throw err;
       }
     },
-    [fetchFlashcards, currentPage, searchQuery]
+    [fetchFlashcards, currentPage, searchQuery],
   );
 
   /**
@@ -268,14 +268,14 @@ export function useFlashcards({
 
       try {
         const response = await fetch(`/api/flashcards/${id}`, {
-          method: "DELETE",
-          credentials: "include",
+          method: 'DELETE',
+          credentials: 'include',
           signal: AbortSignal.timeout(10_000),
         });
 
         if (response.status === 401) {
-          toast.error("Session expired. Please log in again.");
-          window.location.href = "/login";
+          toast.error('Session expired. Please log in again.');
+          window.location.href = '/login';
           return;
         }
 
@@ -285,16 +285,16 @@ export function useFlashcards({
         }
 
         // Success - refetch to fix pagination
-        toast.success("Flashcard deleted");
+        toast.success('Flashcard deleted');
         await fetchFlashcards(currentPage, searchQuery);
       } catch (err) {
         // Rollback optimistic update
         setFlashcards(flashcardsBackupRef.current);
-        console.error("Failed to delete flashcard:", err);
-        toast.error("Failed to delete flashcard");
+        console.error('Failed to delete flashcard:', err);
+        toast.error('Failed to delete flashcard');
       }
     },
-    [flashcards, fetchFlashcards, currentPage, searchQuery]
+    [flashcards, fetchFlashcards, currentPage, searchQuery],
   );
 
   /**

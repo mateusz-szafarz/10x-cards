@@ -1,4 +1,4 @@
-import type { Database } from "./db/database.types";
+import type { Database } from './db/database.types';
 
 // =============================================================================
 // Database Entity Types
@@ -8,14 +8,14 @@ import type { Database } from "./db/database.types";
  * Base types derived from database schema.
  * These represent the raw database row structures.
  */
-type FlashcardEntity = Database["public"]["Tables"]["flashcards"]["Row"];
-type FlashcardInsert = Database["public"]["Tables"]["flashcards"]["Insert"];
-type GenerationSessionInsert = Database["public"]["Tables"]["generation_sessions"]["Insert"];
+type FlashcardEntity = Database['public']['Tables']['flashcards']['Row'];
+type FlashcardInsert = Database['public']['Tables']['flashcards']['Insert'];
+type GenerationSessionInsert = Database['public']['Tables']['generation_sessions']['Insert'];
 
 /**
  * Flashcard source enum from database schema.
  */
-export type FlashcardSource = Database["public"]["Enums"]["flashcard_source"];
+export type FlashcardSource = Database['public']['Enums']['flashcard_source'];
 
 // =============================================================================
 // Pagination DTOs
@@ -114,7 +114,7 @@ export interface DeleteAccountResponseDTO {
  * Excludes user_id (implicit from authentication context).
  * Derived from FlashcardEntity using Omit.
  */
-export type FlashcardDTO = Omit<FlashcardEntity, "user_id">;
+export type FlashcardDTO = Omit<FlashcardEntity, 'user_id'>;
 
 /**
  * Command for creating a manual flashcard.
@@ -124,7 +124,7 @@ export type FlashcardDTO = Omit<FlashcardEntity, "user_id">;
  * - front: required, 1-500 characters
  * - back: required, 1-2000 characters
  */
-export type CreateFlashcardCommand = Pick<FlashcardInsert, "front" | "back">;
+export type CreateFlashcardCommand = Pick<FlashcardInsert, 'front' | 'back'>;
 
 /**
  * Command for updating an existing flashcard.
@@ -132,7 +132,7 @@ export type CreateFlashcardCommand = Pick<FlashcardInsert, "front" | "back">;
  *
  * Same validation as CreateFlashcardCommand.
  */
-export type UpdateFlashcardCommand = Pick<FlashcardInsert, "front" | "back">;
+export type UpdateFlashcardCommand = Pick<FlashcardInsert, 'front' | 'back'>;
 
 /**
  * Query parameters for GET /api/flashcards
@@ -141,8 +141,8 @@ export interface FlashcardsQueryParams {
   page?: number;
   limit?: number;
   source?: FlashcardSource;
-  sort?: "created_at" | "updated_at";
-  order?: "asc" | "desc";
+  sort?: 'created_at' | 'updated_at';
+  order?: 'asc' | 'desc';
   search?: string;
 }
 
@@ -165,7 +165,7 @@ export interface FlashcardsListDTO {
  * Validation:
  * - source_text: required, 1000-10000 characters
  */
-export type CreateGenerationCommand = Pick<GenerationSessionInsert, "source_text">;
+export type CreateGenerationCommand = Pick<GenerationSessionInsert, 'source_text'>;
 
 /**
  * Proposed flashcard from AI generation.
@@ -287,11 +287,11 @@ export interface OpenRouterConfig {
 export interface OpenRouterRequest {
   model: string;
   messages: {
-    role: "system" | "user";
+    role: 'system' | 'user';
     content: string;
   }[];
   response_format: {
-    type: "json_schema";
+    type: 'json_schema';
     json_schema: {
       name: string;
       strict: boolean;

@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
-import { Search } from "lucide-react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Alert } from "../ui/alert";
-import { Skeleton } from "../ui/skeleton";
+import { useState, useCallback } from 'react';
+import { Search } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Alert } from '../ui/alert';
+import { Skeleton } from '../ui/skeleton';
 import {
   Pagination,
   PaginationContent,
@@ -11,14 +11,14 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "../ui/pagination";
-import { FlashcardCard } from "./FlashcardCard";
-import { FlashcardEmpty } from "./FlashcardEmpty";
-import { FlashcardEditDialog } from "./FlashcardEditDialog";
-import { FlashcardDeleteDialog } from "./FlashcardDeleteDialog";
-import { useFlashcards } from "../../hooks/useFlashcards";
-import type { FlashcardDTO, PaginationDTO } from "../../types";
-import type { FlashcardFormData } from "./types";
+} from '../ui/pagination';
+import { FlashcardCard } from './FlashcardCard';
+import { FlashcardEmpty } from './FlashcardEmpty';
+import { FlashcardEditDialog } from './FlashcardEditDialog';
+import { FlashcardDeleteDialog } from './FlashcardDeleteDialog';
+import { useFlashcards } from '../../hooks/useFlashcards';
+import type { FlashcardDTO, PaginationDTO } from '../../types';
+import type { FlashcardFormData } from './types';
 
 interface FlashcardListProps {
   initialFlashcards: FlashcardDTO[];
@@ -82,7 +82,7 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
         await createFlashcard(data);
       }
     },
-    [editingFlashcard, updateFlashcard, createFlashcard]
+    [editingFlashcard, updateFlashcard, createFlashcard],
   );
 
   const handleDeleteClick = useCallback((flashcard: FlashcardDTO) => {
@@ -115,12 +115,14 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">My Flashcards</h1>
-        <Button onClick={handleCreateNew} data-testid="new-flashcard-button">+ New Flashcard</Button>
+        <Button onClick={handleCreateNew} data-testid="new-flashcard-button">
+          + New Flashcard
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           type="text"
           placeholder="Search flashcards..."
@@ -148,7 +150,7 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-lg" />
             ))}
@@ -160,12 +162,12 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
 
         {/* Empty state (search with no results) */}
         {!isLoading && !error && !hasFlashcards && hasInitialData && searchQuery && (
-          <div className="text-center py-12 text-muted-foreground">No results found for "{searchQuery}"</div>
+          <div className="text-muted-foreground py-12 text-center">No results found for "{searchQuery}"</div>
         )}
 
         {/* Data state (flashcard grid) */}
         {!isLoading && !error && hasFlashcards && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {flashcards.map((flashcard) => (
               <FlashcardCard
                 key={flashcard.id}
@@ -186,7 +188,7 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
 
@@ -206,7 +208,7 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
                 <PaginationNext
                   onClick={() => currentPage < pagination.total_pages && setCurrentPage(currentPage + 1)}
                   className={
-                    currentPage === pagination.total_pages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                    currentPage === pagination.total_pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'
                   }
                 />
               </PaginationItem>
