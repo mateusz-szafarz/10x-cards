@@ -28,7 +28,7 @@
 -- ----------------------------------------------------------------------------
 -- Enable moddatetime extension for automatic timestamp updates
 -- This extension provides a trigger function that sets a column to current timestamp
-create extension if not exists moddatetime schema extensions;
+create extension if not exists moddatetime;
 
 -- ----------------------------------------------------------------------------
 -- Custom Types
