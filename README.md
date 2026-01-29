@@ -100,7 +100,7 @@ All tables have RLS enabled - users can only access their own data.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/10x-cards.git
+   git clone https://github.com/mateusz-szafarz/10x-cards.git
    cd 10x-cards
    ```
 
