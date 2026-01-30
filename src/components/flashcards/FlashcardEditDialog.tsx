@@ -49,11 +49,11 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
    * Validate a single field using Zod schema.
    */
   const validateField = (field: keyof FlashcardFormData, value: string) => {
-    try {
-      createFlashcardSchema.shape[field].parse(value);
+    const result = createFlashcardSchema.shape[field].safeParse(value);
+    if (result.success) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
-    } catch (err: any) {
-      const message = err.errors?.[0]?.message || 'Invalid value';
+    } else {
+      const message = result.error.errors[0]?.message || 'Invalid value';
       setErrors((prev) => ({ ...prev, [field]: message }));
     }
   };
@@ -62,19 +62,19 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
    * Validate entire form using Zod schema.
    */
   const validateForm = (): boolean => {
-    try {
-      createFlashcardSchema.parse(formData);
+    const result = createFlashcardSchema.safeParse(formData);
+    if (result.success) {
       setErrors({});
       return true;
-    } catch (err: any) {
-      const fieldErrors: FlashcardFormErrors = {};
-      err.errors?.forEach((error: any) => {
-        const field = error.path[0] as keyof FlashcardFormData;
-        fieldErrors[field] = error.message;
-      });
-      setErrors(fieldErrors);
-      return false;
     }
+
+    const fieldErrors: FlashcardFormErrors = {};
+    result.error.errors.forEach((error) => {
+      const field = error.path[0] as keyof FlashcardFormData;
+      fieldErrors[field] = error.message;
+    });
+    setErrors(fieldErrors);
+    return false;
   };
 
   const handleFieldChange = (field: keyof FlashcardFormData, value: string) => {
@@ -99,7 +99,7 @@ export function FlashcardEditDialog({ flashcard, isOpen, onClose, onSave }: Flas
     try {
       await onSave(formData);
       onClose();
-    } catch (err) {
+    } catch {
       // Error is handled in the hook (toast shown)
       // Keep dialog open so user can retry
     } finally {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { loginSchema } from '@/lib/schemas/auth.schema';
-import type { LoginCommand, LoginResponseDTO, ErrorResponseDTO } from '@/types';
+import type { LoginCommand, ErrorResponseDTO } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -119,7 +119,7 @@ export default function LoginForm() {
 
       // 4. Success - redirect (full page reload to pick up cookies)
       window.location.href = '/flashcards';
-    } catch (error) {
+    } catch {
       // 5. Network error
       setErrors({
         form: 'Unable to connect to server. Please check your connection.',
@@ -198,7 +198,7 @@ export default function LoginForm() {
 
           {/* Link to register */}
           <p className="text-muted-foreground text-center text-sm">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/register" className="hover:text-primary underline underline-offset-4">
               Create an account
             </a>

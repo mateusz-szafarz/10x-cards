@@ -5,7 +5,10 @@ import { FlashcardService } from '../lib/services/flashcard.service';
 import type { FlashcardDTO, PaginationDTO } from '../types';
 
 // User is guaranteed to exist by middleware for protected pages
-const user = Astro.locals.user!;
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
 
 // Initialize with safe defaults
 let initialFlashcards: FlashcardDTO[] = [];

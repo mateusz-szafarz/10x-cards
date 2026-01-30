@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { registerSchema } from '@/lib/schemas/auth.schema';
-import type { RegisterCommand, RegisterResponseDTO, ErrorResponseDTO } from '@/types';
+import type { RegisterCommand, ErrorResponseDTO } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -123,7 +123,7 @@ export default function RegisterForm() {
       setTimeout(() => {
         window.location.href = '/login';
       }, 1000);
-    } catch (error) {
+    } catch {
       // 5. Network error
       setErrors({
         form: 'Unable to connect to server. Please check your connection.',

@@ -22,9 +22,7 @@ export interface AIService {
  * This will be replaced with OpenRouterService in production.
  */
 export class MockAIService implements AIService {
-  get modelName(): string {
-    return 'mock-ai';
-  }
+  readonly modelName = 'mock-ai';
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generateFlashcardProposals(_sourceText: string): Promise<FlashcardProposalDTO[]> {

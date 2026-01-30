@@ -162,7 +162,9 @@ export default function FlashcardList({ initialFlashcards, initialPagination, in
 
         {/* Empty state (search with no results) */}
         {!isLoading && !error && !hasFlashcards && hasInitialData && searchQuery && (
-          <div className="text-muted-foreground py-12 text-center">No results found for "{searchQuery}"</div>
+          <div className="text-muted-foreground py-12 text-center">
+            No results found for &ldquo;{searchQuery}&rdquo;
+          </div>
         )}
 
         {/* Data state (flashcard grid) */}

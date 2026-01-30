@@ -25,6 +25,13 @@ export const prerender = false;
  * - 500: Internal server error
  */
 export const GET: APIRoute = async ({ url, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   // Parse and validate query parameters
   // Convert null to undefined so Zod can apply defaults
   const params = {
@@ -55,7 +62,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const result = await flashcardService.listFlashcards(validationResult.data, locals.user!.id);
+    const result = await flashcardService.listFlashcards(validationResult.data, locals.user.id);
 
     return new Response(JSON.stringify(result satisfies FlashcardsListDTO), {
       status: 200,
@@ -91,6 +98,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
  * - 500: Internal server error
  */
 export const POST: APIRoute = async ({ request, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   // Parse request body
   let body: unknown;
   try {
@@ -127,7 +141,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const result = await flashcardService.createFlashcard(validationResult.data, locals.user!.id);
+    const result = await flashcardService.createFlashcard(validationResult.data, locals.user.id);
 
     return new Response(JSON.stringify(result satisfies FlashcardDTO), {
       status: 201,

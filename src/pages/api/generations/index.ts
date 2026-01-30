@@ -20,7 +20,12 @@ export const prerender = false;
  * - 500: Internal server error
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  // User authenticated by middleware - locals.user is guaranteed to exist
+  if (!locals.user) {
+    return new Response(JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   // Parse request body
   let body: unknown;
@@ -66,7 +71,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const result = await generationService.generateFlashcards(
       validationResult.data.source_text,
-      locals.user!.id,
+      locals.user.id,
       aiService,
     );
 

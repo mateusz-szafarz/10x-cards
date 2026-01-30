@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const response: RegisterResponseDTO = {
     user: {
       id: data.user.id,
-      email: data.user.email!,
+      email: data.user.email ?? '',
     },
   };
 

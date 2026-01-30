@@ -31,6 +31,13 @@ export const prerender = false;
  * - 500: Internal server error
  */
 export const POST: APIRoute = async ({ params, request, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   // Extract generation ID from path
   const generationId = params.id;
 
@@ -88,7 +95,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const result = await generationService.acceptFlashcards(
       generationId,
       validationResult.data.flashcards,
-      locals.user!.id,
+      locals.user.id,
     );
 
     return new Response(JSON.stringify(result satisfies AcceptGenerationResponseDTO), {

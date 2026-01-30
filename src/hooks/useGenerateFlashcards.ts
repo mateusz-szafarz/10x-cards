@@ -126,6 +126,7 @@ export function useGenerateFlashcards(): UseGenerateFlashcardsReturn {
       // Handle 401 - session expired
       if (response.status === 401) {
         toast.error('Session expired. Please log in again.');
+        // eslint-disable-next-line react-compiler/react-compiler -- intentional navigation side effect
         window.location.href = '/login';
         return;
       }

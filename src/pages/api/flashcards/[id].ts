@@ -22,6 +22,13 @@ export const prerender = false;
  * - 500: Internal server error
  */
 export const GET: APIRoute = async ({ params, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   const flashcardId = params.id;
 
   // Validate UUID format
@@ -41,7 +48,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const flashcard = await flashcardService.getFlashcardById(flashcardId, locals.user!.id);
+    const flashcard = await flashcardService.getFlashcardById(flashcardId, locals.user.id);
 
     if (!flashcard) {
       return new Response(
@@ -93,6 +100,13 @@ export const GET: APIRoute = async ({ params, locals }) => {
  * - 500: Internal server error
  */
 export const PUT: APIRoute = async ({ params, request, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   const flashcardId = params.id;
 
   // Validate UUID format
@@ -144,7 +158,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const flashcard = await flashcardService.updateFlashcard(flashcardId, validationResult.data, locals.user!.id);
+    const flashcard = await flashcardService.updateFlashcard(flashcardId, validationResult.data, locals.user.id);
 
     if (!flashcard) {
       return new Response(
@@ -192,6 +206,13 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
  * - 500: Internal server error
  */
 export const DELETE: APIRoute = async ({ params, locals }) => {
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } } satisfies ErrorResponseDTO),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   const flashcardId = params.id;
 
   // Validate UUID format
@@ -211,7 +232,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
   const flashcardService = new FlashcardService(locals.supabase);
 
   try {
-    const deleted = await flashcardService.deleteFlashcard(flashcardId, locals.user!.id);
+    const deleted = await flashcardService.deleteFlashcard(flashcardId, locals.user.id);
 
     if (!deleted) {
       return new Response(
