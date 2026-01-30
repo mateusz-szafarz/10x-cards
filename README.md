@@ -145,6 +145,7 @@ All tables have RLS enabled - users can only access their own data.
 | Script | Description |
 |--------|-------------|
 | `npm run dev` | Start development server |
+| `npm run dev:cloud` | Start development server in test mode |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build locally |
 | `npm run astro` | Run Astro CLI command |
@@ -153,9 +154,10 @@ All tables have RLS enabled - users can only access their own data.
 
 | Script | Description |
 |--------|-------------|
-| `npm run lint` | Run ESLint checks |
-| `npm run lint:fix` | Run ESLint and auto-fix issues |
+| `npm run lint` | Run ESLint and auto-fix issues |
+| `npm run lint:check` | Run ESLint checks without fixing |
 | `npm run format` | Format code with Prettier |
+| `npm run format:check` | Check code formatting without fixing |
 
 ### Testing
 
@@ -165,6 +167,7 @@ All tables have RLS enabled - users can only access their own data.
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run test:ui` | Run tests with Vitest UI |
 | `npm run test:coverage` | Run tests with coverage report |
+| `npm run test:coverage:ui` | Run tests with coverage report and UI |
 | `npm run test:e2e` | Run Playwright E2E tests |
 | `npm run test:e2e:ui` | Run E2E tests with Playwright UI |
 | `npm run test:e2e:debug` | Run E2E tests in debug mode |
