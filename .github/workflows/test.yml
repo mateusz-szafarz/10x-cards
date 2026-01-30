@@ -1,0 +1,81 @@
+name: Tests
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Linting & Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js and dependencies
+        uses: ./.github/actions/setup-node-deps
+
+      - name: Run ESLint
+        run: npm run lint:check
+
+      - name: Run Prettier
+        run: npm run format:check
+
+  unit-integration:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js and dependencies
+        uses: ./.github/actions/setup-node-deps
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [unit-integration]
+    environment: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js and dependencies
+        uses: ./.github/actions/setup-node-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create .env.test file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env.test
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env.test
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
+          echo "USE_MOCK_AI=true" >> .env.test
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/

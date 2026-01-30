@@ -28,6 +28,13 @@ export default defineConfig({
       OPENROUTER_API_KEY: envField.string({
         context: "server",
         access: "secret",
+        optional: true,
+      }),
+      USE_MOCK_AI: envField.string({
+        context: "server",
+        access: "public",
+        optional: true,
+        default: "false",
       }),
     },
   },
